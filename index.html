@@ -1,0 +1,2238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#151516">
+<title>제타앱</title>
+<!--
+  제타앱 — 제타와 같은 화면 · 같은 결 · 거기에 **장기기억**
+
+  회원님 지시 (260910) —
+    「제타랑 똑같은 레이아웃, 기능, 동일수준의 출력 되게끔 앱 만들어놓고,
+     해당 플롯들도 안에 구현해놔.」
+    「제타앱이 갖지 못한 '장기기억'을 나는 갖는게 목표니까,
+     제타앱에는 장기기억을 추가로 구현해놓고.」
+
+  색과 크기는 **제타 실물에서 잰 것**이다 (07. 제타에서 받은 것/4. 화면 그림/00_결.json)
+    바탕 rgb(21,21,22) · 강조 rgb(124,103,255) · 글꼴 Pretendard Variable
+-->
+<style>
+/* ── 결 ─────────────────────────────────────────────
+   제타 화면에서 실제로 잰 값. 짐작한 것이 아니다 */
+:root{
+  --바탕:#151516;          /* rgb(21,21,22) */
+  --바탕2:#1e1e20;         /* 말풍선 · 카드 */
+  --바탕3:#26262a;         /* 눌린 것 */
+  --글자:#ffffff;
+  --흐림:#595b63;          /* rgb(89,91,99) — 마지막 메시지 · 지문 */
+  --흐림2:#8b8d95;
+  --강조:#7c67ff;          /* rgb(124,103,255) */
+  --강조흐림:#5a48c7;
+  --빨강:#f04438;
+  --선:#2a2a2e;
+  --머리높이:52px;
+  --발높이:58px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
+body{
+  background:var(--바탕); color:var(--글자);
+  font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  font-size:14px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit;background:none;border:0;outline:none;
+  font-size:16px}   /* 16px 밑이면 iOS 가 확대한다 */
+img{display:block;max-width:100%}
+.숨김{display:none!important}
+
+/* ── 판 짜기 ───────────────────────────────────────── */
+/* ★ 260910 회원님 : 「PC 브라우저에서 켠 제타앱은 높이가 높아야 아래가 나온다.
+   상단/하단 바들은 필수 노출되게 하고, 세로 길이가 줄어들면 하단 필수바 위에서 축소되게 하라.」
+
+   까닭은 **`min-height:0` 이 없어서**였다. flex 자식은 기본이 `min-height:auto` 라
+   내용만큼 커지고, 그만큼 아래 바가 화면 밖으로 밀려난다.
+   가운데(#몸)만 줄어들게 하면 머리와 발은 늘 남는다 */
+#앱{display:flex;flex-direction:column;height:100dvh;min-height:0;
+  max-width:520px;margin:0 auto;position:relative;overflow:hidden}
+#머리자리,#입력자리,#발{flex:0 0 auto}
+#몸{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch}
+#몸::-webkit-scrollbar{width:0}
+
+/* 머리 */
+.머리{
+  height:var(--머리높이); flex:0 0 auto; display:flex; align-items:center; gap:10px;
+  padding:0 14px; background:var(--바탕); border-bottom:1px solid var(--선);
+  position:sticky; top:0; z-index:20;
+}
+.머리 .제목{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.머리 .가운데{flex:1;min-width:0;font-size:15px;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.머리 .단추{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;font-size:18px}
+.머리 .단추:active{background:var(--바탕3)}
+
+/* 발 — 하단 네비 넷 */
+#발{
+  height:var(--발높이); flex:0 0 auto; display:flex; border-top:1px solid var(--선);
+  background:var(--바탕); padding-bottom:env(safe-area-inset-bottom);
+}
+#발 button{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  color:var(--흐림); font-size:10px;
+}
+#발 button .꼭지{font-size:19px;line-height:1}
+#발 button.켬{color:var(--글자)}
+
+/* ── 홈(랭킹) ──────────────────────────────────────── */
+.탭줄{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;scrollbar-width:none}
+.탭줄::-webkit-scrollbar{height:0}
+.탭{flex:0 0 auto;padding:6px 12px;border-radius:999px;font-size:13px;color:var(--흐림2);
+  background:var(--바탕2);white-space:nowrap}
+.탭.켬{background:var(--글자);color:#111}
+.탭줄.맨탭 .탭{background:none;padding:6px 4px;font-size:15px;font-weight:600}
+.탭줄.맨탭 .탭.켬{background:none;color:var(--글자);border-bottom:2px solid var(--글자);border-radius:0}
+
+.플롯줄{display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid var(--선)}
+.플롯줄 .순위{width:22px;flex:0 0 auto;font-size:15px;font-weight:700;color:var(--흐림2);padding-top:2px}
+.플롯줄 .그림{width:64px;height:64px;flex:0 0 auto;border-radius:10px;background:var(--바탕3);
+  object-fit:cover}
+.플롯줄 .속{flex:1;min-width:0}
+.플롯줄 .이름{font-size:15px;font-weight:700;margin-bottom:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.플롯줄 .한줄{font-size:12px;color:var(--흐림2);margin-bottom:4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.플롯줄 .태그{font-size:11px;color:var(--강조);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.플롯줄 .셈{font-size:11px;color:var(--흐림);margin-top:3px}
+
+/* ── 대화 목록 ─────────────────────────────────────── */
+.칸제목{padding:14px 14px 8px;font-size:15px;font-weight:700;display:flex;align-items:center;
+  justify-content:space-between}
+/* ★ 260910 회원님 : 「대화 목록 우상단의 더보기 기능이 없다면 취소선을 그어라.」
+   있는 척하는 것보다 없다고 하는 편이 낫다 */
+.칸제목 .더{font-size:12px;color:var(--흐림2);font-weight:400;
+  text-decoration:line-through;opacity:.55}
+.스크랩줄{display:flex;gap:12px;padding:0 14px 12px;overflow-x:auto;scrollbar-width:none}
+.스크랩줄::-webkit-scrollbar{height:0}
+.스크랩{flex:0 0 auto;width:62px;text-align:center}
+.스크랩 img{width:62px;height:78px;border-radius:8px;object-fit:cover;background:var(--바탕3)}
+.스크랩 .이름{font-size:11px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.방줄{display:flex;gap:12px;padding:11px 14px;align-items:center}
+.방줄:active{background:var(--바탕2)}
+.방줄 img{width:46px;height:46px;flex:0 0 auto;border-radius:8px;object-fit:cover;background:var(--바탕3)}
+.방줄 .속{flex:1;min-width:0}
+.방줄 .이름{font-size:14px;font-weight:700;margin-bottom:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.방줄 .끝말{font-size:12px;color:var(--흐림);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── 방 안 ────────────────────────────────────────── */
+#대화판{padding:14px 12px 8px;display:flex;flex-direction:column;gap:14px}
+
+/* 유저 — 오른쪽 보라 */
+.내말{align-self:flex-end;max-width:78%;background:var(--강조);color:#fff;
+  padding:9px 13px;border-radius:16px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+
+/* 인물 — 왼쪽 회색. 이름줄이 위에 */
+.남말{display:flex;gap:9px;max-width:88%}
+.남말 .얼굴{width:30px;height:30px;flex:0 0 auto;border-radius:50%;object-fit:cover;
+  background:var(--바탕3);margin-top:16px}
+.남말 .묶음{flex:1;min-width:0}
+.남말 .이름{font-size:12px;color:var(--흐림2);margin-bottom:4px}
+.방울{background:var(--바탕2);padding:10px 13px;border-radius:16px;position:relative;
+  font-size:14px;word-break:break-word}
+.방울+.방울{margin-top:6px}
+.방울 .모델딱지{position:absolute;right:8px;bottom:4px;font-size:9px;color:#3a3a40}
+/* 지문과 대사가 **한 말풍선 안에서** 갈린다 — 제타 실물이 그렇다 */
+.방울 .지문{color:var(--흐림2);font-style:italic;display:block}
+.방울 .대사{color:var(--글자);font-weight:600;display:block}
+.방울 .지문+.대사,.방울 .대사+.지문{margin-top:6px}
+
+/* 내레이션 — 말풍선 없이 ≡ */
+.나레{display:flex;gap:8px;color:var(--흐림2);font-style:italic;font-size:13px;
+  padding:0 4px;line-height:1.7}
+.나레::before{content:"≡";flex:0 0 auto;color:var(--흐림);font-style:normal}
+
+/* 입력 */
+#입력칸{flex:0 0 auto;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--선);background:var(--바탕)}
+#입력줄{display:flex;align-items:flex-end;gap:8px;background:var(--바탕2);
+  border-radius:22px;padding:6px 6px 6px 12px}
+/* ★ 260911 — **16px 밑이면 iOS 사파리가 화면을 확대한다.**
+   글을 치려고 누를 때마다 판이 커졌다 줄었다 해서 쓰기가 나쁘다.
+   입력할 수 있는 칸은 전부 16px 로 둔다 */
+#입력{flex:1;resize:none;max-height:110px;font-size:16px;padding:6px 0;line-height:1.45}
+#입력::placeholder{color:var(--흐림)}
+#보내기{width:34px;height:34px;flex:0 0 auto;border-radius:50%;background:var(--강조);
+  display:grid;place-items:center;font-size:15px}
+#보내기[disabled]{background:var(--바탕3);color:var(--흐림)}
+#연장{display:flex;gap:14px;padding:6px 16px 2px;color:var(--흐림2);font-size:16px}
+
+/* ── 플롯 정보 ─────────────────────────────────────── */
+.플롯그림{width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--바탕3)}
+.플롯속{padding:16px 14px 90px}
+.플롯속 h1{font-size:22px;font-weight:800;margin:0 0 6px}
+.플롯속 .한줄{font-size:14px;color:#d5d6da;margin-bottom:8px}
+.플롯속 .태그{font-size:13px;color:var(--강조);margin-bottom:10px}
+.배지줄{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.배지{font-size:11px;color:var(--흐림2);background:var(--바탕2);padding:4px 9px;border-radius:999px}
+.칸{margin-top:20px}
+.칸 h2{font-size:15px;font-weight:700;margin:0 0 8px}
+.칸 .글{font-size:13px;color:#c8c9ce;white-space:pre-wrap;line-height:1.7}
+.아래고정{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;padding:10px 14px
+  calc(10px + env(safe-area-inset-bottom));background:var(--바탕);border-top:1px solid var(--선);
+  max-width:520px;margin:0 auto}
+.아래고정 .북{width:48px;flex:0 0 auto;border-radius:12px;background:var(--바탕2);
+  display:grid;place-items:center;font-size:17px}
+.아래고정 .큰단추{flex:1;height:48px;border-radius:12px;background:var(--강조);
+  font-size:15px;font-weight:700;display:grid;place-items:center}
+
+/* ── 만들기 ───────────────────────────────────────── */
+.만들기판{padding:16px 14px}
+.빈말{padding:40px 20px;text-align:center;color:var(--흐림);font-size:13px;line-height:1.9}
+
+/* ── 바닥시트 · 덮개 ── */
+#덮개{position:fixed;inset:0;background:#000a;z-index:60;opacity:0;pointer-events:none;
+  transition:opacity .18s}
+#덮개.보임{opacity:1;pointer-events:auto}
+#시트{position:fixed;left:0;right:0;bottom:0;z-index:70;max-width:520px;margin:0 auto;
+  background:var(--바탕2);border-radius:18px 18px 0 0;transform:translateY(101%);
+  transition:transform .22s;max-height:82dvh;display:flex;flex-direction:column}
+#시트.보임{transform:none}
+#시트 .손잡이{width:38px;height:4px;border-radius:2px;background:#3a3a40;margin:9px auto 4px;
+  cursor:ns-resize;touch-action:none}
+#시트 .손잡이:before{content:"";position:absolute;left:0;right:0;height:26px;margin-top:-11px}
+#시트 .손잡이{position:relative}
+#시트 .시트머리{padding:6px 18px 10px;font-size:15px;font-weight:700}
+/* 속만 스크롤되고 아래 단추줄은 늘 보인다 */
+#시트 .시트속{overflow-y:auto;flex:1 1 auto;min-height:0;
+  padding:0 8px calc(14px + env(safe-area-inset-bottom))}
+#시트 .시트단추{flex:0 0 auto}
+.시트줄{display:flex;align-items:center;gap:12px;padding:13px 12px;border-radius:12px;
+  font-size:14px;width:100%;text-align:left}
+.시트줄:active{background:var(--바탕3)}
+.시트줄 .꼭{width:22px;text-align:center;font-size:16px}
+.시트줄 .밑{font-size:11px;color:var(--흐림);margin-top:2px}
+.시트줄.빨강{color:var(--빨강)}
+.시트줄.켬{background:var(--바탕3)}
+#시트 textarea{width:100%;background:var(--바탕);border-radius:12px;padding:12px;
+  font-size:14px;min-height:120px;resize:vertical;line-height:1.6}
+#시트 .시트단추{display:flex;gap:8px;padding:10px 12px}
+#시트 .시트단추 button{flex:1;height:44px;border-radius:12px;background:var(--바탕3);
+  font-size:14px;font-weight:600}
+#시트 .시트단추 button.강{background:var(--강조)}
+
+/* 인물 정보 */
+.인물머리{display:flex;gap:12px;padding:4px 12px 14px;align-items:center}
+.인물머리 img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:var(--바탕3)}
+.인물머리 .이름{font-size:17px;font-weight:700}
+.인물머리 .밑{font-size:12px;color:var(--흐림2)}
+.인물글{font-size:13px;color:#c8c9ce;white-space:pre-wrap;line-height:1.7;padding:0 12px 8px}
+
+/* 눌리는 것 */
+.방울{cursor:pointer}
+.남말 .얼굴{cursor:pointer}
+
+/* 알림 */
+#알림{position:fixed;left:50%;transform:translateX(-50%);bottom:76px;z-index:90;
+  background:#000c;color:#fff;font-size:13px;padding:9px 16px;border-radius:999px;
+  opacity:0;transition:opacity .2s;pointer-events:none;max-width:88%}
+#알림.보임{opacity:1}
+</style>
+</head>
+<body>
+<div id="앱">
+  <div id="머리자리"></div>
+  <div id="몸"></div>
+  <div id="입력자리"></div>
+  <div id="발"></div>
+</div>
+<!-- ★ 260910 회원님 : 「모든 창 좌상단에 < 로 뒤로가기 버튼 오버레이 해놔.」
+     머리에 있던 ‹ 를 떼고 이 하나로 모았다. 어느 창이든 같은 자리에 있다 -->
+<button id="뒤로떠" data-가="뒤로" aria-label="뒤로">‹</button>
+<div id="덮개"></div>
+<div id="시트"></div>
+<style>
+#뒤로떠{position:fixed;left:10px;top:10px;z-index:60;width:38px;height:38px;
+  border-radius:50%;display:none;place-items:center;font-size:24px;line-height:1;
+  padding-bottom:3px;background:rgba(0,0,0,.42);color:#fff;backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.14)}
+#뒤로떠.보임{display:grid}
+.방더{width:32px;height:32px;flex:0 0 auto;display:grid;place-items:center;
+  border-radius:8px;color:var(--흐림);font-size:18px}
+.방더:active{background:var(--바탕3)}
+.플롯연필{position:absolute;right:10px;top:10px;z-index:30;width:38px;height:38px;
+  border-radius:50%;display:grid;place-items:center;font-size:17px;
+  background:rgba(0,0,0,.42);color:#fff;backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.14)}
+</style>
+<div id="알림"></div>
+
+<script>
+'use strict';
+/* ══════════════════════════════════════════════════════
+   제타앱
+
+   ★ 이 파일 하나가 앱 전부다. 옛 앱과 같은 얼개다.
+   ★ 화면은 제타 실물을 찍어 놓고 보고 그렸다.
+     그림 — 07. 제타에서 받은 것/4. 화면 그림/
+   ══════════════════════════════════════════════════════ */
+
+const S = {              /* 지금 상태 */
+  화면: '대화',           /* 홈 · 대화 · 만들기 · 나 */
+  방: null,              /* 열려 있는 방 */
+  플롯: null,            /* 열려 있는 플롯 */
+  보낸중: false
+};
+const D = {              /* 담아 둔 것 */
+  플롯: [], 방: [], 도막: {}, 인기: []
+};
+
+/* 줄바꿈.
+   ★ 260910 — 이것이 없어서 **중계로 요청이 아예 안 나갔다.**
+     `말보내기` 안에서 NL 을 쓰는데 만드는 자리가 없었다. 회원님이 폰에서 치셨는데 무응답이었다.
+   ★ 소스에 역빗금을 안 쓴다 — 스크립트로 이 파일을 고칠 때 한 겹 벗겨진다 (G6) */
+const NL = String.fromCharCode(10);
+
+const $ = s => document.querySelector(s);
+const 몸 = () => $('#몸');
+const 알림 = 글 => {
+  const e = $('#알림'); e.textContent = 글; e.classList.add('보임');
+  clearTimeout(알림._t); 알림._t = setTimeout(() => e.classList.remove('보임'), 1800);
+};
+const 넣기 = (자리, html) => { $(자리).innerHTML = html; };
+const 안전 = s => String(s == null ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/* ── 도막 한 조각을 지문/대사로 가른다 ──
+   제타 실물 : 지문 65% · 섞임 33% · 대사만 1.9%.
+   한 조각 안에 *지문* 과 대사가 섞여 있다. 별표로 가른다 */
+function 조각그리기(글){
+  const t = String(글 || "");
+  if (!t.trim()) return "";
+  /* 별표로 자른다. 홀수 자리가 지문이다.
+     ★ 정규식을 안 쓴다 — 스크립트로 이 파일을 고칠 때 역빗금이 벗겨진다 (G6) */
+  const 토막 = t.split("*");
+  let 낸것 = "";
+  토막.forEach((조각, i) => {
+    const x = 조각.trim();
+    if (!x) return;
+    낸것 += (i % 2 === 1)
+      ? '<span class="지문">' + 안전(x) + '</span>'
+      : '<span class="대사">' + 안전(x) + '</span>';
+  });
+  return 낸것 || '<span class="대사">' + 안전(t) + '</span>';
+}
+
+/* ══════════════════════════════════════════════════════
+   바닥시트 — 제타가 메뉴를 이렇게 띄운다
+   ══════════════════════════════════════════════════════ */
+function 시트열기(제목, 속){
+  const 시 = $("#시트");
+  시.innerHTML = '<div class="손잡이"></div>' +
+    (제목 ? '<div class="시트머리">' + 안전(제목) + '</div>' : '') +
+    '<div class="시트속">' + 속 + '</div>';
+  자리쌓기();
+  $("#덮개").classList.add("보임");
+  시.style.height = ""; 시.style.maxHeight = "";   /* 지난번 늘린 것을 되돌린다 */
+  requestAnimationFrame(() => { 시.classList.add("보임"); 손잡이붙이기(); });
+}
+/* Esc · 뒤로 가기로도 닫는다 */
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && 시트열렸나()) 시트닫기();
+});
+
+/* ★ 260910 회원님 : 「채팅창의 연필모양 눌러 띄우는 팝업창 위에 핸들이 있는데,
+   이걸 통해 입력창을 늘릴 수도 있어야 한다.」
+
+   손잡이를 위로 끌면 시트가 커지고 그 안의 입력칸도 함께 커진다 */
+function 손잡이붙이기(){
+  const 시 = $("#시트");
+  const 손 = 시 && 시.querySelector(".손잡이");
+  if (!손) return;
+  let 잡음 = null;
+  const 시작 = e => {
+    const y = (e.touches ? e.touches[0].clientY : e.clientY);
+    잡음 = {y, 높이: 시.getBoundingClientRect().height};
+    e.preventDefault();
+  };
+  const 움직임 = e => {
+    if (!잡음) return;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY);
+    const 새높이 = Math.max(180, Math.min(innerHeight * 0.94, 잡음.높이 + (잡음.y - y)));
+    시.style.maxHeight = 새높이 + "px";
+    시.style.height = 새높이 + "px";
+    /* 안에 입력칸이 있으면 함께 늘린다 */
+    const 칸 = 시.querySelector("textarea");
+    if (칸) 칸.style.minHeight = Math.max(90, 새높이 - 170) + "px";
+    e.preventDefault();
+  };
+  const 끝 = () => { 잡음 = null; };
+  손.addEventListener("mousedown", 시작);
+  손.addEventListener("touchstart", 시작, {passive: false});
+  addEventListener("mousemove", 움직임, {passive: false});
+  addEventListener("touchmove", 움직임, {passive: false});
+  addEventListener("mouseup", 끝);
+  addEventListener("touchend", 끝);
+}
+
+function 시트열렸나(){
+  const 시 = $("#시트");
+  return !!(시 && 시.classList.contains("보임"));
+}
+function 시트닫기(){
+  const 시 = $("#시트");
+  시.classList.remove("보임");
+  $("#덮개").classList.remove("보임");
+  /* ★ 260910 — 닫아도 속이 DOM 에 남아 있었다.
+     다음에 무엇을 찾을 때 **닫힌 시트의 것**이 걸려 엉뚱하게 돌았다.
+     미끄러져 내려간 뒤에 비운다 */
+  시.style.height = ""; 시.style.maxHeight = "";
+  setTimeout(() => { if (!시.classList.contains("보임")) 시.innerHTML = ""; }, 260);
+}
+const 시트줄 = (꼭, 말, 가, 더) =>
+  '<button class="시트줄 ' + (더 && 더.빛 ? 더.빛 : "") + '" data-시트="' + 가 + '"' +
+  (더 && 더.값 ? ' data-값="' + 안전(더.값) + '"' : "") + '>' +
+  '<span class="꼭">' + 꼭 + '</span><span><span>' + 안전(말) + '</span>' +
+  (더 && 더.밑 ? '<div class="밑">' + 안전(더.밑) + '</div>' : "") + '</span></button>';
+
+/* ══ 머리 ══ */
+function 머리그리기(){
+  const 자리 = $('#머리자리');
+  if (S.방){
+    자리.innerHTML =
+      '<div class="머리">' +
+        '<div style="width:38px"></div>' +   /* 뒤로는 떠 있는 단추가 맡는다 */
+        /* ★ 260911 회원님 : 「채팅방 안에서 채팅방 제목을 누르면
+           플롯 정보가 동일하게 떠야한다.」 */
+        '<button class="가운데" data-가=플롯보기 style="text-align:left">' +
+          안전(S.방.제목) + '</button>' +
+        '<button class="단추" data-가=모델 style="font-size:12px;font-weight:600">' +
+          안전(고른모델().이름) + ' ˅</button>' +
+        '<button class="단추" data-가=방메뉴>☰</button>' +
+      '</div>';
+    return;
+  }
+  if (S.플롯){ 자리.innerHTML = ''; return; }   /* 플롯 화면은 그림 위에 얹는다 */
+  const 이름 = {홈: '홈', 대화: '대화', 만들기: '만들기', 나: '마이페이지'}[S.화면];
+  자리.innerHTML =
+    '<div class="머리">' +
+      '<div class="제목">' + 이름 + '</div>' +
+      '<div style="flex:1"></div>' +
+      (S.화면 === '대화' ? '<button class="단추">🔍</button><button class="단추">⚙</button>' : '') +
+    '</div>';
+}
+
+/* ══ 발 ══ */
+function 발그리기(){
+  const 것 = [['홈', '🏠', '홈'], ['대화', '💬', '대화'], ['만들기', '⊕', '만들기'], ['나', '👤', '마이페이지']];
+  $('#발').innerHTML = 것.map(([키, 꼭지, 말]) =>
+    '<button data-화면="' + 키 + '" class="' + (S.화면 === 키 && !S.방 && !S.플롯 ? '켬' : '') + '">' +
+      '<span class="꼭지">' + 꼭지 + '</span>' + 말 + '</button>').join('');
+  $('#발').classList.toggle('숨김', !!S.방 || !!S.플롯);
+}
+
+/* ══ 홈 — 랭킹 ══ */
+function 홈그리기(){
+  const 것 = D.인기;
+  넣기('#몸',
+    '<div class="탭줄 맨탭"><button class="탭">홈</button><button class="탭 켬">랭킹</button>' +
+      '<button class="탭">글로벌</button></div>' +
+    '<div class="탭줄"><button class="탭">트렌딩</button><button class="탭 켬">베스트</button>' +
+      '<button class="탭">신작</button></div>' +
+    '<div class="탭줄"><button class="탭 켬">남성 인기순</button><button class="탭">전체</button></div>' +
+    '<div class="탭줄"><button class="탭">비주얼 노벨</button><button class="탭 켬">일상/로맨스</button>' +
+      '<button class="탭">미스테리/RPG</button><button class="탭">다각관계</button>' +
+      '<button class="탭">로맨스 판타지</button><button class="탭">철벽/혐관</button></div>' +
+    (것.length ? 것.map((p, i) =>
+      '<div class="플롯줄" data-플롯="' + 안전(p.id) + '">' +
+        '<div class="순위">' + (i + 1) + '</div>' +
+        (p.imageUrl ? '<img class="그림" src="' + 안전(p.imageUrl) + '" loading=lazy>' : '<div class="그림"></div>') +
+        '<div class="속">' +
+          '<div class="이름">' + 안전(p.name) + '</div>' +
+          '<div class="셈">' + (p.interactionCount ? 만단위(p.interactionCount) : '') + '</div>' +
+          '<div class="한줄">' + 안전(p.shortDescription) + '</div>' +
+          '<div class="태그">' + (p.hashtags || []).slice(0, 6).map(t => '#' + 안전(t)).join(' ') + '</div>' +
+        '</div>' +
+      '</div>').join('')
+      : '<div class="빈말">인기 플롯을 아직 안 넣었습니다.<br>제타에서 받은 것을 넣으면 여기 뜹니다.</div>'));
+}
+
+/* ══ 대화 목록 ══ */
+function 대화그리기(){
+  const 방 = D.방;
+  넣기('#몸',
+    '<div class="칸제목">스크랩<span class="더">더보기 ›</span></div>' +
+    '<div class="스크랩줄">' +
+      D.플롯.slice(0, 8).map(p =>
+        '<div class="스크랩" data-플롯="' + 안전(p.id) + '">' +
+          (p.imageUrl ? '<img src="' + 안전(p.imageUrl) + '" loading=lazy>' : '<div style="width:62px;height:78px;border-radius:8px;background:var(--바탕3)"></div>') +
+          '<div class="이름">' + 안전(p.name) + '</div>' +
+        '</div>').join('') +
+    '</div>' +
+    '<div class="칸제목">최신순 ˅</div>' +
+    (방.length ? 방.map(r =>
+      '<div class="방줄" data-방="' + 안전(r.id) + '">' +
+        (r.그림 ? '<img src="' + 안전(r.그림) + '" loading=lazy>' : '<div style="width:46px;height:46px;border-radius:8px;background:var(--바탕3);flex:0 0 auto"></div>') +
+        '<div class="속">' +
+          '<div class="이름">' + 안전(r.제목) + '</div>' +
+          '<div class="끝말">' + 안전(r.끝말 || '') + '</div>' +
+        '</div>' +
+        /* ★ 260910 회원님 : 「대화창에서 삭제 기능이 없다.」
+           제타는 목록에서 「나가기」로 지운다. 여기서도 목록에서 지울 수 있게 한다 */
+        '<button class="방더" data-방메뉴="' + 안전(r.id) + '" aria-label="이 대화">⋯</button>' +
+      '</div>').join('')
+      : '<div class="빈말">아직 대화가 없습니다.</div>'));
+}
+
+/* ══ 방 안 ══ */
+function 방그리기(){
+  const 도막 = D.도막[S.방.id] || [];
+  넣기('#몸', '<div id="대화판">' + 도막.map((m, i) => 도막그리기(m, i)).join('') + '</div>');
+  넣기('#입력자리',
+    '<div id="입력칸">' +
+      '<div id="연장">' +
+        '<button data-가=신고 title="신고">🔔</button>' +
+        '<button data-가=편집 title="편집">✏</button>' +
+        '<button data-가=주문 title="주문해서 다시">🪄</button>' +
+        '<button data-가=재실행 title="다시">↺</button>' +
+        '<div style="flex:1"></div>' +
+        '<button data-가=별표 title="별표 넣기">✳</button>' +
+      '</div>' +
+      '<div id="입력줄">' +
+        '<textarea id="입력" rows="1" placeholder="내용 입력하기"></textarea>' +
+        '<button id="보내기" disabled>▶</button>' +
+      '</div>' +
+    '</div>');
+  const 판 = 몸(); 판.scrollTop = 판.scrollHeight;
+  입력붙이기();
+}
+
+/* 도막 하나를 그린다.
+
+   ★ 260910 — **`position` 으로 가른다.** 도막이 아니라 **조각마다** 다르다 —
+     LEFT      인물     왼쪽 회색 말풍선
+     RIGHT     유저     오른쪽 보라 말풍선
+     NARRATOR  내레이션  말풍선 없이 ≡
+   한 도막 안에 LEFT 와 NARRATOR 가 섞여 온다. 그래서 조각 단위로 돈다 */
+/* 별표를 벗긴다.
+   ★ 정규식을 안 쓴다 — 스크립트로 이 파일을 고칠 때 역빗금이 한 겹 벗겨진다 (Ground rule G6) */
+function 별표벗기기(글){
+  return String(글 || '').split('*').join('').trim();
+}
+
+function 도막그리기(m, 몇){
+  const 조각 = (m.contents || []).filter(c => c.type === "TEXT" && c.text);
+  if (!조각.length) return "";
+  const 낸것 = [];
+  let 묶음 = null;              /* 이어지는 LEFT 조각을 한 묶음으로 */
+  const 묶음닫기 = () => {
+    if (!묶음) return;
+    const 얼굴 = 얼굴찾기(묶음.이름);
+    낸것.push(
+      '<div class="남말">' +
+        (얼굴 ? '<img class="얼굴" src="' + 안전(얼굴) + '" loading=lazy data-인물="' + 안전(묶음.이름) + '">'
+            : '<div class="얼굴" data-인물="' + 안전(묶음.이름) + '"></div>') +
+        '<div class="묶음">' +
+          '<div class="이름">' + 안전(묶음.이름) + '</div>' +
+          묶음.글.map(t => '<div class="방울" data-도막="' + 몇 + '">' + 조각그리기(t) +
+            '<span class="모델딱지">' + 안전((S.방 && S.방.모델) || "zeta") + '</span></div>').join("") +
+        '</div>' +
+      '</div>');
+    묶음 = null;
+  };
+
+  for (const c of 조각){
+    const 자리 = c.position || (((m.sender && m.sender.type) === "BOT") ? "LEFT" : "RIGHT");
+    if (자리 === "RIGHT"){
+      묶음닫기();
+      낸것.push('<div class="내말" data-도막="' + 몇 + '">' + 안전(c.text) + '</div>');
+    } else if (자리 === "NARRATOR"){
+      묶음닫기();
+      /* 내레이션은 별표를 벗기고 ≡ 로 놓는다 */
+      낸것.push('<div class="나레">' + 안전(별표벗기기(c.text)) + '</div>');
+    } else {
+      const 이름 = c.speakerName || "";
+      if (묶음 && 묶음.이름 === 이름) 묶음.글.push(c.text);
+      else { 묶음닫기(); 묶음 = {이름, 글: [c.text]}; }
+    }
+  }
+  묶음닫기();
+  return 낸것.join("");
+}
+/* 인물 이름으로 얼굴을 찾는다. 방의 플롯에 인물 그림이 들어 있다 */
+function 얼굴찾기(이름){
+  if (!S.방) return null;
+  const p = D.플롯.find(x => x.id === S.방.플롯아이디);
+  if (!p) return null;
+  const c = (p.characters || []).find(c => c.name === 이름);
+  return (c && c.imageUrl) || p.imageUrl || null;
+}
+
+/* ══ 플롯 정보 ══ */
+function 플롯그리기(){
+  const p = S.플롯;
+  넣기('#몸',
+    (p.imageUrl ? '<img class="플롯그림" src="' + 안전(p.imageUrl) + '">' : '<div class="플롯그림"></div>') +
+    /* ★ 260910 회원님 : 「이미 완성된 플롯 우상단에 연필모양을 두어 플롯 수정을 가능케 해라.」 */
+    '<button class="플롯연필" data-가=플롯편집 aria-label="플롯 고치기">✏</button>' +
+    '<div class="플롯속">' +
+      '<h1>' + 안전(p.name) + '</h1>' +
+      '<div class="한줄">' + 안전(p.shortDescription) + '</div>' +
+      '<div class="태그">' + (p.hashtags || []).map(t => '#' + 안전(t)).join(' ') + '</div>' +
+      (p.creator ? '<div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">' +
+        '<div style="width:34px;height:34px;border-radius:50%;background:var(--바탕3)"></div>' +
+        '<div style="flex:1;font-size:13px;font-weight:600">' + 안전(p.creator) + '</div>' +
+        '<button style="padding:6px 14px;border-radius:999px;background:var(--강조);' +
+          'font-size:12px;font-weight:700">팔로우</button></div>' : '') +
+      '<div class="배지줄">' +
+        '<span class="배지">💬 ' + (p.interactionCount ? 만단위(p.interactionCount) : '—') + '</span>' +
+        ((p.lorebooks || []).length ? '<span class="배지">📖 설정집</span>' : '') +
+      '</div>' +
+      칸그리기('소개', p.longDescription) +
+      칸그리기('캐릭터', (p.characters || []).map(c => c.name + '\n' + (c.description || '')).join('\n\n')) +
+      칸그리기('인트로', 인트로글(p)) +
+    '</div>' +
+    '<div class="아래고정">' +
+      '<button class="북" data-가=스크랩>' + (스크랩인가(p.id) ? "🔖" : "🏳") + '</button>' +
+      '<button class="큰단추" data-가=시작>대화 시작하기</button>' +
+    '</div>');
+}
+const 만단위 = n => n >= 10000 ? (n / 10000).toFixed(1) + '만' : String(n);
+const 칸그리기 = (제목, 글) => !글 ? '' :
+  '<div class="칸"><h2>' + 제목 + '</h2><div class="글">' + 안전(글) + '</div></div>';
+/* **인트로 도막을 앱 꼴로 바꾼다.**
+
+   ★ 260910 — 플롯 서른 개가 전부 인트로가 비어 보였다. 까닭은 **꼴이 다른 것**이었다 —
+     대화 도막 : {contents: [{type:"TEXT", text, speakerName, position}]}
+     인트로 도막: {type:"text", content:"…", senderType:"BOT", senderId}
+   앱은 contents 만 찾아서 늘 빈 값을 냈고, 새 대화도 소개 한 줄로 시작했다.
+
+   senderId 를 characters 와 맞춰 누가 말하는지 되살린다.
+   맞는 인물이 없으면 내레이터로 둔다 (제타도 그렇게 그린다) */
+function 인트로도막(플롯){
+  const 인 = ((플롯 && 플롯.intros) || [])[0];
+  const 대화 = 인 && (인.conversation || {});
+  const 목 = (대화 && (대화.messages || (Array.isArray(대화) ? 대화 : null))) || [];
+  const 이름표 = {};
+  for (const c of ((플롯 && 플롯.characters) || [])) if (c && c.id) 이름표[c.id] = c.name;
+  const 때 = new Date().toISOString();
+  const 낸것 = [];
+  for (const m of 목){
+    /* 이미 앱 꼴이면 그대로 쓴다 */
+    if (Array.isArray(m.contents)){
+      const 조각 = m.contents.filter(c => c.type === "TEXT" && c.text);
+      if (조각.length) 낸것.push({sender: {type: "BOT"}, contents: 조각, messageTime: 때});
+      continue;
+    }
+    if (m.type === "image" && m.url){
+      낸것.push({sender: {type: "BOT"}, 그림: m.url, contents: [], messageTime: 때});
+      continue;
+    }
+    const 글 = String(m.content || "").trim();
+    if (!글) continue;
+    const 유저 = (m.senderType === "USER");
+    const 이름 = 이름표[m.senderId] || "";
+    낸것.push({sender: {type: 유저 ? "USER" : "BOT"},
+      contents: [{type: "TEXT",
+                  position: 유저 ? "RIGHT" : (이름 ? "LEFT" : "NARRATOR"),
+                  speakerName: 유저 ? "" : (이름 || "내레이터"), text: 글}],
+      messageTime: 때});
+  }
+  return 낸것;
+}
+
+function 인트로글(p){
+  return 인트로도막(p).map(m => (m.contents || [])
+    .filter(x => x.type === "TEXT")
+    .map(x => (x.speakerName ? x.speakerName + NL : "") + x.text).join(NL))
+    .filter(x => x.trim()).join(NL + NL);
+}
+
+/* ══ 내보내기 ══
+
+   ★ 260910 회원님 —
+     「채팅의 설정에 내보내기를 만들어서, 채팅내용, 플롯내용, 유저프로필 등의 로그를 내보내라.」
+     「마이페이지에 내보내기를 만들어서, 유저가 변경하거나 새로 쌓을 수 있는
+      모든 분석가능한 로그를 내보내라.」
+
+   ★ **분석할 수 있게** 낸다 — 사람이 읽는 글이 아니라 JSON 이다.
+     열쇠와 초대 코드는 **빼고** 낸다 */
+function 파일로내리기(이름, 글){
+  try {
+    const 덩이 = new Blob([글], {type: "application/json;charset=utf-8"});
+    const 길 = URL.createObjectURL(덩이);
+    const a = document.createElement("a");
+    a.href = 길; a.download = 이름;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(길); a.remove(); }, 800);
+    return true;
+  } catch(_){ return false; }
+}
+const 때딱지 = () => {
+  const d = new Date(); const z = n => (n < 10 ? "0" : "") + n;
+  return String(d.getFullYear()).slice(2) + z(d.getMonth() + 1) + z(d.getDate()) +
+         "_" + z(d.getHours()) + z(d.getMinutes());
+};
+
+/* 이 방 하나 — 채팅 · 플롯 · 유저 프로필 */
+function 방내보내기(){
+  const 방 = S.방;
+  const 플롯 = 지금플롯() || {};
+  const 꾸러미 = {
+    낸때: new Date().toISOString(),
+    무엇: "방 하나",
+    방: {id: 방.id, 제목: 방.제목, 플롯아이디: 방.플롯아이디,
+         프로필아이디: 방.프로필아이디 || "", 이어하기수: (방.이어하기 || []).length},
+    유저프로필: 방프로필(방, 플롯),
+    플롯: 플롯,
+    기억: 기억읽기(방.id),
+    메모: 메모읽기(방.id),
+    도막: D.도막[방.id] || []
+  };
+  const 됨 = 파일로내리기("제타앱_" + String(방.제목).slice(0, 10) + "_" + 때딱지() + ".json",
+                          JSON.stringify(꾸러미, null, 1));
+  시트닫기();
+  알림(됨 ? "내보냈습니다" : "내보내기에 실패했습니다");
+}
+
+/* 전부 — 회원님이 바꾸거나 쌓은 것 모두 */
+function 다내보내기(){
+  const 메모들 = {};
+  const 기억들 = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (k && k.indexOf("메모_") === 0) 메모들[k.slice(3)] = localStorage.getItem(k);
+      if (k && k.indexOf("기억_") === 0){
+        try { 기억들[k.slice(3)] = JSON.parse(localStorage.getItem(k)); } catch(_){}
+      }
+    }
+  } catch(_){}
+  let 시간 = [];
+  try { 시간 = JSON.parse(localStorage.getItem("시간") || "[]"); } catch(_){}
+  const 꾸러미 = {
+    낸때: new Date().toISOString(),
+    무엇: "전부",
+    빌드: (typeof 빌드 !== "undefined" ? 빌드 : null),
+    고른모델: 설정("모델설정") || 기본모델,
+    프로필: 프로필들(),
+    스크랩: 스크랩들(),
+    지은플롯: 지은것읽기(),
+    고친플롯: 플롯고침들(),
+    새방: (() => { try { return JSON.parse(localStorage.getItem("새방") || "[]"); }
+                   catch(_){ return []; } })(),
+    새도막: (() => { try { return JSON.parse(localStorage.getItem("새도막") || "{}"); }
+                     catch(_){ return {}; } })(),
+    기억: 기억들,
+    메모: 메모들,
+    걸린시간: 시간
+  };
+  const 됨 = 파일로내리기("제타앱_전부_" + 때딱지() + ".json",
+                          JSON.stringify(꾸러미, null, 1));
+  알림(됨 ? "내보냈습니다" : "내보내기에 실패했습니다");
+}
+
+/* ══ 메모장 ══
+
+   ★ 260910 회원님 : 「신고버튼 살려서 기록 남기게 해.
+     현 턴과 사용자 입력을 계속 이어갈 수 있도록 메모장처럼.」
+
+   방마다 메모장이 하나다. 열면 **여태 적은 것이 그대로 이어져** 보이고,
+   「지금 턴 담기」를 누르면 그 자리의 글과 내가 친 말이 아래에 붙는다 */
+function 메모읽기(방아이디){
+  try { return localStorage.getItem("메모_" + 방아이디) || ""; } catch(_){ return ""; }
+}
+function 메모담기(방아이디, 글){
+  try { localStorage.setItem("메모_" + 방아이디, 글); } catch(_){}
+}
+/* 지금 자리(마지막 봇 도막과 그 앞 내 말)를 글로 */
+function 지금턴글(몇){
+  const 도막 = D.도막[S.방.id] || [];
+  const i = (몇 === undefined || 몇 === null || 몇 === "") ? 도막.length - 1 : Number(몇);
+  const 이 = 도막[i];
+  if (!이) return "";
+  const 앞 = 도막[i - 1];
+  const 줄 = ["── " + new Date().toISOString().slice(0, 16).split("T").join(" ") +
+              "  (" + (i + 1) + "번째 도막) ──"];
+  if (앞 && ((앞.sender && 앞.sender.type) !== "BOT"))
+    줄.push("[내가 친 말] " + 도막글꺼내기(앞));
+  줄.push(도막글꺼내기(이));
+  return 줄.join(NL);
+}
+function 메모열기(몇){
+  const 있던 = 메모읽기(S.방.id);
+  시트열기("메모장 — " + 안전(S.방.제목),
+    '<div style="padding:0 12px">' +
+      '<textarea id="메모칸" placeholder="무엇이 이상했는지, 무엇을 바꾸고 싶은지 적어 두십시오."' +
+      ' style="width:100%;min-height:220px">' + 안전(있던) + '</textarea></div>' +
+    '<div class="인물글" style="color:var(--흐림)">이 방에만 남습니다. ' +
+      '손잡이를 위로 끌면 칸이 커집니다.</div>' +
+    '<div class="시트단추"><button data-시트=닫기>그만</button>' +
+    '<button data-시트=메모턴담기 data-값="' + (몇 === undefined ? "" : 몇) + '">지금 턴 담기</button>' +
+    '<button class="강" data-시트=메모저장>담기</button></div>');
+  setTimeout(() => { const t = $("#메모칸"); if (t){ t.focus(); t.scrollTop = t.scrollHeight; } }, 260);
+}
+
+/* ══ 플롯 만들기·고치기 ══
+
+   ★ 260910 회원님 —
+     「이미 완성된 플롯 우상단에 연필모양을 두어 플롯 수정을 가능케 해라.
+      수정창은 제타 브라우저에서 내가 만든 플롯을 수정하듯 편집창을 구현하라.」
+     「만들기 탭에서 자동생성 말고도 수동생성을 구현하라.」
+
+   제타 편집창을 직접 보고 그 칸을 그대로 옮겼다 —
+     제목(20자) · 설명 · 소개/설정(2,400자) · 캐릭터(이름 10자 + 설명) · 인트로
+
+   ★ 만들기와 고치기가 **같은 창**이다. 빈 것으로 열면 수동생성이다 */
+function 플롯고침들(){
+  try { return JSON.parse(localStorage.getItem("플롯고침") || "{}"); } catch(_){ return {}; }
+}
+/* 자료.json 은 못 고치므로 고친 것을 따로 담아 얹는다 */
+function 플롯고침담기(p){
+  const 표 = 플롯고침들();
+  표[p.id] = p;
+  try { localStorage.setItem("플롯고침", JSON.stringify(표)); } catch(_){}
+  const i = D.플롯.findIndex(x => x.id === p.id);
+  if (i >= 0) D.플롯[i] = p; else D.플롯.unshift(p);
+  /* 지은 플롯이면 그쪽도 고친다 */
+  try {
+    const 지 = 지은것읽기();
+    const k = 지.findIndex(x => x.id === p.id);
+    if (k >= 0){ 지[k] = p; localStorage.setItem("지은플롯", JSON.stringify(지)); }
+  } catch(_){}
+}
+
+const 칸틀 = (꼭, 안내, 값, 여러줄, 최대) =>
+  '<div class="칸제목" style="padding-left:0;margin-top:12px">' + 꼭 +
+  (최대 ? ' <span style="color:var(--흐림);font-weight:400">최대 ' + 최대 + '자</span>' : "") +
+  '</div>' +
+  (여러줄
+    ? '<textarea id="편_' + 꼭 + '" placeholder="' + 안내 + '"' +
+      (최대 ? ' maxlength="' + 최대 + '"' : "") +
+      ' style="width:100%;min-height:' + (여러줄 === 2 ? 150 : 90) + 'px">' + 안전(값) + '</textarea>'
+    : '<input id="편_' + 꼭 + '" placeholder="' + 안내 + '" value="' + 안전(값) + '"' +
+      (최대 ? ' maxlength="' + 최대 + '"' : "") +
+      ' style="width:100%;background:var(--바탕2);border-radius:10px;padding:10px 12px;font-size:14px">');
+
+function 플롯편집(있는것){
+  const p = 있는것 || {};
+  const 인물 = (p.characters || [])[0] || {};
+  시트열기(있는것 ? "플롯 고치기" : "플롯 만들기",
+    '<div style="padding:0 12px">' +
+      칸틀("제목", "제목을 입력해주세요.", p.name || "", 0, 20) +
+      칸틀("한줄", "한 줄로 소개해 주세요", p.shortDescription || "", 0, 0) +
+      칸틀("태그", "쉼표로 나눠 적으십시오 — 일상, 로맨스", (p.hashtags || []).join(", "), 0, 0) +
+      칸틀("소개", "상황, 관계, 세계관 등을 설명해주세요.", p.longDescription || "", 2, 2400) +
+      '<div class="칸제목" style="padding-left:0;margin-top:18px">캐릭터</div>' +
+      칸틀("이름", "짧은 이름이 부르기 편해요. 예) 수현", 인물.name || "", 0, 10) +
+      칸틀("캐릭터", "캐릭터의 특징, 행동, 감정 표현에 대해서 써주세요.",
+           인물.description || "", 2, 0) +
+      칸틀("인트로", "첫 장면입니다. 이름줄과 지문(*별표*)을 그대로 쓰십시오.",
+           인트로글(p), 2, 0) +
+    '</div>' +
+    '<div class="시트단추"><button data-시트=닫기>그만</button>' +
+    '<button class="강" data-시트=플롯저장 data-값="' + 안전(p.id || "") + '">' +
+      (있는것 ? "고치기" : "만들기") + '</button></div>');
+}
+
+/* ── 스크랩 ── */
+function 스크랩들(){
+  try { return JSON.parse(localStorage.getItem("스크랩") || "[]"); } catch(_){ return []; }
+}
+const 스크랩인가 = id => 스크랩들().indexOf(id) >= 0;
+function 스크랩뒤집기(id){
+  const 목 = 스크랩들();
+  const i = 목.indexOf(id);
+  if (i >= 0) 목.splice(i, 1); else 목.push(id);
+  try { localStorage.setItem("스크랩", JSON.stringify(목)); } catch(_){}
+}
+
+/* ══ 대화 프로필 ══
+
+   ★ 260910 — **제타 화면을 직접 보고 그대로 만들었다.**
+   회원님 : 「모든 플롯은 새 채팅을 시작하면 유저는 프로필을 입력할 수 있다.
+            이름과 설명 2가지만 있는 수준이다. 제타 브라우저를 직접 확인하라.」
+
+   제타의 「새 대화 프로필」 화면 —
+     이름   (캐릭터가 날 이렇게 부를 거예요)
+     설명   (선택) · 0/1000
+     [ ] 기본 대화 프로필 — 새로운 대화 시작할 때 이 프로필 적용하기
+
+   ★ 여기 적은 것이 **매 턴 프롬프트의 「나」로** 들어간다. 적어 두면 계속 먹는다 */
+function 프로필들(){
+  try { return JSON.parse(localStorage.getItem("프로필") || "[]"); } catch(_){ return []; }
+}
+function 프로필담기(목){
+  try { localStorage.setItem("프로필", JSON.stringify(목)); } catch(_){}
+}
+function 기본프로필(){
+  const 목 = 프로필들();
+  return 목.find(x => x.기본) || 목[0] || null;
+}
+/* 이 방이 쓰는 프로필. 방에 매인 것 → 기본 → 플롯이 준 것 → 「나」 */
+function 방프로필(방, 플롯){
+  const 목 = 프로필들();
+  if (방 && 방.프로필아이디){
+    const 것 = 목.find(x => x.id === 방.프로필아이디);
+    if (것) return 것;
+  }
+  const 기 = 기본프로필();
+  if (기) return 기;
+  const 플 = ((플롯 && 플롯.chatProfiles) || [])[0];
+  if (플 && 플.name) return {id: "", 이름: 플.name, 설명: 플.description || ""};
+  return {id: "", 이름: "나", 설명: ""};
+}
+
+/* 프로필 고르기 — 새 대화를 시작할 때, 그리고 방 안에서 바꿀 때 */
+function 프로필열기(더){
+  const 목 = 프로필들();
+  const 지금 = (S.방 ? 방프로필(S.방, 지금플롯()) : 기본프로필()) || {};
+  시트열기("대화 프로필",
+    (목.length
+      ? 목.map(p => 시트줄(지금.id === p.id ? "●" : "○", p.이름, "프로필고름",
+          {값: p.id, 밑: (p.설명 || "").slice(0, 40) + (p.기본 ? "   · 기본" : ""),
+           빛: 지금.id === p.id ? "켬" : ""})).join("")
+      : String.fromCharCode(60) + "div class='인물글'" + String.fromCharCode(62) +
+        "아직 없습니다. 아래에서 만드십시오." +
+        String.fromCharCode(60) + "/div" + String.fromCharCode(62)) +
+    시트줄("＋", "대화 프로필 추가", "프로필새로") +
+    (목.length ? 시트줄("✏", "지금 것 고치기", "프로필고치기", {값: 지금.id}) : ""));
+}
+
+/* 만들기·고치기 — 제타와 같은 두 칸 */
+function 프로필쓰기(있는것){
+  const p = 있는것 || {id: "", 이름: "", 설명: "", 기본: !프로필들().length};
+  시트열기(있는것 ? "대화 프로필 고치기" : "새 대화 프로필",
+    "<div style='padding:0 12px'>" +
+      "<div class='칸제목' style='padding-left:0'>이름</div>" +
+      "<input id='프로필이름' placeholder='이름을 입력해주세요' value='" + 안전(p.이름) + "'" +
+        " style='width:100%;background:var(--바탕2);border-radius:10px;padding:10px 12px;font-size:16px'>" +
+      "<div class='글' style='color:var(--흐림);font-size:12px;margin:6px 0 14px'>" +
+        "캐릭터가 날 이렇게 부를 거예요</div>" +
+      "<div class='칸제목' style='padding-left:0'>설명 <span style='color:var(--흐림)'>(선택)</span></div>" +
+      "<textarea id='프로필설명' maxlength='1000' placeholder='어떤 사람인지 적어 두면 대화에 계속 씁니다'" +
+        " style='width:100%;min-height:120px'>" + 안전(p.설명) + "</textarea>" +
+      "<label style='display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px'>" +
+        "<input type='checkbox' id='프로필기본'" + (p.기본 ? " checked" : "") + ">" +
+        "기본 대화 프로필로 두기</label>" +
+      "<div class='글' style='color:var(--흐림);font-size:12px;margin-top:4px'>" +
+        "새 대화를 시작할 때 이것이 먼저 잡힙니다.</div>" +
+    "</div>" +
+    "<div class='시트단추'><button data-시트=닫기>그만</button>" +
+    "<button class='강' data-시트=프로필저장 data-값='" + 안전(p.id) + "'>" +
+      (있는것 ? "고치기" : "추가하기") + "</button></div>");
+}
+
+/* ══ 새 대화 ══
+   플롯 정보에서 「대화 시작하기」를 누르면 방을 하나 만든다.
+   인트로가 있으면 그것을 첫 도막으로 놓는다 — 제타가 그렇게 한다 */
+function 새대화(플롯){
+  if (!플롯) return;
+  const id = "새-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
+  const 프 = 기본프로필();
+  const 방 = {id, 제목: 플롯.name, 그림: 플롯.imageUrl, 플롯아이디: 플롯.id,
+              프로필아이디: (프 && 프.id) || "",
+              모델: "zeta", 끝말: "", 이어하기: [], 새것: true};
+
+  /* 인트로를 첫 도막으로 — ★ 260910 꼴이 달라 여태 비어 있었다 */
+  const 도막 = 인트로도막(플롯).filter(m => (m.contents || []).length);
+  /* 인트로가 없으면 소개라도 한 줄 놓는다 — 빈 화면으로 시작하면 막막하다 */
+  if (!도막.length && (플롯.longDescription || 플롯.shortDescription)){
+    도막.push({sender: {type: "BOT"}, contents: [{type: "TEXT", position: "NARRATOR",
+      speakerName: "내레이터", text: 플롯.longDescription || 플롯.shortDescription}],
+      messageTime: new Date().toISOString()});
+  }
+
+  D.방.unshift(방);
+  D.도막[id] = 도막;
+  /* 이 플롯이 내 목록에 없으면 넣는다 — 인기 플롯에서 시작한 경우 */
+  if (!D.플롯.some(p => p.id === 플롯.id)) D.플롯.unshift(플롯);
+  새것담기();
+
+  S.플롯 = null; S.방 = 방;
+  그리기();
+  /* ★ 제타와 같게 — 방에 들어간 뒤 대화 프로필을 고른다.
+     제타는 새 방에 들어가면 곧바로 「선택 · 대화 프로필 추가」가 뜬다 */
+  setTimeout(() => { if (프로필들().length) 프로필열기(); else 프로필쓰기(null); }, 420);
+  알림("새 대화를 시작했습니다");
+}
+
+/* 새로 만든 방과 도막을 담아 둔다 — 자료.json 은 못 고치므로 브라우저에 */
+function 새것담기(){
+  try {
+    const 새방 = D.방.filter(r => r.새것);
+    const 새도막 = {};
+    for (const r of 새방) 새도막[r.id] = D.도막[r.id] || [];
+    /* 받아 온 방에서 이어 친 것도 담는다 */
+    for (const r of D.방){
+      if (r.새것) continue;
+      const 처음 = (기본도막수[r.id] || 0);
+      const 지금 = (D.도막[r.id] || []).length;
+      if (지금 > 처음) 새도막[r.id] = D.도막[r.id];
+    }
+    localStorage.setItem("새방", JSON.stringify(새방));
+    localStorage.setItem("새도막", JSON.stringify(새도막));
+  } catch(e){ 알림("담기 실패 — 자리가 모자랍니다"); }
+}
+const 기본도막수 = {};
+
+/* ══ 만들기 ══ */
+function 만들기그리기(){
+  const 지은것 = 지은것읽기();
+  넣기("#몸",
+    '<div class="만들기판">' +
+      '<div class="칸제목" style="padding-left:0">플롯 만들기</div>' +
+      '<button class="큰단추" data-가=자동생성 style="width:100%;height:52px;' +
+        'border-radius:14px;background:var(--강조);font-size:15px;font-weight:700;' +
+        'display:grid;place-items:center;margin-bottom:6px">✨ 자동생성</button>' +
+      '<div class="글" style="color:var(--흐림);font-size:12px;margin-bottom:10px">' +
+        '인기 플롯 50개에서 뽑은 갈래 아홉 · 축 다섯을 굴려 한 벌을 냅니다.<br>' +
+        '같은 갈래라도 축 자리가 다르면 다른 이야기가 나옵니다.</div>' +
+      /* ★ 260910 회원님 : 「자동생성 말고도 수동생성을 구현하라.」 */
+      '<button class="큰단추" data-가=수동생성 style="width:100%;height:46px;' +
+        'border-radius:14px;background:var(--바탕2);font-size:14px;font-weight:600;' +
+        'display:grid;place-items:center;margin-bottom:6px">✎ 수동생성</button>' +
+      '<div class="글" style="color:var(--흐림);font-size:12px;margin-bottom:18px">' +
+        '제목 · 소개 · 캐릭터 · 인트로를 손으로 적습니다.</div>' +
+      (지은것.length
+        ? '<div class="칸제목" style="padding-left:0">지은 것 ' + 지은것.length + '개</div>' +
+          지은것.map(p =>
+            '<div class="플롯줄" data-플롯="' + 안전(p.id) + '" style="padding-left:0">' +
+              '<div class="속">' +
+                '<div class="이름">' + 안전(p.name) + '</div>' +
+                '<div class="한줄">' + 안전(p.shortDescription) + '</div>' +
+                '<div class="태그">' + (p.hashtags || []).slice(0, 6).map(t => "#" + 안전(t)).join(" ") + '</div>' +
+              '</div>' +
+            '</div>').join("")
+        : '') +
+    '</div>');
+}
+
+/* ── 자동생성 ── */
+function 지은것읽기(){
+  try { return JSON.parse(localStorage.getItem("지은플롯") || "[]"); } catch(_){ return []; }
+}
+
+async function 자동생성(){
+  const 중계 = 중계주소();
+
+  if (S.보낸중) return;
+  S.보낸중 = true;
+  알림("짓는 중…");
+  try {
+    const 어디 = 고른모델().업체;
+    const 초대 = 설정("초대");
+    const r = await fetch(중계 + "/" + 어디 + "/plot", {
+      method: "POST",
+      headers: {"Content-Type": "application/json",
+                ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
+      body: JSON.stringify({모델: 고른모델().모델 || undefined})
+    });
+    const j = await r.json();
+    if (j.error){ 알림((j.error && j.error.message) || "탈"); S.보낸중 = false; return; }
+    const 글 = (((j.choices || [])[0] || {}).message || {}).content || "";
+    const p = 플롯가르기(글, j.자리);
+    if (!p){ 알림("못 알아들었습니다"); S.보낸중 = false; return; }
+
+    const 목 = 지은것읽기();
+    목.unshift(p);
+    try { localStorage.setItem("지은플롯", JSON.stringify(목.slice(0, 60))); } catch(_){}
+    D.플롯.unshift(p);
+    S.플롯 = p; S.방 = null;
+    그리기();
+    알림("지었습니다 — " + (j.자리 && j.자리.갈래 ? j.자리.갈래 : ""));
+  } catch (e){ 알림("못 지었습니다 — " + String(e.message).slice(0, 30)); }
+  S.보낸중 = false;
+}
+
+/* 지은 글을 플롯 한 벌로 가른다.
+   ★ 정규식을 안 쓴다 (G6). 칸 이름은 「이름>>」 꼴이다 */
+function 플롯가르기(글, 자리){
+  const 줄 = String(글).split(NL);
+  const 칸 = {};
+  let 지금 = null;
+  for (const l of 줄){
+    const t = l.trim();
+    const i = t.indexOf(">>");
+    if (i > 0 && i <= 4){
+      지금 = t.slice(0, i).trim();
+      칸[지금] = t.slice(i + 2).trim();
+      continue;
+    }
+    if (지금) 칸[지금] = (칸[지금] ? 칸[지금] + NL : "") + l;
+  }
+  const 이름 = (칸["이름"] || "").trim();
+  if (!이름) return null;
+  const 인물이름 = ((칸["캐릭터"] || "").split(NL)[0] || "")
+    .split("|")[0].split("·")[0].split("(")[0].split(",")[0].trim() || 이름;
+  return {
+    id: "지은-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6),
+    name: 이름,
+    imageUrl: null,
+    shortDescription: (칸["한줄"] || "").trim(),
+    longDescription: (칸["소개"] || "").trim(),
+    hashtags: (칸["태그"] || "").split(",").map(x => x.trim().split("#").join("")).filter(Boolean),
+    characters: [{name: 인물이름, description: (칸["캐릭터"] || "").trim(), imageUrl: null}],
+    chatProfiles: [],
+    intros: [{conversation: {messages: [{contents: [{type: "TEXT", position: "LEFT",
+      speakerName: 인물이름, text: (칸["인트로"] || "").trim()}]}]}}],
+    lorebooks: [],
+    interactionCount: 0,
+    지은자리: 자리,
+    지은것: true
+  };
+}
+function 나그리기(){
+  const 값 = k => 안전(localStorage.getItem(k) || "");
+  넣기("#몸",
+    '<div class="만들기판">' +
+      '<div class="칸"><h2>모델</h2>' +
+        모델셋.map(x => {
+          const 켬 = (설정("모델설정") || 기본모델) === x.값;
+          return 시트줄(켬 ? "●" : "○", x.이름, "모델고름",
+                        {값: x.값, 밑: x.밑, 빛: 켬 ? "켬" : ""});
+        }).join("") +
+      '</div>' +
+      '<div class="칸"><h2>중계</h2>' +
+        '<div class="글" style="margin-bottom:8px;color:var(--흐림2)">' +
+          '열쇠는 앱에 없습니다. 중계가 들고 있습니다.<br>' +
+          '주소는 박혀 있으니 비워 두십시오.</div>' +
+        설정칸("중계", 기본중계, 값("중계")) +
+        설정칸("초대", "초대 코드 (없으면 비움)", 값("초대")) +
+      '</div>' +
+      /* ★ 260910 회원님 : 「실제 제타처럼, 나도 내 프로필을 관리할 수 있는 창을 구현하라.」 */
+      '<div class="칸"><h2>내 프로필</h2>' +
+        (프로필들().length
+          ? 프로필들().map(x => 시트줄(x.기본 ? "●" : "○", x.이름, "프로필고치기",
+              {값: x.id, 밑: (x.설명 || "(설명 없음)").slice(0, 44) +
+                            (x.기본 ? "   · 기본" : ""),
+               빛: x.기본 ? "켬" : ""})).join("")
+          : '<div class="글" style="color:var(--흐림);margin-bottom:8px">' +
+            '아직 없습니다. 대화를 시작하면 만들 수 있습니다.</div>') +
+        시트줄("＋", "대화 프로필 추가", "프로필새로") +
+      '</div>' +
+      '<div class="칸"><h2>내보내기</h2>' +
+        '<div class="글" style="margin-bottom:8px;color:var(--흐림2)">' +
+          '바꾸거나 쌓은 것을 통째로 냅니다 — 프로필 · 스크랩 · 지은 플롯 ·' +
+          ' 고친 플롯 · 새 방 · 기억 · 메모 · 걸린 시간.<br>' +
+          '열쇠와 초대 코드는 담기지 않습니다.</div>' +
+        시트줄("⤓", "전부 내보내기", "다내보내기", {밑: "JSON — 분석할 수 있게"}) +
+      '</div>' +
+      '<div class="칸"><h2>걸린 시간</h2><div class="글" id="시간판"></div></div>' +
+      '<div class="칸"><h2>이 판</h2><div class="글" style="color:var(--흐림2)">' +
+        '빌드 ' + 안전(빌드.번호) +
+        (빌드.때 ? '<br>' + 안전(빌드.때)
+                 : '<br><span style="color:var(--흐림)">아직 굽지 않은 판입니다</span>') +
+      '</div></div>' +
+    '</div>');
+  시간판그리기();
+}
+const 설정칸 = (키, 안내, 값) =>
+  '<input class="설정" data-키="' + 키 + '" placeholder="' + 안내 + '" value="' + 값 + '" ' +
+  'style="width:100%;background:var(--바탕2);border-radius:10px;padding:10px 12px;' +
+  'margin-bottom:8px;font-size:16px">';
+
+/* 걸린 시간을 보인다.
+   회원님 : 「맨날 넌 구글키가 느리지 않다고 하는데, 내가 앱에서 쓰면 느리다.」
+   그래서 **앱이 실제로 겪은 시간**을 남겨 보여 드린다 */
+function 시간판그리기(){
+  const 판 = $("#시간판");
+  if (!판) return;
+  let 목 = [];
+  try { 목 = JSON.parse(localStorage.getItem("시간") || "[]"); } catch(_){}
+  if (!목.length){ 판.textContent = "아직 없습니다."; return; }
+  const 뒤 = 목.slice(-12).reverse();
+  const 값들 = 목.map(x => x.걸림).sort((a, b) => a - b);
+  /* ★ 260910 회원님 :
+       「월/일 시:분  [방이름 4글자]  or google/gemini~  3.1초  368자
+        형태로 출력하되, 글씨가 더 작아져도 좋으니 한줄에 로그 하나씩 찍히도록 해라.」 */
+  const 두자리 = n => (n < 10 ? "0" : "") + n;
+  const 때글 = t => {
+    if (!t) return "  ─  ";
+    const d = new Date(t);
+    return 두자리(d.getMonth() + 1) + "/" + 두자리(d.getDate()) + " " +
+           두자리(d.getHours()) + ":" + 두자리(d.getMinutes());
+  };
+  const 줄들 = 뒤.map(x =>
+    안전(때글(x.때)) + "  [" + 안전(String(x.방 || "").slice(0, 4)) + "]  " +
+    안전(x.업체) + " " + 안전(String(x.모델).slice(0, 22)) + "  " +
+    x.걸림 + "초  " + x.자수 + "자");
+  판.innerHTML =
+    '가장 빠름 ' + 값들[0] + '초 · 가운데 ' + 값들[Math.floor(값들.length / 2)] +
+    '초 · 가장 느림 ' + 값들[값들.length - 1] + '초  (' + 목.length + '번)' +
+    '<div style="margin-top:10px;font-size:11px;line-height:1.9;' +
+      'white-space:pre;overflow-x:auto;font-family:ui-monospace,Menlo,Consolas,monospace">' +
+      줄들.join("<br>") + '</div>';
+}
+
+/* ══ 뒤로 가기 ══
+
+   ★ 260910 회원님 : 「취소 누르면 브라우저 꺼짐 말고 뒤로 가거나, 홈까지 돌아가게끔 바꿔.」
+
+   폰에서 뒤로(취소)를 누르면 앱이 그냥 닫혔다. 앱이 자리를 안 쌓아 두었기 때문이다.
+   이제 한 단계씩 물러난다 — 시트 → 방·플롯 → 홈. 홈에서 한 번 더 누르면 그때 나간다 */
+function 뒤로가기(){
+  if (시트열렸나()){ 시트닫기(); return true; }
+  if (S.방 || S.플롯){ S.방 = null; S.플롯 = null; 그리기(); return true; }
+  if (S.화면 !== "홈"){ S.화면 = "홈"; 그리기(); return true; }
+  return false;                       /* 더 갈 데가 없다 */
+}
+function 자리쌓기(){ try { history.pushState({앱: 1}, ""); } catch(_){} }
+window.addEventListener("popstate", () => { if (뒤로가기()) 자리쌓기(); });
+
+/* ★ 260910 회원님 : 「가끔 다른 곳을 보고 돌아오면 그 페이지가 과거 데이터일 때가 있다.」
+
+   창을 두고 다른 데를 보다 오면 브라우저가 화면을 얼려 둔 채 되살린다(bfcache).
+   그 사이 다른 탭에서 담은 것도 안 보인다. 돌아올 때 **담긴 것을 다시 읽고 그린다** */
+function 되살리기(){
+  try {
+    const 새방 = JSON.parse(localStorage.getItem("새방") || "[]");
+    for (const r of 새방) if (!D.방.some(x => x.id === r.id)) D.방.unshift(r);
+    const 새도막 = JSON.parse(localStorage.getItem("새도막") || "{}");
+    for (const k of Object.keys(새도막)){
+      const 담긴 = 새도막[k] || [];
+      const 이미 = (D.도막[k] || []).length;
+      if (담긴.length > 이미 - (기본도막수[k] || 0)) {
+        D.도막[k] = (D.도막[k] || []).slice(0, 기본도막수[k] || 0).concat(담긴);
+      }
+    }
+    for (const p of 지은것읽기()) if (!D.플롯.some(x => x.id === p.id)) D.플롯.unshift(p);
+  } catch(_){}
+  /* 방 안이면 그 방이 아직 있는지 보고 다시 그린다 */
+  if (S.방){ const 있 = D.방.find(x => x.id === S.방.id); if (있) S.방 = 있; }
+  그리기();
+}
+addEventListener("pageshow", e => { if (e.persisted) 되살리기(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") 되살리기();
+});
+
+/* ══ 그리기 ══ */
+/* 어느 화면을 그리고 있었나 — 화면이 바뀌면 스크롤을 맨 위로 되돌린다 */
+let 앞화면 = "";
+function 그리기(){
+  머리그리기(); 발그리기();
+  /* ★ 260910 회원님 : 「돌아왔다가 또다른 곳을 보면, 스크롤이 아래로 내려간 채로
+     시작되어 마치 오류인 것처럼 인지될 때가 있다.」
+     #몸 은 하나를 돌려 쓰므로 앞 화면의 스크롤이 남는다. 자리가 바뀌면 되돌린다 */
+  const 이번 = (S.방 ? "방:" + S.방.id : S.플롯 ? "플롯:" + S.플롯.id : "화면:" + S.화면);
+  if (이번 !== 앞화면){
+    앞화면 = 이번;
+    const 판 = $("#몸");
+    if (판 && !S.방) 판.scrollTop = 0;      /* 방은 아래(최신)로 가야 하니 건드리지 않는다 */
+  }
+  /* ★ 260911 회원님 : 「최상위 메뉴(홈/대화/만들기/마이페이지)는
+     좌상단 < 버튼 필요없다.」
+     탭 넷은 아래 바로 오가므로 뒤로 갈 데가 없다. 방·플롯에서만 띄운다 */
+  const 떠 = $("#뒤로떠");
+  if (떠) 떠.classList.toggle("보임", !!(S.방 || S.플롯));
+  $('#입력자리').innerHTML = '';
+  if (S.방) return 방그리기();
+  if (S.플롯) return 플롯그리기();
+  if (S.화면 === '홈') return 홈그리기();
+  if (S.화면 === '대화') return 대화그리기();
+  if (S.화면 === '만들기') return 만들기그리기();
+  return 나그리기();
+}
+
+/* ══ 누르기 ══ */
+document.addEventListener('click', e => {
+  if (시트열렸나() && !e.target.closest('#시트') && !e.target.closest('#덮개')) return;
+  const 발단추 = e.target.closest('#발 button[data-화면]');
+  if (발단추){ S.화면 = 발단추.dataset.화면; S.방 = null; S.플롯 = null; return 그리기(); }
+
+  const 가 = e.target.closest('[data-가]');
+  if (가){
+    const 무엇 = 가.dataset.가;
+    if (무엇 === '뒤로'){ 뒤로가기(); return; }
+    if (무엇 === '모델'){ return 모델열기(); }
+    if (무엇 === '방메뉴'){ return 방메뉴열기(); }
+    /* ★ 260910 회원님 : 「신고버튼 살려서 기록 남기게 해.」 — 메모장이다 */
+    if (무엇 === '신고'){ return 메모열기(); }
+    if (무엇 === '편집'){ return 마지막도막(m => 편집열기(m)); }
+    if (무엇 === '주문'){ return 주문열기(); }
+    if (무엇 === '재실행'){ return 재실행(); }
+    if (무엇 === '별표'){ return 별표넣기(); }
+    if (무엇 === '시작'){ return 새대화(S.플롯); }
+    if (무엇 === '자동생성'){ return 자동생성(); }
+    if (무엇 === '수동생성'){ return 플롯편집(null); }
+    if (무엇 === '플롯편집'){ return 플롯편집(S.플롯 || null); }
+    if (무엇 === '플롯보기'){
+      const p = 지금플롯();
+      if (p){ S.플롯 = p; S.방 = null; 그리기(); }
+      return;
+    }
+    /* ★ 260910 회원님 : 「각 플롯의 대화 시작하기 버튼 왼쪽이 뭔지 모르겠다.
+       눌러도 아무 기능 안한다.」 — 스크랩(찜)이다. 대화 목록 맨 위에 모인다 */
+    if (무엇 === '스크랩'){
+      const p = S.플롯; if (!p) return;
+      스크랩뒤집기(p.id);
+      그리기(); 알림(스크랩인가(p.id) ? "스크랩했습니다" : "스크랩에서 뺐습니다");
+      return;
+    }
+  }
+
+  /* ⋯ 를 누르면 방을 열지 않고 메뉴를 띄운다 */
+  const 방더 = e.target.closest("[data-방메뉴]");
+  if (방더){
+    const 방 = D.방.find(r => r.id === 방더.dataset.방메뉴);
+    if (방) 목록방메뉴(방);
+    return;
+  }
+  const 방줄 = e.target.closest('[data-방]');
+  if (방줄){
+    S.방 = D.방.find(r => r.id === 방줄.dataset.방);
+    S.플롯 = null; return 그리기();
+  }
+  const 플롯줄 = e.target.closest('[data-플롯]');
+  if (플롯줄){
+    S.플롯 = [...D.플롯, ...D.인기].find(p => p.id === 플롯줄.dataset.플롯);
+    S.방 = null; return 그리기();
+  }
+});
+
+/* 설정칸을 고치면 바로 담는다 */
+/* 바닥시트 안에서 누른 것 */
+document.addEventListener("click", async e => {
+  if (e.target.id === "덮개") return 시트닫기();
+  const 줄 = e.target.closest("[data-시트]");
+  if (!줄) return;
+  const 가 = 줄.dataset.시트;
+  const 값 = 줄.dataset.값;
+  if (가 === "닫기") return 시트닫기();
+  if (가 === "편집"){ 시트닫기(); return 편집열기(Number(값)); }
+  if (가 === "편집저장") return 편집저장(Number(값));
+  if (가 === "재실행"){ 시트닫기(); return 재실행(Number(값)); }
+  if (가 === "주문"){ 시트닫기(); return 주문열기(Number(값)); }
+  if (가 === "주문보내기"){
+    const t = $("#주문칸"); const 주문 = t ? t.value.trim() : "";
+    시트닫기(); return 재실행(값 === "" ? undefined : Number(값), 주문);
+  }
+  if (가 === "복사"){
+    const m = (D.도막[S.방.id] || [])[Number(값)];
+    if (m) 글복사(도막글꺼내기(m));
+    return 시트닫기();
+  }
+  if (가 === "지우기") return 여기부터지우기(Number(값));
+  if (가 === "새로하기") return 새로하기();
+  if (가 === "이어하기"){ return 이어하기열기(); }
+  if (가 === "이어열기"){ 시트닫기(); return 이어열기(값); }
+  /* ★ 260910 회원님 : 「대화 프로필 누르면 나오는 것은 user 프로필 수정을
+     가능케 해야된다. 해당 프로필 입력값으로 대화에 계속 적용되는 것이다.」 */
+  if (가 === "대화프로필"){ return 프로필열기(); }
+  if (가 === "플롯보기"){ 시트닫기(); const p = 지금플롯();
+    if (p){ S.플롯 = p; S.방 = null; 그리기(); } return; }
+  if (가 === "모델"){ return 모델열기(); }
+  if (가 === "목록방열기"){
+    시트닫기();
+    const 방 = D.방.find(r => r.id === 값);
+    if (방){ S.방 = 방; S.플롯 = null; 그리기(); }
+    return;
+  }
+  if (가 === "목록방복사"){
+    const 글 = (D.도막[값] || []).map(m =>
+      ((m.sender && m.sender.type) === "BOT" ? "" : "> ") + 도막글꺼내기(m)).join(NL + NL);
+    try { navigator.clipboard.writeText(글); } catch(_){}
+    시트닫기(); 알림("복사했습니다"); return;
+  }
+  if (가 === "목록방지우기"){
+    방지우기속(값);
+    시트닫기(); 그리기(); 알림("지웠습니다");
+    return;
+  }
+  if (가 === "방내보내기"){ return 방내보내기(); }
+  if (가 === "다내보내기"){ return 다내보내기(); }
+  if (가 === "메모"){ return 메모열기(값); }
+  if (가 === "메모턴담기"){
+    const t = $("#메모칸"); if (!t) return;
+    const 붙일 = 지금턴글(값);
+    t.value = (t.value.trim() ? t.value.trim() + NL + NL : "") + 붙일 + NL + "  · ";
+    t.focus(); t.scrollTop = t.scrollHeight;
+    return;
+  }
+  if (가 === "메모저장"){
+    const t = $("#메모칸"); if (!t) return;
+    메모담기(S.방.id, t.value);
+    시트닫기(); 알림("메모를 담았습니다");
+    return;
+  }
+  if (가 === "플롯편집"){
+    return 플롯편집(S.플롯 || null);
+  }
+  if (가 === "플롯저장"){
+    const 값칸 = 꼭 => { const t = $("#편_" + 꼭); return t ? t.value : ""; };
+    const 제목 = 값칸("제목").trim();
+    if (!제목) return 알림("제목을 넣으십시오");
+    const 이름 = 값칸("이름").trim() || 제목;
+    const 인트로 = 값칸("인트로");
+    const 있 = 값 ? (D.플롯.find(x => x.id === 값) || null) : null;
+    const p = Object.assign({}, 있 || {}, {
+      id: 값 || ("만-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6)),
+      name: 제목,
+      shortDescription: 값칸("한줄").trim(),
+      longDescription: 값칸("소개"),
+      hashtags: 값칸("태그").split(",").map(x => x.trim()).filter(Boolean),
+      characters: [Object.assign({}, ((있 && 있.characters) || [])[0] || {},
+                    {name: 이름, description: 값칸("캐릭터")})],
+      지은것: true
+    });
+    if (!p.imageUrl) p.imageUrl = (있 && 있.imageUrl) || "";
+    if (!p.interactionCount) p.interactionCount = 0;
+    /* 인트로는 앱 꼴(contents)로 담는다 — 그래야 새 대화에서 그대로 깔린다 */
+    p.intros = 인트로.trim()
+      ? [{conversation: {messages: [{contents: [{type: "TEXT", position: "LEFT",
+          speakerName: 이름, text: 인트로.trim()}]}]}}]
+      : (있 && 있.intros) || [];
+    플롯고침담기(p);
+    시트닫기();
+    S.플롯 = p; S.방 = null; 그리기();
+    알림(값 ? "고쳤습니다" : "만들었습니다");
+    return;
+  }
+  if (가 === "프로필새로"){ return 프로필쓰기(null); }
+  if (가 === "프로필고치기"){
+    return 프로필쓰기(프로필들().find(x => x.id === 값) || null);
+  }
+  if (가 === "프로필고름"){
+    if (S.방){ S.방.프로필아이디 = 값; 새것담기(); }
+    else {
+      const 목 = 프로필들();
+      for (const p of 목) p.기본 = (p.id === 값);
+      프로필담기(목);
+    }
+    시트닫기();
+    const 것 = 프로필들().find(x => x.id === 값);
+    알림("프로필 — " + ((것 && 것.이름) || 값));
+    return;
+  }
+  if (가 === "프로필저장"){
+    const 이 = ($("#프로필이름") || {}).value || "";
+    const 설 = ($("#프로필설명") || {}).value || "";
+    const 기 = !!($("#프로필기본") || {}).checked;
+    if (!이.trim()) return 알림("이름을 넣으십시오");
+    const 목 = 프로필들();
+    let 것 = 목.find(x => x.id === 값);
+    if (!것){ 것 = {id: "프-" + Date.now().toString(36)}; 목.push(것); }
+    것.이름 = 이.trim(); 것.설명 = 설;
+    if (기) for (const p of 목) p.기본 = (p.id === 것.id); else 것.기본 = false;
+    프로필담기(목);
+    if (S.방){ S.방.프로필아이디 = 것.id; 새것담기(); }
+    시트닫기(); 그리기(); 알림("담았습니다");
+    return;
+  }
+  if (가 === "모델고름"){
+    try { localStorage.setItem("모델설정", 값); } catch(_){}
+    const 짝 = 모델셋.find(x => x.값 === 값);
+    시트닫기();
+    /* ★ 곧바로 반영한다. 방 안이면 머리만 — 다시 그리면 스크롤이 튄다 */
+    if (S.방) 머리그리기(); else 그리기();
+    알림("모델 — " + ((짝 && 짝.이름) || 값)); return;
+  }
+  if (가 === "기억"){ return 기억열기(); }
+  if (가 === "지금갈무리"){
+    시트닫기(); 알림("갈무리 중…");
+    const 기2 = 기억읽기(S.방.id);
+    기2.요약한데까지 = -1;                    /* 처음부터 다시 훑는다 */
+    기억쓰기(기2);
+    await 요약해두기(S.방.id);
+    return 기억열기();
+  }
+  if (가 === "기억저장"){
+    const t = $("#기억칸");
+    const 기 = 기억읽기(S.방.id);
+    /* 손으로 고친 것을 네 칸으로 도로 가른다 — 뭉개지 않는다 */
+    const 갈 = 요약가르기(t ? t.value : "");
+    if (갈.여태 || 갈.사이 || 갈.열린것.length || 갈.남길것.length){
+      기.여태 = 갈.여태; 기.사이 = 갈.사이 ? [갈.사이] : [];
+      기.열린것 = 갈.열린것; 기.남길것 = 갈.남길것;
+    } else { 기.여태 = t ? t.value : ""; }
+    기억쓰기(기); 시트닫기(); 알림("기억을 담았습니다"); return;
+  }
+  if (가 === "다복사"){
+    const 도막 = D.도막[S.방.id] || [];
+    글복사(도막.map(도막글꺼내기).join(NL + NL));
+    return 시트닫기();
+  }
+  if (가 === "방나가기"){
+    방지우기속(S.방.id);
+    시트닫기(); 그리기(); 알림("나갔습니다"); return;
+  }
+  if (가 === "방지우기"){
+    D.도막[S.방.id] = [];
+    새것담기(); 시트닫기(); 방그리기(); 알림("지웠습니다"); return;
+  }
+});
+
+/* 말풍선 · 프사 누르기
+   ★ 260910 — 시트가 열려 있으면 **아무것도 안 받는다.**
+     안 그러면 시트 뒤의 말풍선이 눌려 시트가 겹쳐 열린다 */
+document.addEventListener("click", e => {
+  if (시트열렸나()) return;
+  if (!S.방) return;
+  const 얼 = e.target.closest("[data-인물]");
+  if (얼) return 인물열기(얼.dataset.인물);
+  const 방울 = e.target.closest("[data-도막]");
+  if (방울) return 도막메뉴(Number(방울.dataset.도막));
+});
+
+/* 잔심부름 */
+function 마지막도막(하기){
+  const 도막 = D.도막[S.방.id] || [];
+  if (!도막.length) return 알림("아직 아무것도 없습니다");
+  하기(도막.length - 1);
+}
+function 글복사(글){
+  try {
+    navigator.clipboard.writeText(글);
+    알림("복사했습니다");
+  } catch(_){ 알림("복사가 안 됩니다"); }
+}
+function 별표넣기(){
+  const 입 = $("#입력");
+  if (!입) return;
+  const a = 입.selectionStart, b = 입.selectionEnd;
+  const v = 입.value;
+  입.value = v.slice(0, a) + "*" + v.slice(a, b) + "*" + v.slice(b);
+  입.focus();
+  입.selectionStart = 입.selectionEnd = (a === b) ? a + 1 : b + 2;
+}
+function 새로하기(){
+  const 방 = S.방;
+  /* 지금 것을 이어하기로 담고 처음부터 */
+  const 담을 = (D.도막[방.id] || []).slice();
+  const 새id = "저장-" + Date.now().toString(36);
+  D.도막[새id] = 담을;
+  방.이어하기 = 방.이어하기 || [];
+  방.이어하기.unshift({id: 새id, savedAt: new Date().toISOString(), 도막수: 담을.length});
+  /* 인트로만 남긴다 */
+  D.도막[방.id] = 담을.length ? [담을[0]] : [];
+  새것담기(); 시트닫기(); 방그리기();
+  알림("저장하고 새로 시작합니다");
+}
+function 이어열기(id){
+  const 담긴 = D.도막[id];
+  if (!담긴) return 알림("그 저장본이 없습니다");
+  /* 지금 것을 먼저 담고 바꿔 끼운다 */
+  const 방 = S.방;
+  const 지금 = (D.도막[방.id] || []).slice();
+  const 새id = "저장-" + Date.now().toString(36);
+  D.도막[새id] = 지금;
+  방.이어하기 = (방.이어하기 || []).filter(e => e.id !== id);
+  방.이어하기.unshift({id: 새id, savedAt: new Date().toISOString(), 도막수: 지금.length});
+  D.도막[방.id] = 담긴;
+  새것담기(); 방그리기();
+  알림("이어서 갑니다");
+}
+
+document.addEventListener("change", e => {
+  const 칸 = e.target.closest(".설정");
+  if (!칸) return;
+  const 키 = 칸.dataset.키, 값 = 칸.value.trim();
+  try { 값 ? localStorage.setItem(키, 값) : localStorage.removeItem(키); } catch(_){}
+  알림(키 + " 담았습니다");
+});
+
+function 입력붙이기(){
+  const 입 = $('#입력'), 보 = $('#보내기');
+  if (!입) return;
+  입.addEventListener('input', () => {
+    입.style.height = 'auto';
+    입.style.height = Math.min(입.scrollHeight, 110) + 'px';
+  });
+  /* ★ 빈 채로도 보낼 수 있으므로 단추를 잠그지 않는다 */
+  보.disabled = false;
+  /* ★ 260910 회원님 —
+       「pc 브라우저에서 … 엔터를 치면 줄바꿈이 일어난다.
+        shift 엔터로 줄바꿈되게 하고, 엔터는 발송되게 하라.」
+       「제타앱에서 아무것도 치지 않아도 발송이 되어야 한다.
+        이 경우, 유저의 응답 없이 상황을 계속 이어서 진행시키라는 의미이다.」 */
+  const 치기 = () => {
+    if (S.보낸중) return;
+    const 글 = 입.value.trim();
+    입.value = ''; 입.style.height = 'auto';
+    /* 빈 채로 보내면 **유저 없이 이어 가라**는 뜻이다.
+       빈 문자열을 그대로 보내면 모델이 헛돌므로, 그 뜻을 한 줄로 적어 보낸다 */
+    말보내기(글, undefined, !글);
+  };
+  보.addEventListener('click', 치기);
+  /* 엔터로 보내고 Shift+엔터로 줄을 바꾼다. 폰에서는 자판이 제 일을 하게 둔다 */
+  입.addEventListener("keydown", e => {
+    if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const 폰 = matchMedia("(pointer: coarse)").matches;
+    if (폰) return;
+    e.preventDefault(); 치기();
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   중계 — 열쇠는 앱에 없다. 중계가 들고 있다
+   ══════════════════════════════════════════════════════ */
+/* ★ 260910 — **매번 읽는다.**
+   앱이 뜰 때 한 번만 읽으면 마이페이지에서 넣어도 새로고침 전엔 안 먹는다.
+   회원님이 폰에서 넣으셨는데 안 됐다 */
+/* ★ 260910 — **중계 주소와 모델을 앱에 박는다.**
+   회원님 : 「중개주소 아예 박아넣고, 모델명은 … 중에 고를 수 있게 해.
+            일일이 타이핑하는거 불편해.」
+
+   ★ 열쇠는 여전히 앱에 없다. 중계가 들고 있다. 주소만 박는 것이다 */
+/* ★ 260910 회원님 : 「완성되어 빌드를 내보내게 된다면
+   마이페이지에 빌드넘버와 일자와 시간을 적어서 내보낸다.」
+   ★ 아래 한 줄은 **빌드 도구가 갈아 끼운다.** 손으로 고치지 않는다 */
+const 빌드 = {번호: "v1.1.4", 때: "2026-09-11 00:17"};
+
+const 기본중계 = "https://zetaapp-relay.amuselk.workers.dev";
+
+/* 고를 수 있는 모델 — **업체와 모델 이름이 한 벌**이다.
+   따로 두면 「or 인데 접두사 없는 이름」 같은 안 되는 짝이 생긴다.
+   실측(260910) —
+     gg  gemini-3.1-flash-lite         2.5초   ○  (구글은 접두사를 안 붙인다)
+     or  google/gemini-3.1-flash-lite  2.5초   ○
+     or  deepseek/deepseek-v4-flash    6.3초   ○  축 A/B 가 가장 낫다 */
+/* ★ 260910 회원님 —
+     「전체 기본 모델은 딥시크다.」
+     「채팅창 우상단의 zeta 텍스트 대신 현재 적용중인 모델명을 대표적 단어만 출력하게 해놔라.
+      타 모델들과 구분가능하게끔만. … 구글무료키는 (무)google 3.1 이렇게,
+      오픈라우터는 그냥 gemini 3.1 이렇게.」
+
+   ★ 이름은 **좁은 자리에 들어가는 표딱지**다. 밑줄이 자세한 것을 맡는다 */
+const 모델셋 = [
+  {값: "or|deepseek/deepseek-v4-flash",
+   이름: "deepseek", 밑: "오픈라우터 · 결이 가장 낫다 · 조금 느리다"},
+  {값: "gg|gemini-3.1-flash-lite",
+   이름: "(무)google 3.1", 밑: "구글 무료키 · 빠르다 · 값이 안 든다"},
+  {값: "or|google/gemini-3.1-flash-lite",
+   이름: "gemini 3.1", 밑: "오픈라우터"}
+];
+const 기본모델 = 모델셋[0].값;          /* 딥시크 */
+
+/* 지금 고른 것을 **업체와 모델로 갈라** 준다 */
+function 고른모델(){
+  const v = (설정("모델설정") || 기본모델).split("|");
+  const 짝 = 모델셋.find(x => x.값 === (설정("모델설정") || 기본모델));
+  return {업체: v[0] || "gg", 모델: v[1] || "", 이름: (짝 && 짝.이름) || (v[1] || "")};
+}
+const 중계주소 = () => 끝빗금떼기(설정("중계") || 기본중계);
+
+const 설정 = k => { try { return localStorage.getItem(k) || ""; } catch(_){ return ""; } };
+
+/* ══════════════════════════════════════════════════════
+   장기기억 — **제타에 없는 것.** 회원님이 이 앱을 쓰시는 까닭이다.
+
+   옛 앱에서 실측으로 확인한 얼개를 그대로 옮긴다.
+   부름이 안 는다 — 요약기가 한 바퀴에 한 번만 돈다.
+
+   네 칸 —
+     여태     여태 있었던 일 (요약기가 갱신한다)
+     사이     이 사람과 나 사이에 있었던 일
+     열린것   아직 답이 안 난 것
+     남길것   꼭 남길 것
+
+   ★ **앱은 나르기만 한다.** 어느 칸인지 · 언제 지울지는 모델이 본다.
+     회원님 : 「앱은 정말 0 or 1 정도의 기능밖에 못하며, 그런 용도로만 써야한다」
+     옛 앱에서 `미해결` 이 실패한 까닭이 **앱이 그것을 정했기 때문**이었다.
+   ══════════════════════════════════════════════════════ */
+const 빈기억 = id => ({방: id, 여태: "", 사이: [], 열린것: [], 남길것: [],
+                       요약한데까지: -1, 고친때: 0});
+
+function 기억읽기(방아이디){
+  try {
+    const j = JSON.parse(localStorage.getItem("기억_" + 방아이디) || "null");
+    return j || 빈기억(방아이디);
+  } catch(_){ return 빈기억(방아이디); }
+}
+function 기억쓰기(기억){
+  기억.고친때 = Date.now();
+  try { localStorage.setItem("기억_" + 기억.방, JSON.stringify(기억)); } catch(_){}
+}
+
+/* 기억을 모델이 읽을 글로. **모델이 쓴 것을 손대지 않고 잇는다** */
+function 기억글(기억){
+  if (!기억) return "";
+  const 판 = [];
+  if (기억.여태) 판.push(기억.여태);
+  const 사이 = (기억.사이 || []).filter(x => String(x || "").trim());
+  if (사이.length) 판.push("[사이]" + NL + 사이.join(NL + NL));
+  const 열린 = (기억.열린것 || []).filter(x => String(x || "").trim());
+  if (열린.length) 판.push("[아직 답이 안 난 것]" + NL + 열린.map(x => "- " + x).join(NL));
+  const 남길 = (기억.남길것 || []).filter(x => String(x || "").trim());
+  if (남길.length) 판.push("[꼭 남길 것]" + NL + 남길.map(x => "- " + x).join(NL));
+  return 판.join(NL + NL);
+}
+
+/* ══════════════════════════════════════════════════════
+   말 보내기
+
+   ★ 시간을 **구간마다** 잰다.
+     회원님 : 「맨날 넌 구글키가 느리지 않다고 하는데, 내가 앱에서 쓰면 느리다.」
+     스크립트에서 API 를 바로 부른 시간이 아니라 **앱이 실제로 가는 길**을 잰다.
+   ══════════════════════════════════════════════════════ */
+/* 주소 끝의 빗금을 뗀다.
+   ★ 정규식을 안 쓴다 — 스크립트로 이 파일을 고칠 때 역빗금이 벗겨진다 (G6) */
+function 끝빗금떼기(주소){
+  let t = String(주소 || '').trim();
+  while (t.length && t[t.length - 1] === '/') t = t.slice(0, -1);
+  return t;
+}
+
+/* 이어가기 = true 면 회원님이 아무것도 안 치고 보낸 것이다.
+   유저 도막을 만들지 않고, 모델에게 **그냥 이어 가라**고만 알린다 */
+async function 말보내기(친말, 주문, 이어가기){
+  const 중계 = 중계주소();
+
+  if (S.보낸중) return;
+  S.보낸중 = true;
+
+  const 방 = S.방;
+  const 플롯 = D.플롯.find(x => x.id === 방.플롯아이디) || {};
+  const 기억 = 기억읽기(방.id);
+  const 도막 = D.도막[방.id] || [];
+
+  /* 내가 친 말을 먼저 화면에 놓는다 — 기다리는 동안 빈 화면이면 답답하다.
+     ★ 빈 채로 보냈으면(이어가기) 유저 도막을 만들지 않는다. 화면에 빈 말풍선이 뜨면 안 된다 */
+  if (!이어가기){
+    도막.push({sender: {type: "USER"}, contents: [{type: "TEXT", position: "RIGHT", text: 친말}],
+               messageTime: new Date().toISOString()});
+  }
+  방그리기();
+
+  /* 재료만 보낸다. 프롬프트는 중계가 짠다 */
+  /* **이 방에서 본보기를 뽑는다.**
+
+     ★ 260910 — 방마다 결이 크게 다르다. 제타 실측으로 한 묶음이 44자~257자,
+       여섯 배까지 벌어진다. 중계에 박아 둔 본보기는 여러 방에서 뽑은 것이라
+       그 방과 어긋날 수 있고, 그러면 앞 도막이 가르치는 것과 서로 부딪힌다.
+
+     그래서 **그 방의 앞부분**에서 (친 말, 답) 쌍을 골라 보낸다.
+     ★ 최근 것은 안 쓴다 — 그건 이미 도막으로 들어가므로 겹친다.
+     ★ 자동생성한 새 플롯처럼 도막이 적으면 안 보낸다. 중계 것이 쓰인다 */
+  function 방본보기(방, 몇){
+    const 다 = 도막.slice(0, Math.max(0, 도막.length - 24));
+    const 것 = [];
+    for (let i = 1; i < 다.length; i++){
+      const 앞 = 다[i - 1], 이 = 다[i];
+      if (((앞.sender && 앞.sender.type) === "BOT")) continue;
+      if (((이.sender && 이.sender.type) !== "BOT")) continue;
+      const 준 = (앞.contents || []).filter(c => c.type === "TEXT")
+        .map(c => c.text).join(NL).trim();
+      const 답 = 보낼글(이).trim();
+      /* ★ 260910 — **거르는 조건이 그 방 결을 왜곡한다.**
+
+         심다은 방 실측 —
+           그 방 전체    묶음 43자 · 40자↓ 49% · 한 턴의 묶음 7
+           걸러낸 뒤     묶음 71자 · 40자↓ 27% · 한 턴의 묶음 5
+           뽑은 본보기   묶음 80자 · 40자↓ 20% · 한 턴의 묶음 5
+
+         짧은 답을 버리면 **잘게 끊는 결**이 통째로 빠진다.
+         그래서 거르는 것은 **쓸 수 없는 것만** — 빈 것과 터무니없이 긴 것 */
+      if (준.length < 2 || 준.length > 150) continue;
+      if (답.length < 20 || 답.length > 2000) continue;
+      것.push({준, 답});
+    }
+    if (것.length < 3) return null;
+    /* 고루 퍼지게 집는다 — 앞쪽만 쓰면 그 대목 결만 배운다.
+
+       ★ 260910 — 길이로 줄 세워 집는 것도 해 봤으나 판 흔들림에 묻혔다
+         (짧은묶음 38.0% ↔ 15.2%). 회원님 —
+         「세차례 수정해도 안잡히는건 그 안에서 최선의 선택을 한 뒤에 넘어가라.
+          수치로만 줄이려고 하면 끝이 없다.」
+         그래서 실측이 가장 좋았던 **시간 순 고루 집기**로 둔다.
+         ★ 앱과 잣대(zt_여러턴.js)가 **같은 법**이어야 한다 */
+    /* ★ 260910 — **이어 쓰는 자리 가까이에서 집는다.**
+
+       방 안에서도 앞뒤가 다르다 (심다은 방 실측) —
+         앞부분  묶음 71자 · 40자↓ 26% · 한 턴의 묶음 5
+         뒷부분  묶음 31자 · 40자↓ 60% · 한 턴의 묶음 8
+
+       우리는 **뒷부분에서 이어 쓰는데 본보기는 앞부분에서 뽑고** 있었다.
+       그래서 뒤쪽 절반에서 고루 집는다 */
+    const 뒤쪽 = 것.slice(Math.floor(것.length / 2));
+    const 밑감 = 뒤쪽.length >= 몇 ? 뒤쪽 : 것;
+    const 낸것 = [];
+    const 걸음 = 밑감.length / 몇;
+    for (let k = 0; k < 몇; k++) 낸것.push(밑감[Math.floor(k * 걸음)]);
+    return 낸것;
+  }
+
+  /* 도막 하나를 이름줄이 붙은 글로. 화면에 그리는 것과 같은 얼개다 */
+  function 보낼글(m){
+    const 조각 = (m.contents || []).filter(c => c.type === "TEXT" && c.text);
+    const 낸것 = []; let 앞 = null;
+    for (const c of 조각){
+      const 이름 = c.position === "NARRATOR" ? "내레이터" : (c.speakerName || "");
+      if (이름 && 이름 !== 앞){ 낸것.push((낸것.length ? NL : "") + 이름); 앞 = 이름; }
+      낸것.push(c.text);
+    }
+    return 낸것.join(NL);
+  }
+
+  const 재료 = {
+    모델: 고른모델().모델 || undefined,
+    인물: (플롯.characters || [])[0] || {name: 방.제목},
+    /* ★ 회원님이 적으신 대화 프로필이 매 턴 「나」로 들어간다 */
+    나: (() => { const p = 방프로필(방, 플롯);
+                 return {name: p.이름, description: p.설명 || ""}; })(),
+    소개: 플롯.longDescription || 플롯.shortDescription || "",
+    설정집: (플롯.lorebooks || []).map(l => l.description).join(NL).slice(0, 4000),
+    기억: 기억글(기억),
+    /* 최근 것만 보낸다. 앞엣것은 **기억**이 든다 — 그것이 장기기억의 값이다 */
+    /* ★ 260910 — **이름줄을 붙여 싣는다.**
+       전에는 글자만 이어 붙여 보냈다. 그러면 누가 말했는지가 사라져서
+       모델이 앞 대화에서 묶음도 내레이터도 못 배운다. 되먹임이 본보기를 이긴다.
+       실측 — 한 묶음이 259자로 뭉쳤다. 제타는 68자다 */
+    도막들: 도막.slice(-24).map(m => ({
+      봇: ((m.sender && m.sender.type) === "BOT"),
+      글: 보낼글(m)
+    })),
+    /* ★ 그 방에서 뽑은 본보기. 없으면 중계에 박힌 것이 쓰인다 */
+    본보기: 방본보기(방, 14) || undefined,
+    /* ★ 아무것도 안 치고 보내면 **이어 가라**는 뜻이다 (260910 회원님).
+       빈 문자열을 그대로 보내면 모델이 헛도므로 그 뜻을 한 줄로 적는다.
+       ★ 「무엇을 하라」고 박지 않는다 — 방향만 준다 (G2) */
+    친말: 주문 ? (친말 + NL + NL + "[이렇게 다시 써라 — " + 주문 + "]")
+          : (이어가기 ? "[나는 아직 아무 말도 하지 않았다. 장면을 이어 가라.]" : 친말)
+  };
+
+  const 잰것 = {보냄: Date.now()};
+  try {
+    const 어디 = 고른모델().업체;
+    const 초대 = 설정("초대");
+    const r = await fetch(중계 + "/" + 어디 + "/turn", {
+      method: "POST",
+      headers: {"Content-Type": "application/json",
+                ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
+      body: JSON.stringify(재료)
+    });
+    잰것.첫글자 = Date.now();
+    const j = await r.json();
+    잰것.다받음 = Date.now();
+
+    if (!r.ok){ 알림((j.error && j.error.message) || ("탈 " + r.status)); S.보낸중 = false; return; }
+    const 글 = (((j.choices || [])[0] || {}).message || {}).content || "";
+    if (!글){ 알림("빈 답이 왔습니다"); S.보낸중 = false; return; }
+
+    도막.push(답을도막으로(글, 유저이름(방)));
+    D.도막[방.id] = 도막;
+    새것담기();
+    방그리기();
+
+    /* 시간을 남긴다 — 나중에 회원님께 숫자로 보여 드린다 */
+    const 걸림 = ((잰것.다받음 - 잰것.보냄) / 1000).toFixed(1);
+    const 중계잰것 = r.headers.get("X-Ttfb");
+    시간남기기({때: Date.now(), 걸림: Number(걸림), 중계: Number(중계잰것 || 0),
+                업체: 어디, 모델: 재료.모델 || "(기본)", 자수: 글.length,
+                방: (방 && 방.제목) || "", 때: Date.now()});
+    알림(걸림 + "초");
+    /* ★ 답을 받은 뒤에 조용히 돌린다. 대화를 안 막는다 */
+    요약해두기(방.id);
+  } catch (e){
+    알림("못 보냈습니다 — " + String(e.message).slice(0, 40));
+  }
+  S.보낸중 = false;
+}
+
+/* ══════════════════════════════════════════════════════
+   요약기 — **장기기억을 저절로 채운다. 제타에 없는 것**
+
+   ★ 몇 턴에 한 번만 돈다. 매 턴 돌면 값이 두 배가 된다.
+     옛 프로젝트 실측 — 한 바퀴에 한 번 돌면 부름이 안 는다 ($0.0007).
+
+   ★ **어느 칸에 넣을지 · 언제 지울지는 모델이 정한다.** 앱은 나르기만 한다.
+     회원님 : 「앱은 정말 0 or 1 정도의 기능밖에 못하며, 그런 용도로만 써야한다」
+   ══════════════════════════════════════════════════════ */
+const 요약주기 = 6;          /* 여섯 턴에 한 번 */
+
+async function 요약해두기(방아이디){
+  const 중계 = 중계주소();
+  if (!중계) return;
+  const 기 = 기억읽기(방아이디);
+  const 도막 = D.도막[방아이디] || [];
+  const 여기까지 = 도막.length;
+  const 아직 = 여기까지 - (기.요약한데까지 < 0 ? 0 : 기.요약한데까지);
+  if (아직 < 요약주기 * 2) return;              /* 아직 모자라다 */
+
+  /* 요약할 토막 — 지난번 이후 것만 */
+  const 밑 = 기.요약한데까지 < 0 ? 0 : 기.요약한데까지;
+  const 새것 = 도막.slice(밑).map(m =>
+    (m.contents || []).filter(c => c.type === "TEXT")
+      .map(c => (c.speakerName ? c.speakerName + ": " : "") + c.text).join(NL)).join(NL + NL);
+  if (!새것.trim()) return;
+
+  try {
+    const 어디 = 고른모델().업체;
+    const 초대 = 설정("초대");
+    const r = await fetch(중계 + "/" + 어디 + "/summary", {
+      method: "POST",
+      headers: {"Content-Type": "application/json",
+                ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
+      body: JSON.stringify({
+        모델: 고른모델().모델 || undefined,
+        여태: 기.여태, 사이: (기.사이 || []).join(NL),
+        열린것: (기.열린것 || []).join(NL), 남길것: (기.남길것 || []).join(NL),
+        새것
+      })
+    });
+    const j = await r.json();
+    const 글 = (((j.choices || [])[0] || {}).message || {}).content || "";
+    if (!글) return;
+    const 갈린것 = 요약가르기(글);
+    기.여태 = 갈린것.여태 || 기.여태;
+    기.사이 = 갈린것.사이 ? [갈린것.사이] : 기.사이;
+    기.열린것 = 갈린것.열린것;
+    기.남길것 = 갈린것.남길것;
+    기.요약한데까지 = 여기까지;
+    기억쓰기(기);
+    알림("기억을 갈무리했습니다");
+  } catch(_){ /* 조용히 넘어간다 — 대화를 막으면 안 된다 */ }
+}
+
+/* 요약을 네 칸으로 가른다.
+   ★ 정규식을 안 쓴다 (G6) */
+function 요약가르기(글){
+  const 낸것 = {여태: "", 사이: "", 열린것: [], 남길것: []};
+  let 지금 = null;
+  for (const 줄 of String(글).split(NL)){
+    const t = 줄.trim();
+    if (t === "[여태]"){ 지금 = "여태"; continue; }
+    if (t === "[사이]"){ 지금 = "사이"; continue; }
+    if (t === "[열린것]"){ 지금 = "열린것"; continue; }
+    if (t === "[남길것]"){ 지금 = "남길것"; continue; }
+    if (!지금 || !t || t === "…") continue;
+    if (지금 === "여태" || 지금 === "사이")
+      낸것[지금] = (낸것[지금] ? 낸것[지금] + NL : "") + t;
+    else {
+      const x = (t.indexOf("- ") === 0) ? t.slice(2).trim() : t;
+      if (x && x !== "…") 낸것[지금].push(x);
+    }
+  }
+  return 낸것;
+}
+
+/* 모델이 낸 글을 화면이 그릴 꼴로 바꾼다.
+   제타 꼴 — 이름 한 줄 · 그 아래 지문과 대사. 빈 줄로 조각을 나눈다 */
+/* 답을 도막으로 가른다.
+
+   ★ 260910 — 전에는 **빈 줄로만** 잘랐다. 그러면 이름줄 뒤에 빈 줄이 오는 답에서
+     이름이 이름으로 안 잡히고 **본문으로 그려졌다** —
+       수빈
+       (빈 줄)
+       *남자친구. 있었냐고.*
+     화면에 「수빈」이라는 말풍선이 따로 떴다.
+
+   이제 **이름줄을 만나면** 자리를 바꾸고, 이름줄이 없는 덩이는 **앞 이름을 이어받는다.**
+   제타 원본이 그렇게 생겼다 (contents 여럿 · speakerName 이 같으면 한 묶음으로 그린다) */
+/* **이 방에서 회원님(유저)의 이름.**
+   플롯의 대화 프로필에서, 없으면 그 방 도막의 RIGHT 조각에서 찾는다 */
+function 유저이름(방){
+  const 것 = [];
+  const 플 = (D.플롯 || []).find(x => x && 방 && x.id === 방.플롯아이디);
+  for (const p of ((플 && 플.chatProfiles) || [])) if (p && p.name) 것.push(p.name);
+  for (const m of ((D.도막 || {})[(방 && 방.id)] || []))
+    for (const c of (m.contents || []))
+      if (c.position === "RIGHT" && c.speakerName && 것.indexOf(c.speakerName) < 0)
+        것.push(c.speakerName);
+  return 것.filter(x => x && x !== "나");
+}
+
+function 이름줄인가(t){
+  if (!t || t.length > 14) return false;
+  for (const c of [".", ",", "!", "?", "…", String.fromCharCode(34), "*", ">", "("])
+    if (t.indexOf(c) >= 0) return false;
+  return true;
+}
+function 답을도막으로(글, 유저들){
+  const 조각 = [];
+  let 이름 = "";
+  for (const 덩이 of String(글).split(NL + NL)){
+    let 줄 = 덩이.split(NL).map(x => x.trim()).filter(Boolean);
+    if (!줄.length) continue;
+    /* 이름줄로 시작하면 자리를 바꾼다. 그 줄만 있어도 마찬가지다 */
+    while (줄.length && 이름줄인가(줄[0])){ 이름 = 줄[0]; 줄 = 줄.slice(1); }
+    if (!줄.length) continue;        /* 이름만 있던 덩이 — 다음 덩이가 그 이름을 쓴다 */
+    /* ★ 260910 【축 B】 — **{{user}} 이름줄은 내레이터로 받는다.**
+
+       회원님이 당신 인물을 3인칭으로 서술하고 반응을 비워 두시면
+       (「*준은 자신의 손에 묻은 액체를 보며 물음표를 띄우고 있었다.*」)
+       모델이 그 빈칸을 「준」 이름줄로 채웠다. 실측 3.7%, 제타는 0.0% 다.
+
+       제타는 같은 자리에서 **내레이터로 받는다** —
+         내레이터
+         *준은 자기 손바닥을 내려다보고 있었다.*
+         *축축했다.*
+
+       내용은 비슷한데 **꼴만 달랐다.** 그래서 그리는 자리에서 바로잡는다.
+       회원님이 안 하신 말이 회원님 인물의 말풍선으로 뜨면 밀당이 깨진다 */
+    const 유저인가 = 이름 && (유저들 || []).indexOf(이름) >= 0;
+    조각.push({type: "TEXT",
+               position: (이름 === "내레이터" || 유저인가) ? "NARRATOR" : "LEFT",
+               speakerName: 유저인가 ? "내레이터" : 이름, text: 줄.join(NL)});
+  }
+  return {sender: {type: "BOT"}, contents: 조각, messageTime: new Date().toISOString()};
+}
+
+/* 시간 기록 — 회원님께 「느리다」를 숫자로 답하기 위한 것 */
+function 시간남기기(한줄){
+  try {
+    const 목 = JSON.parse(localStorage.getItem("시간") || "[]");
+    목.push(한줄);
+    localStorage.setItem("시간", JSON.stringify(목.slice(-200)));
+  } catch(_){}
+}
+
+/* ══════════════════════════════════════════════════════
+   상호작용 — 제타 실물을 보고 만든 것
+
+     프사 누르기      인물 정보
+     말풍선 누르기    편집 · 다시 · 지우기
+     하단 넷         신고 · 편집 · 주문해서 다시 · 다시
+     방 메뉴         새로하기 · 이어하기 · 대화 프로필 · 모델 · 지우기
+   ══════════════════════════════════════════════════════ */
+
+/* 지금 방의 플롯 */
+function 지금플롯(){
+  if (!S.방) return null;
+  return D.플롯.find(x => x.id === S.방.플롯아이디) ||
+         D.인기.find(x => x.id === S.방.플롯아이디) || null;
+}
+
+/* ── 인물 정보 ── */
+function 인물열기(이름){
+  const p = 지금플롯();
+  if (!p) return 알림("인물을 못 찾았습니다");
+  const c = (p.characters || []).find(x => x.name === 이름) || (p.characters || [])[0];
+  if (!c) return 알림("인물 정보가 없습니다");
+  const 그림 = c.imageUrl || p.imageUrl;
+  시트열기(null,
+    '<div class="인물머리">' +
+      (그림 ? '<img src="' + 안전(그림) + '">' : '<div style="width:56px;height:56px;border-radius:50%;background:var(--바탕3)"></div>') +
+      '<div><div class="이름">' + 안전(c.name) + '</div>' +
+      '<div class="밑">' + 안전(p.name) + '</div></div>' +
+    '</div>' +
+    '<div class="인물글">' + 안전(c.description || "(설명 없음)") + '</div>' +
+    (p.longDescription ? '<div class="시트머리">상황</div><div class="인물글">' +
+      안전(p.longDescription) + '</div>' : ""));
+}
+
+/* ── 말풍선 메뉴 ── */
+function 도막메뉴(몇){
+  const 도막 = D.도막[S.방.id] || [];
+  const m = 도막[몇];
+  if (!m) return;
+  const 봇 = ((m.sender && m.sender.type) === "BOT");
+  const 마지막 = (몇 === 도막.length - 1);
+  시트열기("이 말",
+    시트줄("✏", "고쳐 쓰기", "편집", {값: 몇}) +
+    (봇 && 마지막 ? 시트줄("↺", "다시 쓰게 하기", "재실행", {값: 몇}) : "") +
+    (봇 && 마지막 ? 시트줄("🪄", "주문해서 다시", "주문", {값: 몇}) : "") +
+    시트줄("⧉", "글 복사", "복사", {값: 몇}) +
+    시트줄("📝", "메모장에 담기", "메모", {값: 몇, 밑: "이 턴과 내가 친 말을 이어 적습니다"}) +
+    시트줄("🗑", "여기부터 지우기", "지우기", {값: 몇, 빛: "빨강"}));
+}
+
+/* 도막을 글로 (편집·복사에 쓴다) */
+function 도막글꺼내기(m){
+  return (m.contents || []).filter(c => c.type === "TEXT")
+    .map(c => (c.speakerName && c.position !== "RIGHT" ? c.speakerName + NL : "") + c.text)
+    .join(NL + NL);
+}
+
+/* ── 고쳐 쓰기 ── */
+function 편집열기(몇){
+  const 도막 = D.도막[S.방.id] || [];
+  const m = 도막[몇];
+  if (!m) return;
+  시트열기("고쳐 쓰기",
+    '<div style="padding:0 12px"><textarea id="편집칸">' + 안전(도막글꺼내기(m)) + '</textarea></div>' +
+    '<div class="시트단추"><button data-시트=닫기>그만</button>' +
+    '<button class="강" data-시트=편집저장 data-값="' + 몇 + '">고침</button></div>');
+  setTimeout(() => { const t = $("#편집칸"); if (t) t.focus(); }, 260);
+}
+function 편집저장(몇){
+  const t = $("#편집칸");
+  if (!t) return;
+  const 도막 = D.도막[S.방.id] || [];
+  const m = 도막[몇];
+  if (!m) return;
+  const 봇 = ((m.sender && m.sender.type) === "BOT");
+  도막[몇] = 봇 ? 답을도막으로(t.value, 유저이름(S.방))
+                : {sender: {type: "USER"},
+                   contents: [{type: "TEXT", position: "RIGHT", text: t.value}],
+                   messageTime: m.messageTime};
+  D.도막[S.방.id] = 도막;
+  새것담기(); 시트닫기(); 방그리기();
+  알림("고쳤습니다");
+}
+
+/* ── 다시 쓰게 하기 ── */
+async function 재실행(몇, 주문){
+  const 도막 = D.도막[S.방.id] || [];
+  /* 마지막 봇 도막을 걷어내고, 그 앞의 내 말로 다시 친다 */
+  let i = 몇 === undefined ? 도막.length - 1 : 몇;
+  while (i >= 0 && ((도막[i].sender && 도막[i].sender.type) !== "BOT")) i--;
+  if (i < 0) return 알림("다시 쓸 것이 없습니다");
+  const 지운것 = 도막.splice(i);
+  /* 그 앞의 내 말을 찾는다 */
+  let j = i - 1;
+  while (j >= 0 && ((도막[j].sender && 도막[j].sender.type) === "BOT")) j--;
+  const 친말 = j >= 0 ? (도막[j].contents || []).filter(c => c.type === "TEXT")
+    .map(c => c.text).join(NL) : "";
+  if (j >= 0) 도막.splice(j);
+  D.도막[S.방.id] = 도막;
+  방그리기();
+  await 말보내기(친말 || "…", 주문);
+}
+
+/* ── 주문해서 다시 ── */
+function 주문열기(몇){
+  시트열기("어떻게 다시 쓸까요",
+    '<div style="padding:0 12px"><textarea id="주문칸" ' +
+    'placeholder="보기) 더 짧게 · 더 차갑게 · 다른 인물도 끼워서"></textarea></div>' +
+    '<div class="시트단추"><button data-시트=닫기>그만</button>' +
+    '<button class="강" data-시트=주문보내기 data-값="' + (몇 === undefined ? "" : 몇) + '">다시</button></div>');
+  setTimeout(() => { const t = $("#주문칸"); if (t) t.focus(); }, 260);
+}
+
+/* ── 여기부터 지우기 ── */
+function 여기부터지우기(몇){
+  const 도막 = D.도막[S.방.id] || [];
+  도막.splice(몇);
+  D.도막[S.방.id] = 도막;
+  새것담기(); 시트닫기(); 방그리기();
+  알림("지웠습니다");
+}
+
+/* ── 방 메뉴 ── */
+function 방메뉴열기(){
+  const 방 = S.방;
+  const 이어 = (방.이어하기 || []).length;
+  시트열기(null,
+    시트줄("＋", "새로하기", "새로하기", {밑: "지금 것을 저장하고 처음부터"}) +
+    시트줄("↻", "이어하기", "이어하기", {밑: 이어 ? 이어 + "벌 저장돼 있습니다" : "저장된 것이 없습니다"}) +
+    시트줄("👤", "대화 프로필", "대화프로필", {밑: "내 이름과 설명 — 대화에 계속 씁니다"}) +
+    시트줄("📄", "플롯 정보", "플롯보기") +
+    시트줄("🤖", "AI 모델", "모델", {밑: 방.모델 || "zeta"}) +
+    시트줄("🧠", "기억", "기억", {밑: "제타에 없는 것"}) +
+    시트줄("📝", "메모장", "메모", {밑: 메모읽기(방.id) ? "적어 둔 것이 있습니다" : "비어 있습니다"}) +
+    시트줄("⧉", "대화 통째로 복사", "다복사") +
+    시트줄("⤓", "내보내기", "방내보내기",
+           {밑: "채팅 · 플롯 · 내 프로필 · 기억 · 메모"}) +
+    시트줄("🗑", "대화 내용만 지우기", "방지우기", {빛: "빨강", 밑: "방은 남습니다"}) +
+    시트줄("✕", "이 대화 나가기", "방나가기", {빛: "빨강", 밑: "방째로 지웁니다"}));
+}
+
+/* **방을 통째로 지운다.**
+   자료.json 에서 온 방은 파일을 못 고치므로 「지운방」에 이름을 적어 두고
+   앱이 뜰 때 거른다. 그래야 새로고침해도 안 돌아온다 */
+function 지운방들(){
+  try { return JSON.parse(localStorage.getItem("지운방") || "[]"); } catch(_){ return []; }
+}
+function 방지우기속(id){
+  const 목 = 지운방들();
+  if (목.indexOf(id) < 0) 목.push(id);
+  try { localStorage.setItem("지운방", JSON.stringify(목)); } catch(_){}
+  D.방 = D.방.filter(r => r.id !== id);
+  delete D.도막[id];
+  try {
+    localStorage.removeItem("기억_" + id);
+    localStorage.removeItem("메모_" + id);
+    const 새방 = JSON.parse(localStorage.getItem("새방") || "[]");
+    localStorage.setItem("새방", JSON.stringify(새방.filter(r => r.id !== id)));
+    const 새도막 = JSON.parse(localStorage.getItem("새도막") || "{}");
+    delete 새도막[id];
+    localStorage.setItem("새도막", JSON.stringify(새도막));
+  } catch(_){}
+  if (S.방 && S.방.id === id){ S.방 = null; S.화면 = "대화"; }
+}
+
+/* 대화 목록에서 여는 메뉴 — 제타의 「고정 · 나가기」 자리다 */
+function 목록방메뉴(방){
+  시트열기(방.제목,
+    시트줄("💬", "이어서 하기", "목록방열기", {값: 방.id}) +
+    시트줄("⧉", "대화 통째로 복사", "목록방복사", {값: 방.id}) +
+    시트줄("🗑", "이 대화 지우기", "목록방지우기",
+           {값: 방.id, 빛: "빨강", 밑: "되돌릴 수 없습니다"}));
+}
+
+/* ── 이어하기 ── */
+function 이어하기열기(){
+  const 방 = S.방;
+  const 목 = 방.이어하기 || [];
+  시트열기("이어하기 " + (목.length ? "1/" + 목.length : ""),
+    (목.length ? 목.map((e, i) =>
+      시트줄("💾", (e.savedAt || "").slice(0, 16).split("T").join(" "), "이어열기",
+             {값: e.id, 밑: (e.도막수 || 0) + "도막"})).join("")
+      : '<div class="인물글">저장된 것이 없습니다.</div>'));
+}
+
+/* ── 모델 고르기 ── */
+function 모델열기(){
+  /* ★ 260910 — **업체와 모델이 한 벌**이다. 따로 두면 안 되는 짝이 생긴다.
+     회원님 : 「모델명은 … 중에 고를 수 있게 해. 일일이 타이핑하는거 불편해.」 */
+  const 지금 = 설정("모델설정") || 기본모델;
+  시트열기("AI 모델",
+    모델셋.map(x => 시트줄(지금 === x.값 ? "●" : "○", x.이름, "모델고름",
+      {값: x.값, 밑: x.밑, 빛: 지금 === x.값 ? "켬" : ""})).join(""));
+}
+
+/* ── 기억 ── */
+function 기억열기(){
+  const 기 = 기억읽기(S.방.id);
+  const 글 = 기억글(기);
+  시트열기("기억 — 제타에 없는 것",
+    '<div style="padding:0 12px"><textarea id="기억칸" ' +
+    'placeholder="여태 있었던 일 · 사이 · 아직 답이 안 난 것">' + 안전(글) + '</textarea></div>' +
+    '<div class="인물글" style="color:var(--흐림)">여기 적은 것이 매 턴 함께 갑니다.' +
+    ' 대화가 길어져도 앞의 일이 안 사라집니다.</div>' +
+    '<div class="시트단추"><button data-시트=닫기>그만</button>' +
+    '<button data-시트=지금갈무리>지금 갈무리</button>' +
+    '<button class="강" data-시트=기억저장>담기</button></div>');
+}
+
+/* ══ 자료 들이기 ══
+   제타에서 받은 것을 그대로 쓴다. 꼴을 안 고친다 */
+async function 들이기(){
+  try {
+    const r = await fetch('./자료.json', {cache: 'no-store'});
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    D.플롯 = j.플롯 || []; D.방 = j.방 || []; D.도막 = j.도막 || {}; D.인기 = j.인기 || [];
+    /* 받아 온 방의 도막 수를 적어 둔다 — 이어 친 것만 담으려고 */
+    for (const r of D.방) 기본도막수[r.id] = (D.도막[r.id] || []).length;
+    /* 브라우저에 담아 둔 것을 얹는다 */
+    try {
+      const 새방 = JSON.parse(localStorage.getItem("새방") || "[]");
+      const 새도막 = JSON.parse(localStorage.getItem("새도막") || "{}");
+      for (const r of 새방) if (!D.방.some(x => x.id === r.id)) D.방.unshift(r);
+      for (const p of 지은것읽기()) if (!D.플롯.some(x => x.id === p.id)) D.플롯.unshift(p);
+      /* ★ 손으로 고친 플롯을 얹는다 — 자료.json 은 못 고치므로 따로 담아 둔다 */
+      /* 지운 방은 되살리지 않는다 */
+      const 지운 = 지운방들();
+      if (지운.length){
+        D.방 = D.방.filter(r => 지운.indexOf(r.id) < 0);
+        for (const id of 지운) delete D.도막[id];
+      }
+      const 고침 = 플롯고침들();
+      for (const id of Object.keys(고침)){
+        const i = D.플롯.findIndex(x => x.id === id);
+        if (i >= 0) D.플롯[i] = 고침[id]; else D.플롯.unshift(고침[id]);
+      }
+      for (const k of Object.keys(새도막)) D.도막[k] = 새도막[k];
+    } catch(_){}
+    알림('방 ' + D.방.length + '개 · 플롯 ' + D.플롯.length + '개');
+  } catch (e){
+    /* 자료가 없어도 화면은 뜬다 */
+  }
+  그리기();
+}
+
+그리기();
+자리쌓기();      /* ★ 첫 뒤로가 먹으려면 자리를 하나 쌓아 둬야 한다 */
+들이기();
+</script>
+</body>
+</html>
