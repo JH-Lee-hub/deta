@@ -187,10 +187,17 @@ img{display:block;max-width:100%}
   background:var(--바탕3);margin-top:16px}
 .남말 .묶음{flex:1;min-width:0}
 .남말 .이름{font-size:12px;color:var(--지문);margin-bottom:4px}   /* 260911 실측 — 흰색 70% */
-.방울{background:var(--바탕2);padding:10px 13px;border-radius:16px;position:relative;
+.방울{background:var(--바탕2);padding:10px 13px;border-radius:16px;position:relative;overflow:visible;
   font-size:14px;word-break:break-word}
 .방울+.방울{margin-top:6px}
-.방울 .모델딱지{position:absolute;right:8px;bottom:4px;font-size:9px;color:#3a3a40}
+/* ★ 260911 회원님 — 「말풍선 끝마다 deta 뜰 필요는 없을 듯. 그저 **작은 직각이등변
+   삼각형**을 둬서 어디가 경계인지 표시하는 정도면 충분할 듯. **두 변의 크기는 텍스트 ^ 정도** 크기로.」
+   그래서 글자를 지우고 삼각형만 남긴다. 왼쪽 아래에 둔다 — 말풍선이 왼쪽에서 나오니까 */
+.방울 .모델딱지{position:absolute;left:-6px;bottom:9px;width:0;height:0;font-size:0;overflow:visible;
+  border-style:solid;border-width:0 0 7px 7px;
+  border-color:transparent transparent var(--바탕2) transparent}
+.내말 .모델딱지{left:auto;right:-5px;border-width:0 7px 7px 0;
+  border-color:transparent var(--내말바탕) transparent transparent}
 /* 지문과 대사가 **한 말풍선 안에서** 갈린다 — 제타 실물이 그렇다 */
 /* ★ 260911 — 색을 `--흐림2`(이름줄 색) 에서 `--지문`(흰색 70%) 으로 바꿨다.
    제타 갈무리에서 재 보니 지문이 이름줄보다 밝았다. 위 `:root` 주석에 잰 값이 있다 */
@@ -392,9 +399,13 @@ const NL = String.fromCharCode(10);
 
 const $ = s => document.querySelector(s);
 const 몸 = () => $('#몸');
-const 알림 = 글 => {
+/* ★ 260911 — **얼마나 띄울지 고를 수 있게 했다.**
+   회원님 : 「무료구글 **탈400 글자만 떴다 사라짐.** 내가 이거 목격 못했으면
+             영문도 모르고 채팅 멈춘줄 알겠지. 게다가 그럼 뭘 어째야돼?」
+   탈이나 끊김처럼 **무엇을 해야 하는지 알려야 하는 알림**은 오래 띄운다 */
+const 알림 = (글, 얼마 = 1800) => {
   const e = $('#알림'); e.textContent = 글; e.classList.add('보임');
-  clearTimeout(알림._t); 알림._t = setTimeout(() => e.classList.remove('보임'), 1800);
+  clearTimeout(알림._t); 알림._t = setTimeout(() => e.classList.remove('보임'), 얼마);
 };
 const 넣기 = (자리, html) => { $(자리).innerHTML = html; };
 const 안전 = s => String(s == null ? '' : s)
@@ -793,23 +804,58 @@ let 흐름글 = '';
 let 흐름예약 = 0;
 let 흐름때 = 0;
 
+/* ★ 260911 회원님 — 「**출력이 흐르는듯이 되지 않음.** 내가 생각한건
+   **줄 단위 출력이 아니라 글자 단위 출력**이었음.」
+
+   까닭 — 받은 덩이를 **그때그때 통째로** 그렸다. 중계·모델이 한 번에 수십 자씩
+   보내므로 화면에서는 뭉텅이로 튀어나온다. 흐르는 느낌이 안 난다.
+
+   그래서 **받는 것과 보이는 것을 떼어 놓았다.**
+     흐름글     여태 **받은** 전부
+     보인만큼   여태 **보여 준** 글자 수
+   40ms 마다 조금씩 따라붙는다. 뒤처질수록 빨라지되 한 번에 너무 많이는 안 뱉는다.
+   다 받았으면(흐름끝났나) 남은 것을 조금 더 빠르게 흘려 마무리한다 */
+let 보인만큼 = 0, 흐름끝났나 = false;
 function 흐름그리기(){
   흐름예약 = 0;
   const e = $('#대기');
   if (!e || !S.방) return;
+
+  const 통 = 흐름글.length;
+  if (보인만큼 < 통){
+    const 남은 = 통 - 보인만큼;
+    /* 40ms 에 두세 자 — 초당 50~75자. 사람이 읽는 속도다.
+       뒤처지면(남은 게 많으면) 조금 빨라지고, 다 받았으면 더 빨라진다 */
+    let 걸음 = 2 + Math.floor(남은 / 120);
+    if (흐름끝났나) 걸음 = 걸음 * 2;
+    if (걸음 > 14) 걸음 = 14;
+    보인만큼 = Math.min(통, 보인만큼 + 걸음);
+  }
+
   const 붙었나 = 바닥에붙었나();      /* ★ 바꾸기 **전에** 재야 한다. 바꾸면 높이가 변한다 */
-  const 글 = 흐름글;
+  const 글 = 흐름글.slice(0, 보인만큼);
   e.innerHTML = 글.trim()
     ? 도막그리기(답을도막으로(글, 유저이름(S.방)), -1)
     : 대기점html();
   흐름때 = Date.now();
   if (붙었나) 맨아래로(true);
+
+  /* 아직 못 따라잡았으면 또 돈다 */
+  if (보인만큼 < 흐름글.length) 흐름예약 = setTimeout(흐름그리기, 40);
 }
 function 흐름보이기(글){
   흐름글 = 글;
   if (흐름예약) return;
-  const 지난 = Date.now() - 흐름때;
-  흐름예약 = setTimeout(흐름그리기, 지난 > 60 ? 0 : 60 - 지난);
+  흐름예약 = setTimeout(흐름그리기, 40);
+}
+/* 스트림이 끝났다 — 남은 것을 마저 흘려 보낸다 */
+function 흐름마치기(){
+  흐름끝났나 = true;
+  if (!흐름예약) 흐름예약 = setTimeout(흐름그리기, 0);
+}
+function 흐름되돌리기(){
+  보인만큼 = 0; 흐름끝났나 = false; 흐름글 = '';
+  clearTimeout(흐름예약); 흐름예약 = 0;
 }
 
 /* 인물 이름으로 얼굴을 찾는다. 방의 플롯에 인물 그림이 들어 있다 */
@@ -1325,7 +1371,7 @@ async function 구글플롯직접(){
       })
     });
     const j = await r.json();
-    if (!r.ok){ 알림((j.error && j.error.message) || ("탈 " + r.status)); S.보낸중 = false; return; }
+    if (!r.ok){ 알림((j.error && j.error.message) || ("탈 " + r.status), 8000); S.보낸중 = false; return; }
     const 글 = (((j.choices || [])[0] || {}).message || {}).content || "";
     const pp = 플롯가르기(글, 자리);
     if (!pp){ 알림("못 알아들었습니다"); S.보낸중 = false; return; }
@@ -1993,7 +2039,7 @@ function 입력붙이기(){
 /* ★ 260910 회원님 : 「완성되어 빌드를 내보내게 된다면
    마이페이지에 빌드넘버와 일자와 시간을 적어서 내보낸다.」
    ★ 아래 한 줄은 **빌드 도구가 갈아 끼운다.** 손으로 고치지 않는다 */
-const 빌드 = {번호: "v1.1.7", 때: "2026-09-11 14:47"};
+const 빌드 = {번호: "v1.1.10", 때: "2026-09-11 17:40"};
 
 const 기본중계 = "https://zetaapp-relay.amuselk.workers.dev";
 
@@ -2198,6 +2244,13 @@ async function 흘려받기(주소, 머리, 본문, 닿을때){
   const 읽개 = r.body.getReader();
   const 풀개 = new TextDecoder("utf-8");
   let 남은 = "", 글 = "", 첫글자 = 0;
+  /* ★ 260911 — **왜 끝났는지를 모은다.**
+     회원님이 실제로 굴리시다 겪으셨다 —
+       「유저 첫 입력 후 **모델 첫 반응이 끊김.** 그래서 다시(빈값) 전송하게됨.」
+     받아 둔 자료에서 봇 도막이 **19자**에서 잘려 있었다 (별표도 안 닫힘).
+     그런데 앱은 그것을 **정상으로 여기고 그대로 저장**했다. 알려 주지도 않았다.
+     stop 이 아니면 잘린 것이다 — length(토큰 한도) · content_filter · 그 밖 */
+  let 왜끝남 = "";
 
   for (;;){
     const 온것 = await 읽개.read();
@@ -2213,7 +2266,9 @@ async function 흘려받기(주소, 머리, 본문, 닿을때){
       if (!속 || 속 === "[DONE]") continue;
       let j;
       try { j = JSON.parse(속); } catch(_){ continue; }
-      const d = (((j.choices || [])[0] || {}).delta) || {};
+      const 고 = (j.choices || [])[0] || {};
+      if (고.finish_reason) 왜끝남 = String(고.finish_reason);
+      const d = 고.delta || {};
       const c = d.content;
       if (typeof c === "string" && c){
         if (!첫글자) 첫글자 = Date.now();
@@ -2222,7 +2277,7 @@ async function 흘려받기(주소, 머리, 본문, 닿을때){
       }
     }
   }
-  return {흘렀나: true, 글: 글, 첫글자: 첫글자, 답: r};
+  return {흘렀나: true, 글: 글, 첫글자: 첫글자, 왜끝남: 왜끝남, 답: r};
 }
 
 async function 말보내기(친말, 주문, 이어가기){
@@ -2377,9 +2432,11 @@ async function 말보내기(친말, 주문, 이어가기){
        그때는 **옛 길 `/turn` 으로 되돌아간다.** 그래서 앱을 먼저 구워도 안 깨진다.
        회원님 지시 : 「옛 길(/turn)을 남기고 /turn-stream을 새로 더하게 하라.」 */
     let 흐름 = null;
+    흐름되돌리기();                 /* ★ 앞 턴이 남긴 것을 지운다 */
     try {
       흐름 = await 흘려받기(중계 + "/" + 어디 + "/turn-stream", 머리, 본문, 흐름보이기);
-    } catch(_){ 흐름 = null; }        /* 흐르다 끊겼다 — 아래에서 옛 길로 다시 한다 */
+    } catch(_){ 흐름 = null; }
+    흐름마치기();                   /* ★ 다 받았다 — 남은 글자를 마저 흘린다 */        /* 흐르다 끊겼다 — 아래에서 옛 길로 다시 한다 */
 
     let r, 글;
     if (흐름 && 흐름.흘렀나){
@@ -2394,12 +2451,32 @@ async function 말보내기(친말, 주문, 이어가기){
       const j = await r.json().catch(() => ({}));
       잰것.첫글자 = Date.now();
       잰것.다받음 = Date.now();
-      if (!r.ok){ 대기떼기(); 알림((j.error && j.error.message) || ("탈 " + r.status)); S.보낸중 = false; return; }
+      if (!r.ok){ 대기떼기(); 알림((j.error && j.error.message) || ("탈 " + r.status), 8000); S.보낸중 = false; return; }
       글 = (((j.choices || [])[0] || {}).message || {}).content || "";
     }
 
-    if (!r.ok){ 대기떼기(); 알림("탈 " + r.status); S.보낸중 = false; return; }
-    if (!글){ 대기떼기(); 알림("빈 답이 왔습니다"); S.보낸중 = false; return; }
+    if (!r.ok){ 대기떼기(); 알림("탈 " + r.status, 8000); S.보낸중 = false; return; }
+    if (!글){ 대기떼기(); 알림("빈 답이 왔습니다 — 다시 쓰기를 눌러 보십시오", 8000); S.보낸중 = false; return; }
+
+    /* ★ 260911 — **잘렸나 본다.** 잘렸어도 버리지 않는다. 온 데까지는 쓸모가 있다.
+       다만 **말은 해 준다.** 회원님이 모르고 넘어가면 뒤 턴이 통째로 어긋난다.
+         「내가 이거 목격 못했으면 영문도 모르고 채팅 멈춘줄 알겠지.」
+       세 가지로 본다 —
+         ⑴ 왜끝남이 stop 이 아니다 (length · content_filter …)
+         ⑵ 별표가 홀수다 — 지문을 열고 못 닫았다
+         ⑶ 아주 짧은데 문장 끝맺음이 없다                                     */
+    const 잘렸나 = (() => {
+      if (흐름 && 흐름.흘렀나 && 흐름.왜끝남 && 흐름.왜끝남 !== "stop") return "왜끝남 " + 흐름.왜끝남;
+      /* 별표가 홀수면 지문을 열고 못 닫은 것이다.
+         정규식을 안 쓴다 (G6) — 스크립트로 이 파일을 고칠 때 역빗금이 벗겨진다.
+         실제로 그 탓에 주석이 열려 앱이 통째로 죽었다 */
+      const 별 = String(글).split('*').length - 1;
+      if (별 % 2 === 1) return '지문을 열고 못 닫았습니다';
+      const 끝글자 = String(글).trim().slice(-1);
+      const 맺음 = ['.', '!', '?', '…', '」', '”', "'", '"', '*', ')'];
+      if (글.length < 60 && 맺음.indexOf(끝글자) < 0) return '말이 끝맺어지지 않았습니다';
+      return "";
+    })();
 
     도막.push(답을도막으로(글, 유저이름(방)));
     D.도막[방.id] = 도막;
@@ -2419,11 +2496,12 @@ async function 말보내기(친말, 주문, 이어가기){
                 흘림: !!(흐름 && 흐름.흘렀나), 중계: Number(중계잰것 || 0),
                 업체: 어디, 모델: 재료.모델 || "(기본)", 자수: 글.length,
                 방: (방 && 방.제목) || ""});
-    알림((흐름 && 흐름.흘렀나) ? ("첫 글자 " + 첫 + "초 · 다 " + 걸림 + "초") : (걸림 + "초"));
+    if (잘렸나) 알림("답이 중간에 끊겼습니다 (" + 잘렸나 + ") — 다시 쓰기를 눌러 보십시오", 6000);
+    else 알림((흐름 && 흐름.흘렀나) ? ("첫 글자 " + 첫 + "초 · 다 " + 걸림 + "초") : (걸림 + "초"));
     /* ★ 답을 받은 뒤에 조용히 돌린다. 대화를 안 막는다 */
     요약해두기(방.id);
   } catch (e){
-    알림("못 보냈습니다 — " + String(e.message).slice(0, 40));
+    알림("못 보냈습니다 — " + String(e.message).slice(0, 40), 8000);
   }
   /* ★ 260911 — 어느 길로 끝나든 점 셋을 반드시 뗀다.
      성공하면 `방그리기()` 가 통째로 다시 그려 저절로 사라지지만,
