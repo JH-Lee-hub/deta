@@ -25,9 +25,29 @@
   --바탕2:#1e1e20;         /* 말풍선 · 카드 */
   --바탕3:#26262a;         /* 눌린 것 */
   --글자:#ffffff;
-  --흐림:#595b63;          /* rgb(89,91,99) — 마지막 메시지 · 지문 */
-  --흐림2:#8b8d95;
-  --강조:#7c67ff;          /* rgb(124,103,255) */
+  --흐림:#595b63;          /* rgb(89,91,99) — 마지막 메시지 */
+  --흐림2:#8b8d95;         /* 이름줄. 제타 실측 「흰색 50%」와 사실상 같다 */
+  /* ★ 260911 실측 — **제타는 흐린 글자를 회색이 아니라 「흰색에 투명도」로 낸다.**
+
+     제타 방 안 갈무리(07. …/4. 화면 그림/06_방안.png)에서 픽셀을 직접 쟀다.
+     바탕이 rgb(21,21,22) 로 정확히 나와 **색이 틀어지지 않은 그림**임을 먼저 확인했다.
+     구역마다 밝기 상위 2% 의 가운데값(=글자 속살)을 잰 것이다.
+
+       자리            잰 값   그 바탕 위 흰색 몇 %   데타는 그동안
+       인물 이름줄      180        68%  ≈ 70%        #8b8d95 (139)  ← 어두웠다
+       인물 지문        188        70%               #8b8d95 (139)  ← 어두웠다
+       인물 대사        249        ≈ 흰색             #ffffff        ○
+       내레이션         161        60%               #8b8d95 (139)  ← 어두웠다
+       유저 글          255        흰색               #ffffff        ○
+
+     **흐린 글자 셋이 다 제타보다 어두웠다.** 이름줄 색을 지문·내레이션에도
+     그대로 돌려 썼기 때문이다. 제타는 셋을 다르게 쓴다.
+     제타가 내려받는 CSS 에도 같은 토큰이 있다 — lab(100 …/0.5) · lab(100 …/0.7) */
+  --지문:rgba(255,255,255,.7);
+  --나레:rgba(255,255,255,.6);
+  --강조:#7c67ff;          /* rgb(124,103,255) — 단추·탭. 홈 화면에서 잰 값 */
+  /* ★ 260911 실측 — 유저 말풍선은 --강조 가 아니다. 방 안에서 잰 값이 따로 있다 */
+  --내말바탕:#644dd6;      /* rgb(100,77,214) */
   --강조흐림:#5a48c7;
   --빨강:#f04438;
   --선:#2a2a2e;
@@ -55,7 +75,18 @@ img{display:block;max-width:100%}
    까닭은 **`min-height:0` 이 없어서**였다. flex 자식은 기본이 `min-height:auto` 라
    내용만큼 커지고, 그만큼 아래 바가 화면 밖으로 밀려난다.
    가운데(#몸)만 줄어들게 하면 머리와 발은 늘 남는다 */
-#앱{display:flex;flex-direction:column;height:100dvh;min-height:0;
+/* ★ 260911 신고 — 「첫 대화때 자판누르면 첫대화가 안보임」
+   ★ 260911 회원님 v1.2 메모 1번 — 「타자 불러와졌을떄 채팅입력란이 위로 로드된 상태로
+      고정되어, 채팅방 스크롤해도 그 위치를 고정하길 바람.」
+
+   `100dvh` 는 **자판이 올라온 것을 모른다.** 자판이 화면 절반을 덮어도
+   앱은 여전히 전체 높이라고 믿어서, 위쪽(첫 대화)이 화면 밖으로 밀리고
+   입력칸은 자판 뒤로 들어간다.
+   재 보면 이랬다 — 보이는 높이 640px 인데 입력칸 아래끝이 900px.
+
+   그래서 **`visualViewport.height` 를 보고 `--보임` 에 담아 쓴다.**
+   `visualViewport` 가 없는 곳(옛 브라우저·PC)에서는 `100dvh` 로 되돌아간다 */
+#앱{display:flex;flex-direction:column;height:var(--보임,100dvh);min-height:0;
   max-width:520px;margin:0 auto;position:relative;overflow:hidden}
 #머리자리,#입력자리,#발{flex:0 0 auto}
 #몸{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
@@ -134,26 +165,74 @@ img{display:block;max-width:100%}
 #대화판{padding:14px 12px 8px;display:flex;flex-direction:column;gap:14px}
 
 /* 유저 — 오른쪽 보라 */
-.내말{align-self:flex-end;max-width:78%;background:var(--강조);color:#fff;
+.내말{align-self:flex-end;max-width:78%;background:var(--내말바탕);color:#fff;
   padding:9px 13px;border-radius:16px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+/* ★ 260911 신고 — 「*로 묶어도 내 대화가 회색이탤릭처리가 안됨」
+
+   제타는 **유저 말풍선도 같은 얼개로 가른다.** 짐작이 아니라 실측이다 —
+   회원님이 제타에서 치신 유저 조각 1,730개 중 **809개(46.8%)에 별표가 들어 있고**,
+   제타 화면을 긁은 글(06_방안.txt)에는 그 별표가 **하나도 안 남아 있다.**
+     보낸 것 : `*문을 열러주며*` + 줄바꿈 + `결정했나?`
+     화면 글 : `문을 열러주며` / `결정했나?`      ← 별표가 사라졌다 = 갈라서 그렸다
+
+   ★ 대사는 **굵게 하지 않는다.** 인물 말풍선과 다른 자리다 —
+     제타 갈무리에서 인물 대사는 굵고(가장 밝은 점 249), 유저 글은 보통 굵기다 */
+.내말 .지문{color:var(--지문);font-style:italic;display:block}
+.내말 .대사{color:#fff;display:block}
+.내말 .지문+.대사,.내말 .대사+.지문{margin-top:5px}
 
 /* 인물 — 왼쪽 회색. 이름줄이 위에 */
 .남말{display:flex;gap:9px;max-width:88%}
 .남말 .얼굴{width:30px;height:30px;flex:0 0 auto;border-radius:50%;object-fit:cover;
   background:var(--바탕3);margin-top:16px}
 .남말 .묶음{flex:1;min-width:0}
-.남말 .이름{font-size:12px;color:var(--흐림2);margin-bottom:4px}
+.남말 .이름{font-size:12px;color:var(--지문);margin-bottom:4px}   /* 260911 실측 — 흰색 70% */
 .방울{background:var(--바탕2);padding:10px 13px;border-radius:16px;position:relative;
   font-size:14px;word-break:break-word}
 .방울+.방울{margin-top:6px}
 .방울 .모델딱지{position:absolute;right:8px;bottom:4px;font-size:9px;color:#3a3a40}
 /* 지문과 대사가 **한 말풍선 안에서** 갈린다 — 제타 실물이 그렇다 */
-.방울 .지문{color:var(--흐림2);font-style:italic;display:block}
+/* ★ 260911 — 색을 `--흐림2`(이름줄 색) 에서 `--지문`(흰색 70%) 으로 바꿨다.
+   제타 갈무리에서 재 보니 지문이 이름줄보다 밝았다. 위 `:root` 주석에 잰 값이 있다 */
+.방울 .지문{color:var(--지문);font-style:italic;display:block}
 .방울 .대사{color:var(--글자);font-weight:600;display:block}
 .방울 .지문+.대사,.방울 .대사+.지문{margin-top:6px}
 
+/* ── 대기 표시 (· · ·) ──────────────────────────────
+   ★ 260911 신고 — 「출력대기중엔 ᆞ ᆞ ᆞ 표시가 움직이도록.」
+   ★ 260911 신고 총평 — 「제타의 무빙ㆍ모션을 직접 체크하지 않고 만든듯」
+
+   그래서 **짐작하지 않고 제타가 내려받는 CSS 를 그대로 읽었다.**
+   (제타 홈을 브라우저로 열어 받아진 자산만 읽었다. API 는 부르지 않았다)
+
+     @keyframes loading-dot-bubble{0%,to{opacity:.5}33.333%,66.667%{opacity:.2}}
+     @keyframes loading-dot-plate {0%,to{opacity:.7}33.333%,66.667%{opacity:.3}}
+     .animate-loading-dot-bubble{animation:1.5s linear infinite loading-dot-bubble}
+     .animate-loading-dot-plate {animation:1.5s linear infinite loading-dot-plate}
+
+   알아낸 것 셋 —
+     ① **튀지 않는다.** 위아래로 움직이지 않고 **투명도만** 오르내린다
+     ② 1.5초 · linear · 무한
+     ③ 두 벌이다. 말풍선 안은 최대 .5, 판 위는 최대 .7 —
+        위에서 잰 「흐린 글자」 값(말풍선 70% · 내레이션 60%)과 같은 얼개다
+
+   ★ 어긋나는 시각(딜레이)은 **못 쟀다.** 방 안 화면은 로그인이 있어야 열린다.
+     다만 마디가 0% · 33.3% · 66.7% 로 **정확히 셋으로 나뉜 것**은
+     점 세 개에 1.5초÷3 = 0.5초씩 어긋나게 준 꼴이다. 그렇게 뒀다.
+     ★ 이것만은 잰 값이 아니라 **읽어 낸 것**이다 */
+@keyframes 대기점{0%,100%{opacity:.5}33.333%,66.667%{opacity:.2}}
+.대기방울{display:inline-flex;align-items:center;gap:5px;min-height:21px}
+.대기방울 .점{width:6px;height:6px;border-radius:50%;background:#fff;
+  animation:대기점 1.5s linear infinite}
+.대기방울 .점:nth-child(2){animation-delay:-.5s}
+.대기방울 .점:nth-child(3){animation-delay:-1s}
+/* 움직임을 꺼 둔 분에게는 안 움직인다 — 점은 그대로 보인다 */
+@media (prefers-reduced-motion:reduce){
+  .대기방울 .점{animation:none;opacity:.4}
+}
+
 /* 내레이션 — 말풍선 없이 ≡ */
-.나레{display:flex;gap:8px;color:var(--흐림2);font-style:italic;font-size:13px;
+.나레{display:flex;gap:8px;color:var(--나레);font-style:italic;font-size:13px;   /* 260911 실측 — 흰색 60% */
   padding:0 4px;line-height:1.7}
 .나레::before{content:"≡";flex:0 0 auto;color:var(--흐림);font-style:normal}
 
@@ -199,15 +278,28 @@ img{display:block;max-width:100%}
 #덮개{position:fixed;inset:0;background:#000a;z-index:60;opacity:0;pointer-events:none;
   transition:opacity .18s}
 #덮개.보임{opacity:1;pointer-events:auto}
+/* ★ 260911 회원님 v1.2 메모 2번 — 「채팅방 메모장/수정창 손잡이 작음.
+   키우고, 손잡이를 위에 두자.」
+
+   전에는 `38×4px` 이고 **시트 안쪽 맨 위**에 있었다. 작아서 잡히지도 않았다.
+   이제 **시트 바깥 위로 띄우고** 크기를 키웠다 — `64×7px`.
+   ★ 미끄러져 내려갈 때 손잡이만 남아 떠 있으면 안 되므로
+     감추는 거리를 `101%` 에서 `101% + 34px` 으로 늘렸다. 손잡이까지 같이 내려간다
+   ★ 잡는 자리는 눈에 보이는 것보다 훨씬 넓다 — 위아래 22px · 좌우 30px 더 준다 */
 #시트{position:fixed;left:0;right:0;bottom:0;z-index:70;max-width:520px;margin:0 auto;
-  background:var(--바탕2);border-radius:18px 18px 0 0;transform:translateY(101%);
-  transition:transform .22s;max-height:82dvh;display:flex;flex-direction:column}
+  background:var(--바탕2);border-radius:18px 18px 0 0;
+  transform:translateY(calc(101% + 34px));
+  transition:transform .22s;display:flex;flex-direction:column;
+  /* 자판이 올라오면 보이는 높이도 줄어든다. `dvh` 는 그것을 모른다 */
+  max-height:calc(var(--보임,100dvh) * .82);
+  /* 손잡이가 흐름에서 빠졌으니 맨 위 여백을 시트가 직접 준다 */
+  padding-top:10px}
 #시트.보임{transform:none}
-#시트 .손잡이{width:38px;height:4px;border-radius:2px;background:#3a3a40;margin:9px auto 4px;
+#시트 .손잡이{position:absolute;top:-26px;left:50%;margin-left:-32px;
+  width:64px;height:7px;border-radius:4px;background:rgba(255,255,255,.38);
   cursor:ns-resize;touch-action:none}
-#시트 .손잡이:before{content:"";position:absolute;left:0;right:0;height:26px;margin-top:-11px}
-#시트 .손잡이{position:relative}
-#시트 .시트머리{padding:6px 18px 10px;font-size:15px;font-weight:700}
+#시트 .손잡이:before{content:"";position:absolute;left:-30px;right:-30px;top:-22px;bottom:-22px}
+#시트 .시트머리{padding:4px 18px 10px;font-size:15px;font-weight:700}
 /* 속만 스크롤되고 아래 단추줄은 늘 보인다 */
 #시트 .시트속{overflow-y:auto;flex:1 1 auto;min-height:0;
   padding:0 8px calc(14px + env(safe-area-inset-bottom))}
@@ -331,15 +423,37 @@ function 조각그리기(글){
 /* ══════════════════════════════════════════════════════
    바닥시트 — 제타가 메뉴를 이렇게 띄운다
    ══════════════════════════════════════════════════════ */
-function 시트열기(제목, 속){
+/* ★ 260911 — **시트도 온 길을 쌓는다.**
+   회원님 v1.2 메모 3번 : 「무조껀 상위가 아님. 내부에서 열린 경로에서는
+   내부로 돌아가는 기능도 필요함.」
+
+   시트는 한 자리를 돌려 쓴다(`#시트` 하나에 내용만 갈아 끼운다).
+   그래서 방메뉴에서 「모델 고르기」를 열면 **방메뉴가 덮여 사라졌고**,
+   뒤로 가면 시트가 통째로 닫혔다. 이제 **덮기 전 것을 쌓아 두고 그리로 돌아간다** */
+let 지금시트 = null;          /* {제목, 속} — 지금 떠 있는 것 */
+const 시트길 = [];             /* 그 밑에 깔린 것들 */
+
+function 시트그리기(제목, 속){
   const 시 = $("#시트");
   시.innerHTML = '<div class="손잡이"></div>' +
     (제목 ? '<div class="시트머리">' + 안전(제목) + '</div>' : '') +
     '<div class="시트속">' + 속 + '</div>';
-  자리쌓기();
   $("#덮개").classList.add("보임");
   시.style.height = ""; 시.style.maxHeight = "";   /* 지난번 늘린 것을 되돌린다 */
   requestAnimationFrame(() => { 시.classList.add("보임"); 손잡이붙이기(); });
+}
+function 시트열기(제목, 속){
+  if (지금시트) 시트길.push(지금시트);
+  지금시트 = {제목: 제목, 속: 속};
+  시트그리기(제목, 속);
+  자리쌓기();
+}
+/* 시트에서 한 겹만 물러난다. 밑에 깔린 것이 있으면 그것을 도로 띄운다 */
+function 시트뒤로(){
+  const 앞 = 시트길.pop();
+  if (!앞){ 시트닫기(); return; }
+  지금시트 = 앞;
+  시트그리기(앞.제목, 앞.속);
 }
 /* Esc · 뒤로 가기로도 닫는다 */
 document.addEventListener("keydown", e => {
@@ -350,20 +464,36 @@ document.addEventListener("keydown", e => {
    이걸 통해 입력창을 늘릴 수도 있어야 한다.」
 
    손잡이를 위로 끌면 시트가 커지고 그 안의 입력칸도 함께 커진다 */
+/* ★ 260911 — 창(window)에 거는 것은 **딱 한 번만** 건다.
+   전에는 시트를 열 때마다 `mousemove`·`touchmove` 를 새로 걸었다.
+   시트를 스무 번 열면 스무 벌이 쌓여 손잡이 한 번 끄는 데 스무 번 돈다.
+   이번에 시트가 시트를 덮는 길이 생겨 더 자주 열리므로 여기서 잡는다 */
+let 잡음 = null;
+let 손잡이걸었나 = false;
+
 function 손잡이붙이기(){
   const 시 = $("#시트");
   const 손 = 시 && 시.querySelector(".손잡이");
   if (!손) return;
-  let 잡음 = null;
+  잡음 = null;
   const 시작 = e => {
     const y = (e.touches ? e.touches[0].clientY : e.clientY);
-    잡음 = {y, 높이: 시.getBoundingClientRect().height};
+    잡음 = {y: y, 높이: 시.getBoundingClientRect().height};
     e.preventDefault();
   };
+  손.addEventListener("mousedown", 시작);
+  손.addEventListener("touchstart", 시작, {passive: false});
+  if (손잡이걸었나) return;
+  손잡이걸었나 = true;
+
   const 움직임 = e => {
     if (!잡음) return;
+    const 시 = $("#시트");
+    if (!시) return;
     const y = (e.touches ? e.touches[0].clientY : e.clientY);
-    const 새높이 = Math.max(180, Math.min(innerHeight * 0.94, 잡음.높이 + (잡음.y - y)));
+    /* ★ 자판이 올라오면 `innerHeight` 는 그대로다. 보이는 높이를 봐야 한다 */
+    const 보임 = (window.visualViewport && window.visualViewport.height) || innerHeight;
+    const 새높이 = Math.max(180, Math.min(보임 * 0.94, 잡음.높이 + (잡음.y - y)));
     시.style.maxHeight = 새높이 + "px";
     시.style.height = 새높이 + "px";
     /* 안에 입력칸이 있으면 함께 늘린다 */
@@ -372,8 +502,6 @@ function 손잡이붙이기(){
     e.preventDefault();
   };
   const 끝 = () => { 잡음 = null; };
-  손.addEventListener("mousedown", 시작);
-  손.addEventListener("touchstart", 시작, {passive: false});
   addEventListener("mousemove", 움직임, {passive: false});
   addEventListener("touchmove", 움직임, {passive: false});
   addEventListener("mouseup", 끝);
@@ -386,6 +514,8 @@ function 시트열렸나(){
 }
 function 시트닫기(){
   const 시 = $("#시트");
+  /* ★ 260911 — 통째로 닫으니 밑에 깔린 것도 함께 버린다 */
+  지금시트 = null; 시트길.length = 0;
   시.classList.remove("보임");
   $("#덮개").classList.remove("보임");
   /* ★ 260910 — 닫아도 속이 DOM 에 남아 있었다.
@@ -508,8 +638,36 @@ function 방그리기(){
         '<button id="보내기" disabled>▶</button>' +
       '</div>' +
     '</div>');
-  const 판 = 몸(); 판.scrollTop = 판.scrollHeight;
+  맨아래로(true);
   입력붙이기();
+}
+
+/* ── 맨 아래로 ────────────────────────────────────────
+   ★ 260911 신고 — 「유저입력시 입력된 유저말풍선 모두 보이게 최하단으로 스크롤 이동.」
+
+   전에는 `판.scrollTop = 판.scrollHeight` 한 줄이었다. **한 번으로는 모자라다** —
+     ⑴ 그 순간엔 아직 줄바꿈이 안 끝나서 `scrollHeight` 가 실제보다 작다
+     ⑵ 인물 얼굴 그림이 나중에 떠서 그만큼 아래로 밀린다
+     ⑶ 자판이 올라오는 중이면 보이는 높이가 아직 안 줄었다
+   그래서 **그린 뒤 · 한 틱 뒤 · 조금 더 뒤** 세 번 내린다. 값이 같으면 아무 일도 안 난다.
+
+   ★ 바닥에 붙어 있을 때만 따라 내려간다 (`억지로` 가 아니면).
+     위를 읽고 계신데 끌어내리면 안 된다 */
+const 바닥여유 = 80;
+function 바닥에붙었나(){
+  const 판 = 몸();
+  if (!판) return true;
+  return (판.scrollHeight - 판.scrollTop - 판.clientHeight) <= 바닥여유;
+}
+function 맨아래로(억지로){
+  const 판 = 몸();
+  if (!판) return;
+  if (!억지로 && !바닥에붙었나()) return;
+  const 내리기 = () => { const p = 몸(); if (p) p.scrollTop = p.scrollHeight; };
+  내리기();
+  requestAnimationFrame(() => { 내리기(); requestAnimationFrame(내리기); });
+  setTimeout(내리기, 120);
+  setTimeout(내리기, 320);
 }
 
 /* 도막 하나를 그린다.
@@ -519,6 +677,18 @@ function 방그리기(){
      RIGHT     유저     오른쪽 보라 말풍선
      NARRATOR  내레이션  말풍선 없이 ≡
    한 도막 안에 LEFT 와 NARRATOR 가 섞여 온다. 그래서 조각 단위로 돈다 */
+/* 말풍선 오른쪽 아래에 붙는 작은 딱지.
+
+   ★ 260911 회원님 v1.2 메모 4번 — 「채팅 말풍선 끝에 zeta 대신 deta라고 붙이길 바람.」
+
+   받아 온 방 서른 개는 모델 칸이 다 `zeta` 다(회원님이 제타 무료 모델을 쓰셨다).
+   이제 이 앱은 **데타**다. 그 이름으로 붙인다. 딴 모델은 그 이름 그대로 둔다 */
+function 딱지이름(모델){
+  const t = String(모델 || "").trim();
+  if (!t || t === "zeta") return "deta";
+  return t;
+}
+
 /* 별표를 벗긴다.
    ★ 정규식을 안 쓴다 — 스크립트로 이 파일을 고칠 때 역빗금이 한 겹 벗겨진다 (Ground rule G6) */
 function 별표벗기기(글){
@@ -540,7 +710,7 @@ function 도막그리기(m, 몇){
         '<div class="묶음">' +
           '<div class="이름">' + 안전(묶음.이름) + '</div>' +
           묶음.글.map(t => '<div class="방울" data-도막="' + 몇 + '">' + 조각그리기(t) +
-            '<span class="모델딱지">' + 안전((S.방 && S.방.모델) || "zeta") + '</span></div>').join("") +
+            '<span class="모델딱지">' + 안전(딱지이름(S.방 && S.방.모델)) + '</span></div>').join("") +
         '</div>' +
       '</div>');
     묶음 = null;
@@ -550,7 +720,10 @@ function 도막그리기(m, 몇){
     const 자리 = c.position || (((m.sender && m.sender.type) === "BOT") ? "LEFT" : "RIGHT");
     if (자리 === "RIGHT"){
       묶음닫기();
-      낸것.push('<div class="내말" data-도막="' + 몇 + '">' + 안전(c.text) + '</div>');
+      /* ★ 260911 신고 — 「*로 묶어도 내 대화가 회색이탤릭처리가 안됨」
+         인물 말풍선만 `조각그리기()` 를 거치고 유저 말풍선은 `안전()` 으로 그냥 넣고 있었다.
+         그래서 별표가 글자 그대로 남았다. **같은 얼개를 태운다** */
+      낸것.push('<div class="내말" data-도막="' + 몇 + '">' + 조각그리기(c.text) + '</div>');
     } else if (자리 === "NARRATOR"){
       묶음닫기();
       /* 내레이션은 별표를 벗기고 ≡ 로 놓는다 */
@@ -564,6 +737,81 @@ function 도막그리기(m, 몇){
   묶음닫기();
   return 낸것.join("");
 }
+/* ── 기다리는 동안 (· · ·) ────────────────────────────
+   ★ 260911 신고 — 「출력대기중엔 ᆞ ᆞ ᆞ 표시가 움직이도록.」
+
+   제타처럼 **인물 자리에** 놓는다 — 얼굴 · 이름줄 · 말풍선 안에 점 셋.
+   제타가 쓰는 클래스 이름이 `loading-dot-bubble`(말풍선 안)인 것도 그 뜻이다.
+   모션 값은 제타 CSS 에서 그대로 가져왔다 (위 `@keyframes 대기점` 주석) */
+function 기다림이름(){
+  const 방 = S.방;
+  if (!방) return "";
+  const p = D.플롯.find(x => x.id === 방.플롯아이디);
+  const c = p && (p.characters || [])[0];
+  return (c && c.name) || 방.제목 || "";
+}
+function 대기점html(){
+  const 이름 = 기다림이름();
+  const 얼굴 = 얼굴찾기(이름);
+  return '<div class="남말">' +
+    (얼굴 ? '<img class="얼굴" src="' + 안전(얼굴) + '">' : '<div class="얼굴"></div>') +
+    '<div class="묶음">' +
+      '<div class="이름">' + 안전(이름) + '</div>' +
+      '<div class="방울" aria-live="polite" aria-label="답을 쓰는 중입니다">' +
+        '<span class="대기방울"><i class="점"></i><i class="점"></i><i class="점"></i></span>' +
+      '</div>' +
+    '</div></div>';
+}
+function 대기붙이기(){
+  const 판 = $('#대화판');
+  if (!판 || $('#대기')) return;
+  const e = document.createElement('div');
+  e.id = '대기';
+  e.innerHTML = 대기점html();
+  판.appendChild(e);
+  흐름글 = ''; 흐름때 = 0;
+  맨아래로(true);
+}
+function 대기떼기(){
+  if (흐름예약){ clearTimeout(흐름예약); 흐름예약 = 0; }
+  흐름글 = '';
+  const e = $('#대기');
+  if (e && e.parentNode) e.parentNode.removeChild(e);
+}
+
+/* ── 글자가 흐르는 동안 ───────────────────────────────
+   ★ 260911 신고 — 「채팅 흐르는 느낌 있우면 좋을듯.」
+                  「출력 시작할 때 자동으로 스크롤이 따라붙길 바람.」
+
+   받는 대로 **점 셋이 있던 자리**를 글로 바꿔 나간다.
+   그리는 얼개는 `도막그리기()` 그대로다 — 그래야 흐르는 동안 보이는 것과
+   다 받은 뒤 보이는 것이 **같다.** 따로 그리면 마지막에 화면이 한 번 덜컥한다.
+
+   ★ 매 조각마다 다시 그리면 폰이 버벅인다. 0.06초에 한 번으로 묶는다
+   ★ **바닥에 붙어 계실 때만** 따라 내려간다. 위를 읽고 계시면 가만둔다 */
+let 흐름글 = '';
+let 흐름예약 = 0;
+let 흐름때 = 0;
+
+function 흐름그리기(){
+  흐름예약 = 0;
+  const e = $('#대기');
+  if (!e || !S.방) return;
+  const 붙었나 = 바닥에붙었나();      /* ★ 바꾸기 **전에** 재야 한다. 바꾸면 높이가 변한다 */
+  const 글 = 흐름글;
+  e.innerHTML = 글.trim()
+    ? 도막그리기(답을도막으로(글, 유저이름(S.방)), -1)
+    : 대기점html();
+  흐름때 = Date.now();
+  if (붙었나) 맨아래로(true);
+}
+function 흐름보이기(글){
+  흐름글 = 글;
+  if (흐름예약) return;
+  const 지난 = Date.now() - 흐름때;
+  흐름예약 = setTimeout(흐름그리기, 지난 > 60 ? 0 : 60 - 지난);
+}
+
 /* 인물 이름으로 얼굴을 찾는다. 방의 플롯에 인물 그림이 들어 있다 */
 function 얼굴찾기(이름){
   if (!S.방) return null;
@@ -618,8 +866,34 @@ function 인트로도막(플롯){
   const 인 = ((플롯 && 플롯.intros) || [])[0];
   const 대화 = 인 && (인.conversation || {});
   const 목 = (대화 && (대화.messages || (Array.isArray(대화) ? 대화 : null))) || [];
+  /* ★ 260911 — **인트로 인물이 통째로 내레이터로 떨어지고 있었다.**
+
+     제타 플롯 서른 개를 다 재 보니 `characters` 에 **id 칸이 없다** (name·description·imageUrl 뿐).
+     그런데 인트로 도막의 `senderId` 는 `_NARRATOR_` 아니면 UUID 다.
+     그래서 이름표가 늘 비었고 — **인물 대사가 전부 내레이터로 깔렸다.**
+
+     폰에서 실제로 눌러 보고 찾았다. 「소꿉친구가 나에게 이상한 선물을 줬다」 방을 새로 여니
+     인트로 아홉 도막이 다 ≡ 로 떴고, 그 되먹임을 받아 **새 답도 이름줄 없이 나왔다.**
+
+     ★ 고치는 법 — `_NARRATOR_` 만 내레이터로 본다.
+       그 밖의 senderId 는 인물이다. **나온 차례대로** characters 에 맞춘다.
+       인물이 하나인 플롯이 대부분이라 이것으로 맞는다.                          */
   const 이름표 = {};
   for (const c of ((플롯 && 플롯.characters) || [])) if (c && c.id) 이름표[c.id] = c.name;
+  {
+    const 캐 = ((플롯 && 플롯.characters) || []).filter(c => c && c.name);
+    const 본것 = [];
+    const 목2 = 목;
+    for (const m of 목2){
+      const sid = m && m.senderId;
+      if (!sid || sid === "_NARRATOR_" || m.senderType === "USER") continue;
+      if (이름표[sid]) continue;
+      if (본것.indexOf(sid) < 0) 본것.push(sid);
+    }
+    본것.forEach((sid, i) => { if (캐[i] && 캐[i].name) 이름표[sid] = 캐[i].name; });
+    /* 인물보다 senderId 가 많으면 나머지는 첫 인물로 — 내레이터로 뭉뚱그리는 것보다 낫다 */
+    if (캐.length) for (const sid of 본것) if (!이름표[sid]) 이름표[sid] = 캐[0].name;
+  }
   const 때 = new Date().toISOString();
   const 낸것 = [];
   for (const m of 목){
@@ -686,7 +960,10 @@ function 방내보내기(){
   const 꾸러미 = {
     낸때: new Date().toISOString(),
     무엇: "방 하나",
-    방: {id: 방.id, 제목: 방.제목, 플롯아이디: 방.플롯아이디,
+    /* ★ 260911 — **모델을 함께 담는다.**
+       회원님이 「이 방이 이상하다」 하셨을 때 어느 모델이었는지 알 수 없었다.
+       정예원 방 신고를 받고 되짚어 보려는데 자료에 모델이 없어 확인이 막혔다 */
+    방: {id: 방.id, 제목: 방.제목, 플롯아이디: 방.플롯아이디, 모델: 방.모델 || "",
          프로필아이디: 방.프로필아이디 || "", 이어하기수: (방.이어하기 || []).length},
     유저프로필: 방프로필(방, 플롯),
     플롯: 플롯,
@@ -883,8 +1160,11 @@ function 방프로필(방, 플롯){
   }
   const 기 = 기본프로필();
   if (기) return 기;
+  /* ★ 260911 — 제타 플롯의 chatProfiles 이름이 「{{user}}」 인 것이 있다.
+     그대로 쓰면 유저 이름이 「{{user}}」 가 되어 **치환이 안 된다.** 자리표는 건너뛴다 */
   const 플 = ((플롯 && 플롯.chatProfiles) || [])[0];
-  if (플 && 플.name) return {id: "", 이름: 플.name, 설명: 플.description || ""};
+  const 자리표 = n => !n || (n.indexOf("{{") >= 0) || n === "user";
+  if (플 && !자리표(플.name)) return {id: "", 이름: 플.name, 설명: 플.description || ""};
   return {id: "", 이름: "나", 설명: ""};
 }
 
@@ -1018,6 +1298,49 @@ function 지은것읽기(){
   try { return JSON.parse(localStorage.getItem("지은플롯") || "[]"); } catch(_){ return []; }
 }
 
+/* ★ 260911 — **구글로 직접 플롯을 짓는다.**
+   물음은 중계(/plotprompt)가 짜서 돌려준다. 앱에 한 벌 더 두면 한쪽이 낡는다.
+   부르는 것만 앱이 한다 — 앱은 회원님 기기에서 도니 한국에서 나간다. */
+async function 구글플롯직접(){
+  const 열 = 설정("구글키");
+  if (!열){
+    알림("마이페이지에서 구글 키를 넣어 주십시오");
+    S.보낸중 = false; return;
+  }
+  const 중계 = 중계주소();
+  try {
+    const p = await fetch(중계 + "/plotprompt", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({})
+    });
+    if (!p.ok){ 알림("물음을 못 받았습니다 (" + p.status + ")"); S.보낸중 = false; return; }
+    const {messages, 자리} = await p.json();
+
+    const r = await fetch(구글주소, {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "Authorization": "Bearer " + 열},
+      body: JSON.stringify({
+        model: 고른모델().모델 || "gemini-3.1-flash-lite",
+        messages, temperature: 1.15, max_tokens: 1600
+      })
+    });
+    const j = await r.json();
+    if (!r.ok){ 알림((j.error && j.error.message) || ("탈 " + r.status)); S.보낸중 = false; return; }
+    const 글 = (((j.choices || [])[0] || {}).message || {}).content || "";
+    const pp = 플롯가르기(글, 자리);
+    if (!pp){ 알림("못 알아들었습니다"); S.보낸중 = false; return; }
+
+    const 목 = 지은것읽기();
+    목.unshift(pp);
+    try { localStorage.setItem("지은플롯", JSON.stringify(목.slice(0, 60))); } catch(_){}
+    D.플롯.unshift(pp);
+    S.플롯 = pp; S.방 = null;
+    그리기();
+    알림("지었습니다 — " + ((자리 && 자리.갈래) ? 자리.갈래 : ""));
+  } catch(e){ 알림("못 지었습니다 — " + String(e.message).slice(0, 30)); }
+  S.보낸중 = false;
+}
+
 async function 자동생성(){
   const 중계 = 중계주소();
 
@@ -1026,6 +1349,16 @@ async function 자동생성(){
   알림("짓는 중…");
   try {
     const 어디 = 고른모델().업체;
+    /* ★ 260911 두 번째 고침 — **여기에 대화용 분기를 잘못 붙였다.**
+
+       처음에 `if (어디 === "gd") return await 구글직접(재료, 잰것, 방, 도막, 이어가기);`
+       를 넣었는데, **이 함수에는 그런 변수가 하나도 없다.** 자동생성은 플롯을 짓는
+       함수이고 구글직접은 대화 턴을 굴리는 함수다. 붙일 자리를 잘못 골랐다.
+       검사가 `or` 로 돌아 그 줄을 안 타서 못 잡았다 — **회원님이 「(무)google 직접」을
+       고른 채 자동생성을 누르면 ReferenceError 로 죽었을 것이다.**
+
+       플롯 짓는 쪽은 따로 둔다. 중계의 /plotprompt 가 물음만 돌려준다 (열쇠 안 씀). */
+    if (어디 === "gd") return await 구글플롯직접();
     const 초대 = 설정("초대");
     const r = await fetch(중계 + "/" + 어디 + "/plot", {
       method: "POST",
@@ -1105,6 +1438,15 @@ function 나그리기(){
         설정칸("중계", 기본중계, 값("중계")) +
         설정칸("초대", "초대 코드 (없으면 비움)", 값("초대")) +
       '</div>' +
+      /* ★ 260911 — **구글을 이 기기에서 바로 부를 때만** 쓰는 열쇠.
+         중계는 홍콩에서 나가 구글에 막힌다. 이 기기는 한국에서 나간다.
+         ★ 이 열쇠는 **이 기기 안에만** 있다. 코드에도 저장소에도 안 들어간다 */
+      '<div class="칸"><h2>구글 키</h2>' +
+        '<div class="글" style="margin-bottom:8px;color:var(--흐림2)">' +
+          '모델에서 <b>(무)google 직접</b> 을 고르실 때만 씁니다.<br>' +
+          '이 기기 안에만 저장됩니다. 값이 안 듭니다.</div>' +
+        설정칸("구글키", "AIza… (없으면 비움)", 값("구글키")) +
+      '</div>' +
       /* ★ 260910 회원님 : 「실제 제타처럼, 나도 내 프로필을 관리할 수 있는 창을 구현하라.」 */
       '<div class="칸"><h2>내 프로필</h2>' +
         (프로필들().length
@@ -1158,10 +1500,11 @@ function 시간판그리기(){
     return 두자리(d.getMonth() + 1) + "/" + 두자리(d.getDate()) + " " +
            두자리(d.getHours()) + ":" + 두자리(d.getMinutes());
   };
+  /* ★ 260911 — 흘려받은 판은 **첫 글자까지**도 함께 찍는다. 사람이 느끼는 것은 그쪽이다 */
   const 줄들 = 뒤.map(x =>
     안전(때글(x.때)) + "  [" + 안전(String(x.방 || "").slice(0, 4)) + "]  " +
     안전(x.업체) + " " + 안전(String(x.모델).slice(0, 22)) + "  " +
-    x.걸림 + "초  " + x.자수 + "자");
+    (x.첫 ? ("첫 " + x.첫 + "초 · ") : "") + x.걸림 + "초  " + x.자수 + "자");
   판.innerHTML =
     '가장 빠름 ' + 값들[0] + '초 · 가운데 ' + 값들[Math.floor(값들.length / 2)] +
     '초 · 가장 느림 ' + 값들[값들.length - 1] + '초  (' + 목.length + '번)' +
@@ -1176,10 +1519,66 @@ function 시간판그리기(){
 
    폰에서 뒤로(취소)를 누르면 앱이 그냥 닫혔다. 앱이 자리를 안 쌓아 두었기 때문이다.
    이제 한 단계씩 물러난다 — 시트 → 방·플롯 → 홈. 홈에서 한 번 더 누르면 그때 나간다 */
+/* ★ 260911 신고 — 「디바이스 취소버튼 뒤로가기 나가짐(채팅창열자마자누르면.
+   다른창들도 체크)」
+   ★ 260911 회원님 v1.2 메모 3번 — 「무조껀 상위가 아님.
+   내부에서 열린 경로에서는 내부로 돌아가는 기능도 필요함.」
+
+   전에는 **온 길이 없었다.** 「시트 → 방·플롯 → 홈」으로 무조건 한 단계씩 내렸다.
+   그래서 마이페이지에서 프로필을 고치다 뒤로 가면 홈으로 떨어졌다.
+   방을 열어도 자리를 안 쌓아서, 브라우저 자리가 하나뿐이면 그대로 앱 밖으로 나갔다.
+
+   이제 **지나온 자리를 쌓아 두고 그 길로 되돌아간다.**
+     온길      화면·방·플롯 을 옮길 때마다 앞 자리를 쌓는다
+     시트길    시트가 시트를 덮을 때 밑에 깔린 것을 쌓는다 (시트열기 쪽)
+   되돌아갈 때는 **쌓지 않는다** — `되돌리는중` 이 그것을 막는다 */
+const 온길 = [];
+let 지금자리 = null;
+let 되돌리는중 = false;
+
+function 자리표(){
+  return S.방 ? "방:" + S.방.id : S.플롯 ? "플롯:" + S.플롯.id : "화면:" + S.화면;
+}
+function 자리담기(){ return {표: 자리표(), 화면: S.화면, 방: S.방, 플롯: S.플롯}; }
+
+/* `그리기()` 가 맨 처음 부른다. 자리가 바뀌었으면 앞 자리를 쌓는다 */
+function 길살피기(){
+  const 이번 = 자리표();
+  if (!지금자리 || 이번 === 지금자리.표){ 지금자리 = 자리담기(); return; }
+  if (!되돌리는중){
+    온길.push(지금자리);
+    if (온길.length > 40) 온길.shift();     /* 끝없이 쌓이지 않게 */
+    자리쌓기();
+  }
+  지금자리 = 자리담기();
+}
+
 function 뒤로가기(){
-  if (시트열렸나()){ 시트닫기(); return true; }
-  if (S.방 || S.플롯){ S.방 = null; S.플롯 = null; 그리기(); return true; }
-  if (S.화면 !== "홈"){ S.화면 = "홈"; 그리기(); return true; }
+  /* ① 시트가 떠 있으면 시트에서 한 겹 */
+  if (시트열렸나()){ 시트뒤로(); return true; }
+  /* ② 온 길이 있으면 그 길로 */
+  const 앞 = 온길.pop();
+  if (앞){
+    되돌리는중 = true;
+    try {
+      S.화면 = 앞.화면; S.플롯 = 앞.플롯;
+      /* 그 사이 지워졌을 수 있다. 최신 것으로 다시 집는다 */
+      S.방 = 앞.방 ? (D.방.find(x => x.id === 앞.방.id) || null) : null;
+      그리기();
+    } finally { 되돌리는중 = false; }
+    return true;
+  }
+  /* ③ 길이 없으면 옛 규칙대로 한 단계 — 첫 화면이 방·플롯일 때를 위한 것이다 */
+  if (S.방 || S.플롯){
+    되돌리는중 = true;
+    try { S.방 = null; S.플롯 = null; 그리기(); } finally { 되돌리는중 = false; }
+    return true;
+  }
+  if (S.화면 !== "홈"){
+    되돌리는중 = true;
+    try { S.화면 = "홈"; 그리기(); } finally { 되돌리는중 = false; }
+    return true;
+  }
   return false;                       /* 더 갈 데가 없다 */
 }
 function 자리쌓기(){ try { history.pushState({앱: 1}, ""); } catch(_){} }
@@ -1216,6 +1615,7 @@ document.addEventListener("visibilitychange", () => {
 /* 어느 화면을 그리고 있었나 — 화면이 바뀌면 스크롤을 맨 위로 되돌린다 */
 let 앞화면 = "";
 function 그리기(){
+  길살피기();          /* ★ 260911 — 자리가 바뀌었으면 온 길에 쌓는다 */
   머리그리기(); 발그리기();
   /* ★ 260910 회원님 : 「돌아왔다가 또다른 곳을 보면, 스크롤이 아래로 내려간 채로
      시작되어 마치 오류인 것처럼 인지될 때가 있다.」
@@ -1543,6 +1943,15 @@ function 입력붙이기(){
   입.addEventListener('input', () => {
     입.style.height = 'auto';
     입.style.height = Math.min(입.scrollHeight, 110) + 'px';
+    맨아래로(false);      /* 입력칸이 커진 만큼 대화가 가려지지 않게 */
+  });
+  /* ★ 260911 신고 — 「첫 대화때 자판누르면 첫대화가 안보임.」
+     자판이 올라오는 것은 `visualViewport` 가 알려 준다(맨 아래 `자판보기`).
+     다만 기기에 따라 그 알림이 늦게 오거나 아예 안 온다. 그래서 여기서도 한 번 더 본다 */
+  입.addEventListener('focus', () => {
+    맨아래로(false);
+    setTimeout(() => 맨아래로(false), 180);
+    setTimeout(() => 맨아래로(false), 420);
   });
   /* ★ 빈 채로도 보낼 수 있으므로 단추를 잠그지 않는다 */
   보.disabled = false;
@@ -1584,7 +1993,7 @@ function 입력붙이기(){
 /* ★ 260910 회원님 : 「완성되어 빌드를 내보내게 된다면
    마이페이지에 빌드넘버와 일자와 시간을 적어서 내보낸다.」
    ★ 아래 한 줄은 **빌드 도구가 갈아 끼운다.** 손으로 고치지 않는다 */
-const 빌드 = {번호: "v1.1.4", 때: "2026-09-11 00:17"};
+const 빌드 = {번호: "v1.1.7", 때: "2026-09-11 14:47"};
 
 const 기본중계 = "https://zetaapp-relay.amuselk.workers.dev";
 
@@ -1607,9 +2016,73 @@ const 모델셋 = [
   {값: "gg|gemini-3.1-flash-lite",
    이름: "(무)google 3.1", 밑: "구글 무료키 · 빠르다 · 값이 안 든다"},
   {값: "or|google/gemini-3.1-flash-lite",
-   이름: "gemini 3.1", 밑: "오픈라우터"}
+   이름: "gemini 3.1", 밑: "오픈라우터"},
+  /* ★ 260911 — **앱에서 구글을 바로 부른다.**
+     중계는 홍콩에서 나가 구글에 막힌다 (400 User location is not supported).
+     앱은 회원님 기기에서 도니 한국에서 나간다.
+     열쇠는 **이 기기 안에만** 둔다 — 마이페이지에서 넣으신다 */
+  {값: "gd|gemini-3.1-flash-lite",
+   이름: "(무)google 직접", 밑: "이 기기에서 바로 · 값이 안 든다 · 열쇠를 넣으셔야 한다"}
 ];
 const 기본모델 = 모델셋[0].값;          /* 딥시크 */
+
+/* ── 앱에서 구글을 바로 부른다 ──
+
+   ★ 프롬프트는 **중계가 짠다.** 앱에 한 벌 더 두면 한쪽이 낡는다.
+     중계의 `/prompt` 는 열쇠를 안 쓰고 프롬프트만 돌려준다.
+   ★ 열쇠는 localStorage 에만 있다. 코드에도 저장소에도 안 들어간다.      */
+const 구글주소 = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+async function 구글직접(재료, 잰것, 방, 도막, 이어가기){
+  const 열 = 설정("구글키");
+  if (!열){
+    알림("마이페이지에서 구글 키를 넣어 주십시오");
+    S.보낸중 = false; 그리기(); return;
+  }
+  const 중계 = 중계주소();
+  try {
+    /* 1) 프롬프트를 중계에서 받는다 */
+    const p = await fetch(중계 + "/prompt", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(재료)
+    });
+    if (!p.ok){ 알림("프롬프트를 못 받았습니다 (" + p.status + ")"); S.보낸중 = false; 그리기(); return; }
+    const {messages} = await p.json();
+    잰것.첫글자 = Date.now();
+
+    /* 2) 구글을 바로 부른다 */
+    const r = await fetch(구글주소, {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "Authorization": "Bearer " + 열},
+      body: JSON.stringify({
+        model: 고른모델().모델 || "gemini-3.1-flash-lite",
+        messages, temperature: 1.0, max_tokens: 1400
+      })
+    });
+    const j = await r.json();
+    잰것.다받음 = Date.now();
+    if (!r.ok){
+      알림((j.error && j.error.message) || ("탈 " + r.status));
+      S.보낸중 = false; 그리기(); return;
+    }
+    const 글 = (((j.choices || [])[0] || {}).message || {}).content || "";
+    if (!글){ 알림("빈 답이 왔습니다"); S.보낸중 = false; 그리기(); return; }
+
+    도막.push(답을도막으로(글, 유저이름(방)));
+    D.도막[방.id] = 도막;
+    새것담기();
+    방그리기();
+    const 걸림 = ((잰것.다받음 - 잰것.보냄) / 1000).toFixed(1);
+    시간남기기({때: Date.now(), 걸림: Number(걸림), 중계: 0,
+                업체: "gd", 모델: 고른모델().모델, 자수: 글.length,
+                방: (방 && 방.제목) || ""});
+    알림(걸림 + "초");
+    S.보낸중 = false;
+    await 요약해두기(방.id);
+  } catch(e){
+    알림("못 보냈습니다 — " + (e && e.message ? e.message : ""));
+    S.보낸중 = false; 그리기();
+  }
+}
 
 /* 지금 고른 것을 **업체와 모델로 갈라** 준다 */
 function 고른모델(){
@@ -1652,10 +2125,28 @@ function 기억쓰기(기억){
 }
 
 /* 기억을 모델이 읽을 글로. **모델이 쓴 것을 손대지 않고 잇는다** */
+/* ★ 260911 — 마디를 **층으로** 싣는다.
+   최근 둘은 본문까지, 그 앞은 제목만, 더 앞은 몇 개였는지만.
+   첫 앱의 fmtEras() 와 같은 얼개다 (ERA_FULL 2 · ERA_TITLES 15).     */
+const 마디본문 = 2;      /* 본문까지 싣는 최근 마디 수 */
+const 마디제목 = 15;     /* 제목만 싣는 최대 마디 수 */
+function 마디글(기억){
+  const 마디 = (기억 && 기억.마디) || [];
+  if (!마디.length) return String((기억 && 기억.여태) || "");
+  const 판 = [];
+  const 앞 = 마디.slice(0, Math.max(0, 마디.length - 마디본문));
+  const 보일앞 = 앞.slice(-마디제목);
+  if (앞.length > 보일앞.length)
+    판.push("(그보다 앞선 " + (앞.length - 보일앞.length) + "토막은 제목도 남지 않았다)");
+  for (const x of 보일앞) 판.push(x.n + ". " + x.제목);
+  for (const x of 마디.slice(-마디본문)) 판.push(x.n + ". " + x.제목 + NL + "  " + x.글);
+  return 판.join(NL);
+}
 function 기억글(기억){
   if (!기억) return "";
   const 판 = [];
-  if (기억.여태) 판.push(기억.여태);
+  const 마 = 마디글(기억);
+  if (마) 판.push(마);
   const 사이 = (기억.사이 || []).filter(x => String(x || "").trim());
   if (사이.length) 판.push("[사이]" + NL + 사이.join(NL + NL));
   const 열린 = (기억.열린것 || []).filter(x => String(x || "").trim());
@@ -1682,6 +2173,58 @@ function 끝빗금떼기(주소){
 
 /* 이어가기 = true 면 회원님이 아무것도 안 치고 보낸 것이다.
    유저 도막을 만들지 않고, 모델에게 **그냥 이어 가라**고만 알린다 */
+/* ── 흘려받기 ─────────────────────────────────────────
+   ★ 260911 신고 — 「채팅 흐르는 느낌 있우면 좋을듯.」
+
+   업체들이 다 같은 꼴로 흘려보낸다 (SSE) —
+     data: {"choices":[{"delta":{"content":"글"}}]}
+     data: [DONE]
+   빈 줄로 덩이가 갈리고, 콜론으로 시작하는 줄은 주석이다(오픈라우터가 보낸다).
+
+   ★ **덩이가 반쪽으로 끊겨 온다.** 그물이 나누는 자리는 글자 경계와 상관없다.
+     그래서 마지막 줄은 늘 남겨 두었다가 다음 덩이와 이어 붙인다.
+     이걸 안 하면 한글이 깨지고 JSON 이 쪼개진다
+   ★ `TextDecoder` 에 `{stream:true}` 를 주는 것도 같은 까닭이다 —
+     한글 한 글자가 세 바이트라 덩이 경계에서 쪼개진다
+
+   돌려주는 것 —
+     {흘렀나:true,  글, 첫글자, 답}    흘러왔다
+     {흘렀나:false, 답}                안 흘렀다 — 부른 쪽이 옛 길로 되돌아간다 */
+async function 흘려받기(주소, 머리, 본문, 닿을때){
+  const r = await fetch(주소, {method: "POST", headers: 머리, body: 본문});
+  const 결 = String(r.headers.get("Content-Type") || "");
+  if (!r.ok || 결.indexOf("event-stream") < 0 || !r.body) return {흘렀나: false, 답: r};
+
+  const 읽개 = r.body.getReader();
+  const 풀개 = new TextDecoder("utf-8");
+  let 남은 = "", 글 = "", 첫글자 = 0;
+
+  for (;;){
+    const 온것 = await 읽개.read();
+    if (온것.done) break;
+    남은 += 풀개.decode(온것.value, {stream: true});
+    const 줄들 = 남은.split(NL);
+    남은 = 줄들.pop();                 /* 마지막 줄은 아직 덜 왔을 수 있다 */
+    for (const 줄 of 줄들){
+      const t = 줄.trim();
+      if (!t || t.charAt(0) === ":") continue;         /* 빈 줄 · 주석 */
+      if (t.indexOf("data:") !== 0) continue;
+      const 속 = t.slice(5).trim();
+      if (!속 || 속 === "[DONE]") continue;
+      let j;
+      try { j = JSON.parse(속); } catch(_){ continue; }
+      const d = (((j.choices || [])[0] || {}).delta) || {};
+      const c = d.content;
+      if (typeof c === "string" && c){
+        if (!첫글자) 첫글자 = Date.now();
+        글 += c;
+        if (닿을때) 닿을때(글);
+      }
+    }
+  }
+  return {흘렀나: true, 글: 글, 첫글자: 첫글자, 답: r};
+}
+
 async function 말보내기(친말, 주문, 이어가기){
   const 중계 = 중계주소();
 
@@ -1700,6 +2243,10 @@ async function 말보내기(친말, 주문, 이어가기){
                messageTime: new Date().toISOString()});
   }
   방그리기();
+  /* ★ 260911 — 기다리는 동안 화면이 죽어 있지 않게 점 셋을 놓는다.
+     신고 : 「출력대기중엔 ᆞ ᆞ ᆞ 표시가 움직이도록.」
+     ★ 그리고 **맨 아래로 내린다** — 방금 친 말풍선이 통째로 보여야 한다 */
+  대기붙이기();
 
   /* 재료만 보낸다. 프롬프트는 중계가 짠다 */
   /* **이 방에서 본보기를 뽑는다.**
@@ -1785,10 +2332,29 @@ async function 말보내기(친말, 주문, 이어가기){
        전에는 글자만 이어 붙여 보냈다. 그러면 누가 말했는지가 사라져서
        모델이 앞 대화에서 묶음도 내레이터도 못 배운다. 되먹임이 본보기를 이긴다.
        실측 — 한 묶음이 259자로 뭉쳤다. 제타는 68자다 */
-    도막들: 도막.slice(-24).map(m => ({
-      봇: ((m.sender && m.sender.type) === "BOT"),
-      글: 보낼글(m)
-    })),
+    /* ★ 260911 — **24 → 14 로 줄였다.**
+
+       잰 값 : 프롬프트 9,970자 중 대화 원문이 6,607자(66.3%)였다.
+       플롯은 3.7%, 유저는 0.6% 다. 그래서 **플롯을 바꿔도 인물이 안 갈렸다.**
+       그리고 기운 흐름의 관성이 66% 로 되먹혀 들어왔다.
+
+       ★ 연속성을 잃지 않으려고 **요약을 더 자주 돌린다** (아래 요약주기 6 → 4).
+         미요약 구간이 최대 8 도막이므로 14 도막 안에 들어온다.                */
+    /* ★ 260911 — **유저 도막에서 이름줄을 뗀다.**
+
+       제타에서 받은 방은 유저 도막에도 speakerName 이 붙어 있다.
+       그대로 보내면 되먹임이 「준」 이름줄을 계속 가르치는데,
+       꼴 규칙은 「{{user}}는 이름줄에 놓지 않는다」다. **규칙과 되먹임이 어긋난다.**
+       데타에서 새로 만든 도막에는 이름이 없으니 같은 꼴로 맞춘다.                 */
+    도막들: 도막.slice(-14).map(m => {
+      const 봇 = ((m.sender && m.sender.type) === "BOT");
+      let 글 = 보낼글(m);
+      if (!봇){
+        const 나이름 = 방프로필(방, 플롯).이름;
+        if (나이름) 글 = 글.split(NL).filter(l => l.trim() !== 나이름).join(NL).trim();
+      }
+      return {봇, 글};
+    }),
     /* ★ 그 방에서 뽑은 본보기. 없으면 중계에 박힌 것이 쓰인다 */
     본보기: 방본보기(방, 14) || undefined,
     /* ★ 아무것도 안 치고 보내면 **이어 가라**는 뜻이다 (260910 회원님).
@@ -1802,37 +2368,67 @@ async function 말보내기(친말, 주문, 이어가기){
   try {
     const 어디 = 고른모델().업체;
     const 초대 = 설정("초대");
-    const r = await fetch(중계 + "/" + 어디 + "/turn", {
-      method: "POST",
-      headers: {"Content-Type": "application/json",
-                ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
-      body: JSON.stringify(재료)
-    });
-    잰것.첫글자 = Date.now();
-    const j = await r.json();
-    잰것.다받음 = Date.now();
+    const 머리 = {"Content-Type": "application/json",
+                  ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})};
+    const 본문 = JSON.stringify(재료);
 
-    if (!r.ok){ 알림((j.error && j.error.message) || ("탈 " + r.status)); S.보낸중 = false; return; }
-    const 글 = (((j.choices || [])[0] || {}).message || {}).content || "";
-    if (!글){ 알림("빈 답이 왔습니다"); S.보낸중 = false; return; }
+    /* ★ 260911 — **흘려받기를 먼저 해 본다.**
+       중계에 `/turn-stream` 이 아직 없으면(안 올린 판) 404 가 온다.
+       그때는 **옛 길 `/turn` 으로 되돌아간다.** 그래서 앱을 먼저 구워도 안 깨진다.
+       회원님 지시 : 「옛 길(/turn)을 남기고 /turn-stream을 새로 더하게 하라.」 */
+    let 흐름 = null;
+    try {
+      흐름 = await 흘려받기(중계 + "/" + 어디 + "/turn-stream", 머리, 본문, 흐름보이기);
+    } catch(_){ 흐름 = null; }        /* 흐르다 끊겼다 — 아래에서 옛 길로 다시 한다 */
+
+    let r, 글;
+    if (흐름 && 흐름.흘렀나){
+      r = 흐름.답;
+      글 = 흐름.글;
+      잰것.첫글자 = 흐름.첫글자 || Date.now();
+      잰것.다받음 = Date.now();
+    } else {
+      /* 옛 길 — 전문을 한 번에 받는다 */
+      r = (흐름 && 흐름.답 && 흐름.답.status !== 404) ? 흐름.답
+        : await fetch(중계 + "/" + 어디 + "/turn", {method: "POST", headers: 머리, body: 본문});
+      const j = await r.json().catch(() => ({}));
+      잰것.첫글자 = Date.now();
+      잰것.다받음 = Date.now();
+      if (!r.ok){ 대기떼기(); 알림((j.error && j.error.message) || ("탈 " + r.status)); S.보낸중 = false; return; }
+      글 = (((j.choices || [])[0] || {}).message || {}).content || "";
+    }
+
+    if (!r.ok){ 대기떼기(); 알림("탈 " + r.status); S.보낸중 = false; return; }
+    if (!글){ 대기떼기(); 알림("빈 답이 왔습니다"); S.보낸중 = false; return; }
 
     도막.push(답을도막으로(글, 유저이름(방)));
     D.도막[방.id] = 도막;
     새것담기();
     방그리기();
 
-    /* 시간을 남긴다 — 나중에 회원님께 숫자로 보여 드린다 */
+    /* 시간을 남긴다 — 나중에 회원님께 숫자로 보여 드린다.
+
+       ★ 260911 — **첫 글자까지와 다 뜨기까지를 따로 잰다** (실행계획 2.4).
+         전에는 `첫글자` 라는 이름만 붙여 놓고 실제로는 **머리글이 온 때**를 재고 있었다.
+         흘려받으면 진짜 첫 글자가 언제 왔는지 알 수 있다.
+         사람이 느끼는 것은 앞쪽이다 */
     const 걸림 = ((잰것.다받음 - 잰것.보냄) / 1000).toFixed(1);
+    const 첫 = 잰것.첫글자 ? ((잰것.첫글자 - 잰것.보냄) / 1000).toFixed(1) : 0;
     const 중계잰것 = r.headers.get("X-Ttfb");
-    시간남기기({때: Date.now(), 걸림: Number(걸림), 중계: Number(중계잰것 || 0),
+    시간남기기({때: Date.now(), 걸림: Number(걸림), 첫: Number(첫),
+                흘림: !!(흐름 && 흐름.흘렀나), 중계: Number(중계잰것 || 0),
                 업체: 어디, 모델: 재료.모델 || "(기본)", 자수: 글.length,
-                방: (방 && 방.제목) || "", 때: Date.now()});
-    알림(걸림 + "초");
+                방: (방 && 방.제목) || ""});
+    알림((흐름 && 흐름.흘렀나) ? ("첫 글자 " + 첫 + "초 · 다 " + 걸림 + "초") : (걸림 + "초"));
     /* ★ 답을 받은 뒤에 조용히 돌린다. 대화를 안 막는다 */
     요약해두기(방.id);
   } catch (e){
     알림("못 보냈습니다 — " + String(e.message).slice(0, 40));
   }
+  /* ★ 260911 — 어느 길로 끝나든 점 셋을 반드시 뗀다.
+     성공하면 `방그리기()` 가 통째로 다시 그려 저절로 사라지지만,
+     탈이 나 되돌아가는 길에서는 그것이 안 돈다. 그대로 두면 영영 점만 깜빡인다 */
+  대기떼기();
   S.보낸중 = false;
 }
 
@@ -1845,7 +2441,7 @@ async function 말보내기(친말, 주문, 이어가기){
    ★ **어느 칸에 넣을지 · 언제 지울지는 모델이 정한다.** 앱은 나르기만 한다.
      회원님 : 「앱은 정말 0 or 1 정도의 기능밖에 못하며, 그런 용도로만 써야한다」
    ══════════════════════════════════════════════════════ */
-const 요약주기 = 6;          /* 여섯 턴에 한 번 */
+const 요약주기 = 4;          /* ★ 260911 — 대화 원문을 14 도막으로 줄인 만큼 더 자주 돈다 */
 
 async function 요약해두기(방아이디){
   const 중계 = 중계주소();
@@ -1872,7 +2468,11 @@ async function 요약해두기(방아이디){
                 ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
       body: JSON.stringify({
         모델: 고른모델().모델 || undefined,
-        여태: 기.여태, 사이: (기.사이 || []).join(NL),
+        /* ★ 앞선 마디 제목들 — 같은 제목을 또 짓지 않게 */
+        앞제목: (기.마디 || []).map(x => x.n + ". " + x.제목).join(NL),
+        /* 바로 앞 마디 본문만 보낸다. 전부 보내면 다시 무한히 자란다 */
+        여태: (기.마디 || []).length ? 기.마디[기.마디.length - 1].글 : (기.여태 || ""),
+        사이: (기.사이 || []).join(NL),
         열린것: (기.열린것 || []).join(NL), 남길것: (기.남길것 || []).join(NL),
         새것
       })
@@ -1881,7 +2481,21 @@ async function 요약해두기(방아이디){
     const 글 = (((j.choices || [])[0] || {}).message || {}).content || "";
     if (!글) return;
     const 갈린것 = 요약가르기(글);
-    기.여태 = 갈린것.여태 || 기.여태;
+    /* ★ 260911 — **마디로 쌓는다. 여태에 이어 붙이지 않는다.**
+       전에는 여태가 계속 자라 500턴이면 터졌다 (회원님 지적).
+       첫 앱이 이미 이렇게 풀어 두었다 — 마디마다 제목을 달고,
+       오래된 것은 제목만 싣는다. 「놀이터 사건」의 인덱스 구조다 */
+    기.마디 = 기.마디 || [];
+    if (갈린것.여태){
+      기.마디.push({
+        n: 기.마디.length + 1,
+        부터: 밑, 까지: 여기까지,
+        제목: 갈린것.제목 || ("토막 " + (기.마디.length + 1)),
+        글: 갈린것.여태
+      });
+    }
+    /* 옛 자료 호환 — 여태만 있던 방은 그것을 0번 마디로 삼는다 */
+    기.여태 = "";
     기.사이 = 갈린것.사이 ? [갈린것.사이] : 기.사이;
     기.열린것 = 갈린것.열린것;
     기.남길것 = 갈린것.남길것;
@@ -1894,15 +2508,17 @@ async function 요약해두기(방아이디){
 /* 요약을 네 칸으로 가른다.
    ★ 정규식을 안 쓴다 (G6) */
 function 요약가르기(글){
-  const 낸것 = {여태: "", 사이: "", 열린것: [], 남길것: []};
+  const 낸것 = {제목: "", 여태: "", 사이: "", 열린것: [], 남길것: []};
   let 지금 = null;
   for (const 줄 of String(글).split(NL)){
     const t = 줄.trim();
+    if (t === "[제목]"){ 지금 = "제목"; continue; }
     if (t === "[여태]"){ 지금 = "여태"; continue; }
     if (t === "[사이]"){ 지금 = "사이"; continue; }
     if (t === "[열린것]"){ 지금 = "열린것"; continue; }
     if (t === "[남길것]"){ 지금 = "남길것"; continue; }
     if (!지금 || !t || t === "…") continue;
+    if (지금 === "제목"){ if (!낸것.제목) 낸것.제목 = t.slice(0, 40); continue; }
     if (지금 === "여태" || 지금 === "사이")
       낸것[지금] = (낸것[지금] ? 낸것[지금] + NL : "") + t;
     else {
@@ -2115,7 +2731,10 @@ function 방메뉴열기(){
     시트줄("↻", "이어하기", "이어하기", {밑: 이어 ? 이어 + "벌 저장돼 있습니다" : "저장된 것이 없습니다"}) +
     시트줄("👤", "대화 프로필", "대화프로필", {밑: "내 이름과 설명 — 대화에 계속 씁니다"}) +
     시트줄("📄", "플롯 정보", "플롯보기") +
-    시트줄("🤖", "AI 모델", "모델", {밑: 방.모델 || "zeta"}) +
+    /* ★ 260911 회원님 — 「그대로 두어라. 그 방이 무슨 모델을 썼나를 보여주는 자리다.
+       하지만 zeta가 나올 것 같다면 그 문구만 deta로 변경하라.」
+       그래서 **값은 그대로 보여 주되** `zeta` 일 때만 `deta` 로 적는다 */
+    시트줄("🤖", "AI 모델", "모델", {밑: 딱지이름(방.모델)}) +
     시트줄("🧠", "기억", "기억", {밑: "제타에 없는 것"}) +
     시트줄("📝", "메모장", "메모", {밑: 메모읽기(방.id) ? "적어 둔 것이 있습니다" : "비어 있습니다"}) +
     시트줄("⧉", "대화 통째로 복사", "다복사") +
@@ -2229,6 +2848,45 @@ async function 들이기(){
   }
   그리기();
 }
+
+/* ══════════════════════════════════════════════════════
+   자판이 올라온 것을 앱이 알게 한다
+
+   ★ 260911 신고 — 「첫 대화때 자판누르면 첫대화가 안보임.」
+   ★ 260911 회원님 v1.2 메모 1번 — 「타자 불러와졌을떄 채팅입력란이 위로 로드된
+      상태로 고정되어, 채팅방 스크롤해도 그 위치를 고정하길 바람.」
+
+   자판이 올라와도 `100dvh` 는 그대로다. 실제로 재 보면 이랬다 —
+     보이는 높이 640px   ·   앱 높이 900px   ·   입력칸 아래끝 900px
+   입력칸이 자판 뒤로 260px 들어가 있었다. 위쪽 첫 대화는 그만큼 화면 밖으로 밀렸다.
+
+   **`visualViewport` 를 본다.** 그것만이 자판을 셈에 넣는다.
+     height     자판을 뺀 진짜 보이는 높이
+     offsetTop  iOS 에서 판이 통째로 밀려 올라간 만큼. 그만큼 되밀어야 제자리다
+
+   ★ `visualViewport` 가 없으면 아무것도 안 한다 — CSS 가 `100dvh` 로 되돌아간다
+   ══════════════════════════════════════════════════════ */
+(function 자판보기(){
+  const vv = window.visualViewport;
+  if (!vv) return;
+  let 앞높이 = -1;
+  function 맞추기(){
+    const h = Math.round(vv.height);
+    const 위 = Math.round(vv.offsetTop || 0);
+    document.documentElement.style.setProperty('--보임', h + 'px');
+    const 앱 = $('#앱');
+    if (앱) 앱.style.transform = 위 ? 'translateY(' + 위 + 'px)' : '';
+    /* 자판이 **올라올 때만** 따라 내린다. 내려갈 때 끌어내리면 읽던 자리를 잃는다.
+       그리고 바닥에 붙어 있을 때만 내린다 — 위를 읽고 계시면 가만둔다 */
+    const 자판올라옴 = (앞높이 >= 0 && h < 앞높이 - 40);
+    앞높이 = h;
+    if (자판올라옴 && S.방) 맨아래로(false);
+  }
+  vv.addEventListener('resize', 맞추기);
+  vv.addEventListener('scroll', 맞추기);
+  addEventListener('orientationchange', () => setTimeout(맞추기, 250));
+  맞추기();
+})();
 
 그리기();
 자리쌓기();      /* ★ 첫 뒤로가 먹으려면 자리를 하나 쌓아 둬야 한다 */
