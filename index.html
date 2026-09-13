@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#151516">
-<title>제타앱</title>
+<title>데타</title>
 <!--
-  제타앱 — 제타와 같은 화면 · 같은 결 · 거기에 **장기기억**
+  데타 — 제타와 같은 화면 · 같은 결 · 거기에 **장기기억**
 
   회원님 지시 (260910) —
     「제타랑 똑같은 레이아웃, 기능, 동일수준의 출력 되게끔 앱 만들어놓고,
      해당 플롯들도 안에 구현해놔.」
     「제타앱이 갖지 못한 '장기기억'을 나는 갖는게 목표니까,
-     제타앱에는 장기기억을 추가로 구현해놓고.」
+     데타에는 장기기억을 추가로 구현해놓고.」
 
   색과 크기는 **제타 실물에서 잰 것**이다 (07. 제타에서 받은 것/4. 화면 그림/00_결.json)
     바탕 rgb(21,21,22) · 강조 rgb(124,103,255) · 글꼴 Pretendard Variable
@@ -231,8 +231,13 @@ img{display:block;max-width:100%}
 .대기방울{display:inline-flex;align-items:center;gap:5px;min-height:21px}
 .대기방울 .점{width:6px;height:6px;border-radius:50%;background:#fff;
   animation:대기점 1.5s linear infinite}
-.대기방울 .점:nth-child(2){animation-delay:-.5s}
-.대기방울 .점:nth-child(3){animation-delay:-1s}
+/* ★ 260912 회원님 : 「입력 후 출력 대기하는 점3개 **흐르는 방향을 반대로** 바꿔라.
+   지금은 우에서 좌로 움직이는 느낌이니까, **좌에서 우로** 움직이는 느낌으로 바꿔.」
+
+   제타 값은 `-.5s` · `-1s` 였고 그러면 **둘째 → 첫째 → 셋째** 로 어두워진다.
+   둘을 맞바꾸면 **첫째 → 둘째 → 셋째**, 왼쪽에서 오른쪽으로 흐른다 */
+.대기방울 .점:nth-child(2){animation-delay:-1s}
+.대기방울 .점:nth-child(3){animation-delay:-.5s}
 /* 움직임을 꺼 둔 분에게는 안 움직인다 — 점은 그대로 보인다 */
 @media (prefers-reduced-motion:reduce){
   .대기방울 .점{animation:none;opacity:.4}
@@ -317,6 +322,11 @@ img{display:block;max-width:100%}
 .시트줄 .꼭{width:22px;text-align:center;font-size:16px}
 .시트줄 .밑{font-size:11px;color:var(--흐림);margin-top:2px}
 .시트줄.빨강{color:var(--빨강)}
+/* ★ 260912 — 이어하기 목록에서 그 대화의 메모·기억을 바로 연다 */
+.곁줄{display:flex;gap:6px;padding:0 12px 10px 46px}
+.곁단추{padding:5px 11px;border-radius:9px;background:var(--바탕3);color:var(--흐림);
+  font-size:11px;border:0;cursor:pointer}
+.곁단추:active{background:var(--바탕2)}
 .시트줄.켬{background:var(--바탕3)}
 #시트 textarea{width:100%;background:var(--바탕);border-radius:12px;padding:12px;
   font-size:14px;min-height:120px;resize:vertical;line-height:1.6}
@@ -374,7 +384,7 @@ img{display:block;max-width:100%}
 <script>
 'use strict';
 /* ══════════════════════════════════════════════════════
-   제타앱
+   데타
 
    ★ 이 파일 하나가 앱 전부다. 옛 앱과 같은 얼개다.
    ★ 화면은 제타 실물을 찍어 놓고 보고 그렸다.
@@ -552,6 +562,15 @@ function 머리그리기(){
            플롯 정보가 동일하게 떠야한다.」 */
         '<button class="가운데" data-가=플롯보기 style="text-align:left">' +
           안전(S.방.제목) + '</button>' +
+        /* ★★★ 260912 회원님 지적 — 「대화 시작했을 때 누구인지 안고르고 '그만' 눌렀더니,
+           **다시 고를 방도가 없다.** 제타는 이렇지 않다. 다시 만들어.」
+
+           메뉴 안에는 있었지만 **보이지 않으니 없는 것과 같았다.**
+           제타는 방 안 머리에 **지금 쓰는 프로필 이름을 늘 띄워 두고** 그것을 누르면 열린다.
+           ★ 회원님 : 「각 채팅방에서 **보라색 작은 체크표시** 있는게 현재 선택되어있는 프로필」
+             — 방마다 따로 잡히므로 **어느 것인지 늘 보여야 한다** */
+        '<button class="단추" data-가=대화프로필 style="font-size:12px;font-weight:600">' +
+          안전((방프로필(S.방, 지금플롯()) || {}).이름 || "프로필") + ' ˅</button>' +
         '<button class="단추" data-가=모델 style="font-size:12px;font-weight:600">' +
           안전(고른모델().이름) + ' ˅</button>' +
         '<button class="단추" data-가=방메뉴>☰</button>' +
@@ -596,7 +615,7 @@ function 홈그리기(){
         '<div class="속">' +
           '<div class="이름">' + 안전(p.name) + '</div>' +
           '<div class="셈">' + (p.interactionCount ? 만단위(p.interactionCount) : '') + '</div>' +
-          '<div class="한줄">' + 안전(p.shortDescription) + '</div>' +
+          '<div class="한줄">' + 안전(이름채우기(p.shortDescription, p)) + '</div>' +
           '<div class="태그">' + (p.hashtags || []).slice(0, 6).map(t => '#' + 안전(t)).join(' ') + '</div>' +
         '</div>' +
       '</div>').join('')
@@ -816,46 +835,120 @@ let 흐름때 = 0;
    40ms 마다 조금씩 따라붙는다. 뒤처질수록 빨라지되 한 번에 너무 많이는 안 뱉는다.
    다 받았으면(흐름끝났나) 남은 것을 조금 더 빠르게 흘려 마무리한다 */
 let 보인만큼 = 0, 흐름끝났나 = false;
+/* ★★★ 260912 — **제타 실측에 맞춘 흐름 속도.** 아래 흐름그리기() 주석 참고.
+   제타 방에서 0.4초마다 화면에 그려진 글자를 세니 **15.7자/초**였고,
+   73칸 동안 한 번도 안 멎었다(흔들림÷평균 0.41). 그 결을 그대로 낸다. */
+const 흐름초당자 = 16;      /* 초당 낼 글자 수 */
+const 흐름간격 = 60;        /* 몇 밀리초마다 그리나 — 한 번에 한 자쯤.
+                               ★ 120ms(두 자씩)로 재니 흔들림÷평균 0.61 이었다(제타 0.41).
+                                 촘촘히 하면 고르게 된다 */
+const 흐름한칸 = Math.ceil(흐름초당자 * 흐름간격 / 1000);
+let 흐름잰때 = 0;
 function 흐름그리기(){
   흐름예약 = 0;
   const e = $('#대기');
   if (!e || !S.방) return;
 
+  /* ★★★ 260912 — **글자가 아니라 말풍선 단위로 낸다.**
+
+     회원님 : 「**흐르는듯한 채팅은 실제 제타 스타일과 좀 차이가 있다?**
+       다시 제대로 확인해줄래? or(오픈라우터) 3.1은 잘 되더라.」
+       「**gg(구글키) 3.1은 갑자기 확 다 나와버린다.** 왜 한번에 출력되듯 하는거지?」
+
+     앱에서 재 보니 버그가 아니었다 —
+       gg 3.1 실측 : 첫 조각이 **4,352ms** 에 오고 답은 4,442ms 에 끝났다.
+       프롬프트가 커서(system 4,248자 + 본보기 22쌍) 첫 토큰이 늦고,
+       그다음은 한꺼번에 쏟아진다. **글자를 흘릴 틈이 없다.**
+     SSE 조각 수도 업체마다 딴판이다 — gg 9개 · or 3.1 10개 · deepseek 88개.
+     글자 단위로 흘리면 **모델마다 흐름이 딴판**이 된다.
+
+     ★ 그리고 제타는 애초에 글자를 흘리지 않는다. **말풍선이 하나씩 툭툭 나타난다.**
+
+     그래서 **빈 줄로 닫힌 데까지만** 보인다. 말풍선 하나가 완성되면 그것만 붙는다.
+
+     ★★★ 260912 — **그것으로는 안 됐다. 실측으로 밝혀졌다.**
+
+       회원님 : 「제타 출력을 실시간으로 체크하면 되는 문제 아니냐 … 사실 내 생각엔
+         **이미 텍스트는 뭉텅이로 전달받은 다음에, css가 순차출력을 해주는 거라고 생각이 되거든,
+         제타에서는.**」
+
+       제타 방에서 0.4초마다 **화면에 그려진 글자 수**를 직접 셌다 —
+
+         제타   흔들림÷평균 **0.41** · 73칸 중 멎은 칸 **0개** · **15.7자/초**
+         우리   흔들림÷평균 **1.51** · 21칸 중 멎은 칸 **16개** · **148~242자/초**
+
+       같은 턴의 두 줄기를 나란히 놓으면 까닭이 보인다 —
+         받은 것 : 18 11 23 10 11 8 0 3 3 6 0 4 4 3 0 4 3 7 9 45 27   ← 꾸준히 도착한다
+         그린 것 : 14  0 39  0  0 0 0 0 0 27 0 0 0 0 0 0 0 0 0 89 41   ← 다섯 번만 움직인다
+
+       `묶음크기()` 가 99 라서 답이 **말풍선 하나**로 나온다. 그러면 기다리는 `\n\n` 이
+       아예 안 오고, 끝난 뒤 `보인만큼 = 통` 으로 **남은 전부를 한 번에 쏟는다.**
+       말풍선 단위라는 생각은 맞았지만 **그 단위가 답 안에 없었다.**
+
+     ★ 그래서 **받은 것과 무관하게 고른 속도로** 낸다. 제타 실측이 15.7자/초다.
+       조각이 크게 오든 잘게 오든 · 말풍선이 하나든 여럿이든 **같은 결**이 된다.
+       다만 **받은 것보다 앞질러 갈 수는 없다.** */
   const 통 = 흐름글.length;
   if (보인만큼 < 통){
-    const 남은 = 통 - 보인만큼;
-    /* 40ms 에 두세 자 — 초당 50~75자. 사람이 읽는 속도다.
-       뒤처지면(남은 게 많으면) 조금 빨라지고, 다 받았으면 더 빨라진다 */
-    let 걸음 = 2 + Math.floor(남은 / 120);
-    if (흐름끝났나) 걸음 = 걸음 * 2;
-    if (걸음 > 14) 걸음 = 14;
-    보인만큼 = Math.min(통, 보인만큼 + 걸음);
+    if (흐름끝났나 && 통 - 보인만큼 <= 흐름한칸){
+      보인만큼 = 통;                      /* 다 받았고 한 칸 안쪽이면 마저 보인다 */
+    } else {
+      /* 지난번에 그린 때로부터 흐른 만큼만 낸다 — 초당 흐름초당자 자 */
+      const 흘렀 = Math.max(0, Date.now() - (흐름잰때 || Date.now()));
+      const 낼만큼 = Math.max(1, Math.round(흐름초당자 * 흘렀 / 1000));
+      보인만큼 = Math.min(통, 보인만큼 + 낼만큼);
+    }
   }
+  흐름잰때 = Date.now();
 
   const 붙었나 = 바닥에붙었나();      /* ★ 바꾸기 **전에** 재야 한다. 바꾸면 높이가 변한다 */
   const 글 = 흐름글.slice(0, 보인만큼);
   e.innerHTML = 글.trim()
-    ? 도막그리기(답을도막으로(글, 유저이름(S.방)), -1)
+    ? 도막그리기(답을도막으로(글, 유저이름(S.방), 묶음크기(지금플롯())), -1)
     : 대기점html();
   흐름때 = Date.now();
   if (붙었나) 맨아래로(true);
 
-  /* 아직 못 따라잡았으면 또 돈다 */
-  if (보인만큼 < 흐름글.length) 흐름예약 = setTimeout(흐름그리기, 40);
+  /* 아직 못 따라잡았으면 또 돈다.
+     ★ 260912 — **고른 간격으로** 돈다. 끝났다고 빨라지지 않는다 —
+       빨라지면 마지막이 덜컥 쏟아져 제타 결과 달라진다 (실측 148~242자/초가 그것이었다) */
+  if (보인만큼 < 흐름글.length) 흐름예약 = setTimeout(흐름그리기, 흐름간격);
 }
 function 흐름보이기(글){
   흐름글 = 글;
   if (흐름예약) return;
-  흐름예약 = setTimeout(흐름그리기, 40);
+  if (!흐름잰때) 흐름잰때 = Date.now();
+  흐름예약 = setTimeout(흐름그리기, 흐름간격);
 }
 /* 스트림이 끝났다 — 남은 것을 마저 흘려 보낸다 */
 function 흐름마치기(){
   흐름끝났나 = true;
-  if (!흐름예약) 흐름예약 = setTimeout(흐름그리기, 0);
+  /* ★ 260912 — 0 이 아니라 **같은 간격**으로 잇는다. 끝났다고 쏟지 않는다 */
+  if (!흐름예약) 흐름예약 = setTimeout(흐름그리기, 흐름간격);
 }
 function 흐름되돌리기(){
   보인만큼 = 0; 흐름끝났나 = false; 흐름글 = '';
+  흐름잰때 = 0;
   clearTimeout(흐름예약); 흐름예약 = 0;
+}
+/* ★★★ 260912 — **흐름이 다 흐를 때까지 기다린다.**
+
+   이것이 없어서 고쳐도 안 먹었다. 실측 —
+     0.4초마다 : 14 0 0 -9 0 19 7 **464**      ← 마지막에 통째로 튀었다
+   까닭은 `흐름마치기()` **바로 뒤에 본문을 그려** 흐르던 것을 덮어썼기 때문이다.
+   조각이 몇 초 안에 다 오면 흐를 틈이 없다 (gg 3.1 은 SSE 조각이 열 개뿐이다).
+
+   제타는 410자를 **33초**에 걸쳐 흘린다. 우리도 다 흐른 뒤에 본문을 그린다.
+   ★ 회원님이 읽고 계시는 동안 기다리는 것이지, 멎어 있는 것이 아니다. */
+function 흐름끝나기다리기(){
+  return new Promise(맞음 => {
+    const 잰 = Date.now();
+    (function 본다(){
+      /* 다 보였거나 · 너무 오래 걸리면(60초) 넘어간다 */
+      if (보인만큼 >= 흐름글.length || Date.now() - 잰 > 60000) return 맞음();
+      setTimeout(본다, 흐름간격);
+    })();
+  });
 }
 
 /* 인물 이름으로 얼굴을 찾는다. 방의 플롯에 인물 그림이 들어 있다 */
@@ -876,7 +969,8 @@ function 플롯그리기(){
     '<button class="플롯연필" data-가=플롯편집 aria-label="플롯 고치기">✏</button>' +
     '<div class="플롯속">' +
       '<h1>' + 안전(p.name) + '</h1>' +
-      '<div class="한줄">' + 안전(p.shortDescription) + '</div>' +
+      /* ★ 260912 — **플롯 화면에서는 대표 캐릭터 이름으로** (회원님 지시) */
+      '<div class="한줄">' + 안전(이름채우기(p.shortDescription, p)) + '</div>' +
       '<div class="태그">' + (p.hashtags || []).map(t => '#' + 안전(t)).join(' ') + '</div>' +
       (p.creator ? '<div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">' +
         '<div style="width:34px;height:34px;border-radius:50%;background:var(--바탕3)"></div>' +
@@ -887,15 +981,46 @@ function 플롯그리기(){
         '<span class="배지">💬 ' + (p.interactionCount ? 만단위(p.interactionCount) : '—') + '</span>' +
         ((p.lorebooks || []).length ? '<span class="배지">📖 설정집</span>' : '') +
       '</div>' +
-      칸그리기('소개', p.longDescription) +
-      칸그리기('캐릭터', (p.characters || []).map(c => c.name + '\n' + (c.description || '')).join('\n\n')) +
+      칸그리기('소개', 이름채우기(p.longDescription, p)) +
+      칸그리기('캐릭터', 이름채우기((p.characters || [])
+        .map(c => c.name + '\n' + (c.description || '')).join('\n\n'), p)) +
       칸그리기('인트로', 인트로글(p)) +
+      /* ★ 260912 — 인물 특징. **여기서만 보인다** (회원님 지시 C) */
+      특징칸(p) +
     '</div>' +
     '<div class="아래고정">' +
       '<button class="북" data-가=스크랩>' + (스크랩인가(p.id) ? "🔖" : "🏳") + '</button>' +
-      '<button class="큰단추" data-가=시작>대화 시작하기</button>' +
+      /* ★ 260912 — 제타는 방이 있으면 「대화 이어하기」가 뜬다 */
+      '<button class="큰단추" data-가=시작>' +
+        (플롯의방(p.id) ? '대화 이어하기' : '대화 시작하기') + '</button>' +
     '</div>');
 }
+/* 플롯 화면의 특징 칸 — 없으면 뽑는 단추를 보인다 */
+function 특징칸(p){
+  const 것 = 특징읽기(p.id);
+  const 머리 = '<div class="칸"><h2>어떤 사람인가' +
+    ' <span style="font-size:11px;color:var(--흐림);font-weight:400">' +
+    '플롯에서 뽑았습니다 · 대화에는 안 보입니다</span></h2>';
+  if (!것)
+    return 머리 +
+      '<div class="글" style="color:var(--흐림2);margin-bottom:8px">' +
+        '아직 안 뽑았습니다. 뽑으면 이 인물이 다른 인물과 어떻게 다른지 보입니다.</div>' +
+      '<button class="큰단추" data-가=특징뽑기 style="width:100%;height:42px;' +
+        'border-radius:12px;background:var(--바탕2);font-size:14px;font-weight:600;' +
+        'display:grid;place-items:center">✦ 특징 뽑기</button></div>';
+  const 줄들 = [];
+  for (const k of ["자아", "의도", "방향", "상태", "거절", "무너짐", "버릇", "모르는것"]){
+    const v = String(것[k] || "").trim();
+    if (!v || v === "—") continue;
+    줄들.push('<div style="margin-bottom:9px">' +
+      '<span style="color:var(--강조);font-size:12px;font-weight:700">' + k + '</span><br>' +
+      '<span style="font-size:13px">' + 안전(v) + '</span></div>');
+  }
+  return 머리 + '<div class="글">' + 줄들.join("") + '</div>' +
+    '<button class="시트줄" data-가=특징다시 style="padding:8px 0;font-size:12px;' +
+      'color:var(--흐림)">↻ 다시 뽑기</button></div>';
+}
+
 const 만단위 = n => n >= 10000 ? (n / 10000).toFixed(1) + '만' : String(n);
 const 칸그리기 = (제목, 글) => !글 ? '' :
   '<div class="칸"><h2>' + 제목 + '</h2><div class="글">' + 안전(글) + '</div></div>';
@@ -908,7 +1033,7 @@ const 칸그리기 = (제목, 글) => !글 ? '' :
 
    senderId 를 characters 와 맞춰 누가 말하는지 되살린다.
    맞는 인물이 없으면 내레이터로 둔다 (제타도 그렇게 그린다) */
-function 인트로도막(플롯){
+function 인트로도막(플롯, 방){
   const 인 = ((플롯 && 플롯.intros) || [])[0];
   const 대화 = 인 && (인.conversation || {});
   const 목 = (대화 && (대화.messages || (Array.isArray(대화) ? 대화 : null))) || [];
@@ -943,9 +1068,25 @@ function 인트로도막(플롯){
   const 때 = new Date().toISOString();
   const 낸것 = [];
   for (const m of 목){
-    /* 이미 앱 꼴이면 그대로 쓴다 */
+    /* 이미 앱 꼴이면 그대로 쓴다.
+
+       ★ 260912 — **그대로 쓰면 안 되는 것이 둘 있었다.**
+         자동생성 플롯이 이 길로 온다. 그래서 회원님이 보신 흠 둘이 여기서 났다 —
+           「직접 우상단 통해 내 프로필을 확정했는데도 여전히 인트로는 **{{user}}라고
+            변수명이 그대로** 출력된다」
+           「인트로에 **서연우 이름이 두 번 반복**된다. 뭘까?」
+         아래 날글 쪽은 고쳐 두었는데 **이 가지만 안 탔다.** */
     if (Array.isArray(m.contents)){
-      const 조각 = m.contents.filter(c => c.type === "TEXT" && c.text);
+      const 조각 = m.contents.filter(c => c.type === "TEXT" && c.text).map(c => {
+        let 글 = 이름채우기(String(c.text), 플롯, 방);
+        const 이 = String(c.speakerName || "").trim();
+        if (이 && 이 !== "내레이터"){
+          const 줄 = 글.split(NL);
+          while (줄.length > 1 && 줄[0].trim() === 이) 줄.shift();
+          글 = 줄.join(NL).trim();
+        }
+        return {...c, text: 글};
+      }).filter(c => c.text);
       if (조각.length) 낸것.push({sender: {type: "BOT"}, contents: 조각, messageTime: 때});
       continue;
     }
@@ -953,10 +1094,26 @@ function 인트로도막(플롯){
       낸것.push({sender: {type: "BOT"}, 그림: m.url, contents: [], messageTime: 때});
       continue;
     }
-    const 글 = String(m.content || "").trim();
+    /* ★ 260912 회원님 지적 — 「직접 우상단 통해 내 프로필을 확정했는데도
+       **여전히 인트로는 {{user}}라고 변수명이 그대로 출력**된다」
+
+       까닭이 여기였다 — 인트로 글만 `이름채우기()` 를 안 거치고 날글로 들어갔다.
+       ★ 회원님이 이어서 물으신 것 — 「이거, **이름 받침에 따라 과/와 등의 조사가
+         어색해질텐데**, 어떻게 하냐?」 → `자리채우기()` 가 조사를 맞춘다 */
+    let 글 = 이름채우기(String(m.content || "").trim(), 플롯, 방);
     if (!글) continue;
     const 유저 = (m.senderType === "USER");
     const 이름 = 이름표[m.senderId] || "";
+
+    /* ★ 260912 회원님 지적 — 「인트로에 **서연우 이름이 두 번 반복**된다. 뭘까?」
+       자동생성 인트로는 글 첫 줄에 이름을 한 번 쓰고 오는데,
+       앱이 `speakerName` 으로 **또** 얹어서 두 번이 됐다. 첫 줄이 그 이름이면 뗀다 */
+    if (!유저 && 이름){
+      const 줄 = 글.split(NL);
+      while (줄.length > 1 && 줄[0].trim() === 이름) 줄.shift();
+      글 = 줄.join(NL).trim();
+      if (!글) continue;
+    }
     낸것.push({sender: {type: 유저 ? "USER" : "BOT"},
       contents: [{type: "TEXT",
                   position: 유저 ? "RIGHT" : (이름 ? "LEFT" : "NARRATOR"),
@@ -966,8 +1123,8 @@ function 인트로도막(플롯){
   return 낸것;
 }
 
-function 인트로글(p){
-  return 인트로도막(p).map(m => (m.contents || [])
+function 인트로글(p, 방){
+  return 인트로도막(p, 방).map(m => (m.contents || [])
     .filter(x => x.type === "TEXT")
     .map(x => (x.speakerName ? x.speakerName + NL : "") + x.text).join(NL))
     .filter(x => x.trim()).join(NL + NL);
@@ -1017,7 +1174,7 @@ function 방내보내기(){
     메모: 메모읽기(방.id),
     도막: D.도막[방.id] || []
   };
-  const 됨 = 파일로내리기("제타앱_" + String(방.제목).slice(0, 10) + "_" + 때딱지() + ".json",
+  const 됨 = 파일로내리기("데타_" + String(방.제목).slice(0, 10) + "_" + 때딱지() + ".json",
                           JSON.stringify(꾸러미, null, 1));
   시트닫기();
   알림(됨 ? "내보냈습니다" : "내보내기에 실패했습니다");
@@ -1055,9 +1212,70 @@ function 다내보내기(){
     메모: 메모들,
     걸린시간: 시간
   };
-  const 됨 = 파일로내리기("제타앱_전부_" + 때딱지() + ".json",
+  const 됨 = 파일로내리기("데타_전부_" + 때딱지() + ".json",
                           JSON.stringify(꾸러미, null, 1));
   알림(됨 ? "내보냈습니다" : "내보내기에 실패했습니다");
+}
+
+/* ══ 인물 특징 ══
+
+   ★ 260912 회원님 단상 —
+     「최초앱은 호감/반감/긴장/경계가 있었지만 데타는 그게 없어서 모두 동일한 스탯을
+      갖는 건 아닐까 … **플롯 정보에 따라 인물상이 달라지지 않는다는 것.**」
+
+   플롯을 중계에 보내면 여덟 칸으로 갈라 돌려준다 —
+     자아 · 의도 · 방향 · 상태 · 거절 · 무너짐 · 버릇 · **모르는것**
+
+   ★ **대화 화면에는 안 보인다.** 플롯 화면에서만 확인한다 (회원님 지시 C).
+     다만 프롬프트에는 매 턴 들어간다 — 그래야 인물상이 달라진다 */
+function 특징들(){
+  try { return JSON.parse(localStorage.getItem("특징") || "{}"); } catch(_){ return {}; }
+}
+function 특징읽기(플롯아이디){
+  return 특징들()[플롯아이디] || null;
+}
+function 특징담기(플롯아이디, 것){
+  const 표 = 특징들();
+  표[플롯아이디] = 것;
+  try { localStorage.setItem("특징", JSON.stringify(표)); } catch(_){}
+}
+
+/* 플롯 하나에서 뽑는다. 이미 있으면 다시 안 뽑는다 (다시뽑기 = true 면 뽑는다) */
+async function 특징뽑기(플롯, 다시뽑기){
+  if (!플롯) return null;
+  if (!다시뽑기){
+    const 있던 = 특징읽기(플롯.id);
+    if (있던) return 있던;
+  }
+  const 중계 = 중계주소();
+  const 어디 = 고른모델().업체;
+  /* 구글 직접(gd)은 중계를 안 쓰므로 오픈라우터로 돌린다 */
+  const 갈곳 = (어디 === "gd") ? "or" : 어디;
+  const 초대 = 설정("초대");
+  try {
+    const r = await fetch(중계 + "/" + 갈곳 + "/trait", {
+      method: "POST",
+      headers: {"Content-Type": "application/json",
+                ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
+      body: JSON.stringify({
+        제목: 플롯.name,
+        한줄: 플롯.shortDescription,
+        소개: 이름채우기(플롯.longDescription, 플롯),
+        인물: (플롯.characters || [])[0] || {name: 플롯.name},
+        유저이름: (방프로필(S.방, 플롯) || {}).이름 || "나",
+        유저설명: (방프로필(S.방, 플롯) || {}).설명 || "",
+        설정집: 이름채우기((플롯.lorebooks || []).map(l => l.description).join(NL), 플롯).slice(0, 3000),
+        /* ★ 260912 — 인트로를 **원문 그대로** 보낸다.
+           「부름」 칸이 플롯이 유저를 뭐라 부르는지 여기서도 본다 */
+        인트로: 인트로글(플롯)
+      })
+    });
+    const o = JSON.parse(await r.text());
+    if (o.error) return null;
+    const 것 = o.특징 || null;
+    if (것 && Object.keys(것).length){ 특징담기(플롯.id, 것); return 것; }
+  } catch(_){}
+  return null;
 }
 
 /* ══ 메모장 ══
@@ -1067,12 +1285,42 @@ function 다내보내기(){
 
    방마다 메모장이 하나다. 열면 **여태 적은 것이 그대로 이어져** 보이고,
    「지금 턴 담기」를 누르면 그 자리의 글과 내가 친 말이 아래에 붙는다 */
+/* ★ 260912 회원님 : 「신고용 메모 기능도 **각 대화(n개, 플롯 내부에 여러개 있는 그것)마다**
+   저장되길 바란다는거.」
+
+   방 하나 안에 대화가 여럿(이어하기 벌)이므로, **지금 보고 있는 대화**를 열쇠로 삼는다.
+   방을 새로하기 하면 앞 대화는 「저장-…」 아이디를 받고 메모도 그쪽으로 따라간다 */
 function 메모읽기(방아이디){
   try { return localStorage.getItem("메모_" + 방아이디) || ""; } catch(_){ return ""; }
 }
 function 메모담기(방아이디, 글){
   try { localStorage.setItem("메모_" + 방아이디, 글); } catch(_){}
 }
+/* 메모를 다른 아이디로 옮긴다 — 새로하기 · 이어열기 때 */
+function 메모옮기기(옛, 새){
+  try {
+    const 글 = localStorage.getItem("메모_" + 옛);
+    if (글){ localStorage.setItem("메모_" + 새, 글); localStorage.removeItem("메모_" + 옛); }
+  } catch(_){}
+}
+/* ★ 260912 회원님 : 「신고내역 및 **기억도 방 별로** 적용 … 할 것」
+   메모는 따라갔는데 기억은 안 따라갔다. 새로하기를 해도 앞 대화의 기억이 남아 있었다 */
+function 기억옮기기(옛, 새){
+  try {
+    const 글 = localStorage.getItem("기억_" + 옛);
+    if (!글) return;
+    const j = JSON.parse(글); j.방 = 새;
+    localStorage.setItem("기억_" + 새, JSON.stringify(j));
+    localStorage.removeItem("기억_" + 옛);
+  } catch(_){}
+}
+/* 그 대화에 적어 둔 것이 있나 — 이어하기 목록에서 보입니다 */
+function 적은것있나(대화){
+  const 메 = 메모읽기(대화).trim();
+  const 기 = 기억글(기억읽기(대화)).trim();
+  return {메모: !!메, 기억: !!기};
+}
+
 /* 지금 자리(마지막 봇 도막과 그 앞 내 말)를 글로 */
 function 지금턴글(몇){
   const 도막 = D.도막[S.방.id] || [];
@@ -1087,16 +1335,26 @@ function 지금턴글(몇){
   줄.push(도막글꺼내기(이));
   return 줄.join(NL);
 }
+/* ★ 260912 — **어느 대화의 메모인지** 고른다.
+   몇이 `@아이디` 꼴이면 이어하기에 담긴 그 대화의 메모를 본다 */
 function 메모열기(몇){
-  const 있던 = 메모읽기(S.방.id);
-  시트열기("메모장 — " + 안전(S.방.제목),
+  const 딴대화 = (typeof 몇 === "string" && 몇.charAt(0) === "@") ? 몇.slice(1) : "";
+  const 대화 = 딴대화 || S.방.id;
+  S.메모대화 = 대화;
+  if (딴대화) 몇 = undefined;
+  const 있던 = 메모읽기(대화);
+  시트열기("메모장 — " + 안전(S.방.제목) + (딴대화 ? " (지난 대화)" : ""),
     '<div style="padding:0 12px">' +
       '<textarea id="메모칸" placeholder="무엇이 이상했는지, 무엇을 바꾸고 싶은지 적어 두십시오."' +
       ' style="width:100%;min-height:220px">' + 안전(있던) + '</textarea></div>' +
-    '<div class="인물글" style="color:var(--흐림)">이 방에만 남습니다. ' +
-      '손잡이를 위로 끌면 칸이 커집니다.</div>' +
+    '<div class="인물글" style="color:var(--흐림)">' +
+      (딴대화 ? "<b>지난 대화</b>에 적은 것입니다. 그 대화에만 남습니다."
+              : "이 대화에만 남습니다.") +
+      ' 손잡이를 위로 끌면 칸이 커집니다.</div>' +
     '<div class="시트단추"><button data-시트=닫기>그만</button>' +
-    '<button data-시트=메모턴담기 data-값="' + (몇 === undefined ? "" : 몇) + '">지금 턴 담기</button>' +
+    (딴대화 ? "" :
+      '<button data-시트=메모턴담기 data-값="' + (몇 === undefined ? "" : 몇) +
+        '">지금 턴 담기</button>') +
     '<button class="강" data-시트=메모저장>담기</button></div>');
   setTimeout(() => { const t = $("#메모칸"); if (t){ t.focus(); t.scrollTop = t.scrollHeight; } }, 260);
 }
@@ -1175,6 +1433,49 @@ function 스크랩뒤집기(id){
   try { localStorage.setItem("스크랩", JSON.stringify(목)); } catch(_){}
 }
 
+/* **같은 플롯의 방을 하나로 합친다.**
+
+   가장 최근 방을 남기고, 나머지는 그 방의 「이어하기」 벌로 넣는다.
+   도막도 메모도 함께 따라간다. **한 번만 한다** — 합친 뒤엔 새 방이 안 생긴다 */
+function 합치기(){
+  const 묶음 = {};
+  for (const r of D.방){
+    const k = r.플롯아이디 || ("_" + r.id);
+    (묶음[k] = 묶음[k] || []).push(r);
+  }
+  let 합친수 = 0;
+  for (const k of Object.keys(묶음)){
+    const 것 = 묶음[k];
+    if (것.length < 2) continue;
+    것.sort((a, b) => 방때(b) - 방때(a));
+    const 남길 = 것[0];
+    남길.이어하기 = 남길.이어하기 || [];
+    for (const r of 것.slice(1)){
+      const 도막 = D.도막[r.id] || [];
+      if (도막.length){
+        남길.이어하기.push({id: r.id,
+                            savedAt: new Date(방때(r) || Date.now()).toISOString(),
+                            만든때: r.만든때 || "",
+                            도막수: 도막.length});
+        /* 도막은 그대로 둔다 — 이어하기가 그 아이디로 찾는다 */
+      } else {
+        delete D.도막[r.id];
+      }
+      /* 남길 방의 이어하기도 물려받는다 */
+      for (const e of (r.이어하기 || [])) 남길.이어하기.push(e);
+      합친수++;
+    }
+    /* 최근 것부터 */
+    남길.이어하기.sort((a, b) => Date.parse(b.savedAt || 0) - Date.parse(a.savedAt || 0));
+    D.방 = D.방.filter(x => x === 남길 || 것.indexOf(x) < 0);
+  }
+  if (합친수){
+    새것담기();
+    setTimeout(() => 알림("같은 플롯의 대화 " + 합친수 + "개를 하나로 합쳤습니다"), 900);
+  }
+  return 합친수;
+}
+
 /* ══ 대화 프로필 ══
 
    ★ 260910 — **제타 화면을 직접 보고 그대로 만들었다.**
@@ -1187,17 +1488,180 @@ function 스크랩뒤집기(id){
      [ ] 기본 대화 프로필 — 새로운 대화 시작할 때 이 프로필 적용하기
 
    ★ 여기 적은 것이 **매 턴 프롬프트의 「나」로** 들어간다. 적어 두면 계속 먹는다 */
+/* ══ 자리표 ══
+
+   ★ 260912 회원님 : 「내 캐릭터 이름을 **확정해서 넣는 것이 아니라, {{user}}로 넣은 뒤**,
+     매 상황에 맞게 출력하는게 옳다 … **고정값이 아니라 가변값**으로 설정하라는 거다.」
+
+   ★ 조사까지 맞춘다. 안 맞추면 **축 A(자연스러움)를 가르치는 자리에서 어색한 한국어**가 된다 —
+     「준가 무엇을 할지는」 → 준**이**  ·  「정예원는」 → 정예원**은**
+     260911 에 프롬프트에서 한 번 데었다. 화면도 같다 */
+const 받침있나 = 이름 => {
+  const t = String(이름 || "").trim();
+  if (!t) return false;
+  const c = t.charCodeAt(t.length - 1);
+  if (c < 0xAC00 || c > 0xD7A3) return false;   /* 한글이 아니면 모른다 — 안 바꾼다 */
+  return (c - 0xAC00) % 28 !== 0;               /* 종성이 있으면 받침이다 */
+};
+/* 받침 없을 때 쓰는 것 : 받침 있을 때 쓰는 것 */
+const 조사짝 = {"가": "이", "는": "은", "를": "을", "와": "과",
+                "랑": "이랑", "야": "아", "로": "으로"};
+function 자리채우기(글, 표, 이름){
+  const 원 = String(글 == null ? "" : 글);
+  if (!이름 ||원.indexOf(표) < 0) return 원;
+  const 받 = 받침있나(이름);
+  const 토막 = 원.split(표);
+  let 낸것 = 토막[0];
+  for (let i = 1; i < 토막.length; i++){
+    const 뒤 = 토막[i], 첫 = 뒤.charAt(0);
+    if (받 && 조사짝[첫]) 낸것 += 이름 + 조사짝[첫] + 뒤.slice(1);
+    else 낸것 += 이름 + 뒤;
+  }
+  return 낸것;
+}
+
+/* ★ 260912 — **플롯에 박힌 유저 이름**을 찾는다.
+   특징의 「부름」 칸이 그것이다. 모델이 플롯 글을 읽고 문맥으로 골라 준다.
+   글자로 찾으면 「준비」의 「준」까지 걸린다 */
+function 박힌이름(플롯){
+  if (!플롯) return "";
+  const 특 = 특징읽기(플롯.id);
+  const 부 = String((특 || {}).부름 || "").trim();
+  if (!부 || 부 === "—" || 부.length > 12) return "";
+  if (부.indexOf("{{") >= 0) return "";
+  /* 인물 이름과 같으면 잘못 뽑은 것이다 — 안 바꾼다 */
+  for (const c of (플롯.characters || [])) if (c && c.name === 부) return "";
+  return 부;
+}
+
+/* 이 자리에 맞는 이름으로. 방 안이면 그 방 프로필, 아니면 **대표 프로필**.
+
+   ★ 260912 — 두 가지를 한다 —
+     ① `{{user}}` · `{{char}}` 자리표를 채운다
+     ② **박혀 있는 유저 이름**을 지금 이름으로 바꾼다 (회원님 지시 ⑨)
+   ②를 안 하면 모델이 플롯에 박힌 옛 이름을 그대로 쓴다 */
+function 이름채우기(글, 플롯, 방){
+  const 원 = String(글 == null ? "" : 글);
+  if (!원) return 원;
+  const p = 플롯 || S.플롯 || null;
+  const 나 = (방 ? (방프로필(방, p) || {}).이름
+                : ((기본프로필() || {}).이름 || (방프로필(null, p) || {}).이름)) || "나";
+  const 인물 = ((p && p.characters) || [])[0] || {};
+  let 낸것 = 원;
+  if (낸것.indexOf("{{") >= 0){
+    낸것 = 자리채우기(낸것, "{{user}}", 나);
+    낸것 = 자리채우기(낸것, "{{char}}", 인물.name || (p && p.name) || "");
+  }
+  /* ② 박힌 이름 → 지금 이름. 같으면 그대로 둔다 */
+  const 박힌 = 박힌이름(p);
+  if (박힌 && 박힌 !== 나) 낸것 = 이름바꾸기(낸것, 박힌, 나);
+  return 낸것;
+}
+
+/* 옛 이름을 새 이름으로 — **조사까지 맞추고, 낱말 안은 안 건드린다.**
+
+   ★ 「준」을 바꾸다가 「준**비**」 「기**준**」까지 바꾸면 글이 깨진다.
+     앞뒤가 한글 낱자면 낱말 안이므로 건너뛴다.
+     뒤에 조사가 붙은 것과 띄어쓰기로 끝난 것만 바꾼다 */
+const 붙는조사 = ["은", "는", "이", "가", "을", "를", "와", "과", "의", "도", "만",
+                  "에", "에게", "한테", "께", "으로", "로", "랑", "이랑", "아", "야",
+                  "이라", "라", "이나", "나", "보다", "처럼", "같이", "밖에", "부터", "까지"];
+function 이름바꾸기(글, 옛, 새){
+  const 원 = String(글 == null ? "" : 글);
+  if (!옛 || !새 || 원.indexOf(옛) < 0) return 원;
+  const 한글 = c => { const n = String(c || "").charCodeAt(0);
+                      return n >= 0xAC00 && n <= 0xD7A3; };
+  let 낸것 = "", i = 0;
+  while (i < 원.length){
+    const j = 원.indexOf(옛, i);
+    if (j < 0){ 낸것 += 원.slice(i); break; }
+    const 앞 = j > 0 ? 원[j - 1] : "";
+    const 뒤자리 = j + 옛.length;
+    const 뒤 = 뒤자리 < 원.length ? 원[뒤자리] : "";
+    /* 앞이 한글이면 낱말 안이다 — 안 건드린다 */
+    let 바꾸나 = !한글(앞);
+    /* 뒤가 한글이면 조사인지 본다. 조사가 아니면 낱말 안이다 */
+    if (바꾸나 && 한글(뒤)){
+      const 뒷말 = 원.slice(뒤자리, 뒤자리 + 3);
+      바꾸나 = 붙는조사.some(x => 뒷말.indexOf(x) === 0);
+    }
+    if (!바꾸나){ 낸것 += 원.slice(i, 뒤자리); i = 뒤자리; continue; }
+    /* 조사를 새 이름 받침에 맞춘다 */
+    낸것 += 새;
+    i = 뒤자리;
+    if (한글(뒤)){
+      const 짝 = {"은": "는", "는": "은", "이": "가", "가": "이",
+                  "을": "를", "를": "을", "과": "와", "와": "과",
+                  "으로": "로", "로": "으로", "아": "야", "야": "아",
+                  "이랑": "랑", "랑": "이랑"};
+      /* 두 글자 조사를 먼저 본다 */
+      const 두 = 원.slice(뒤자리, 뒤자리 + 2);
+      const 한 = 원.slice(뒤자리, 뒤자리 + 1);
+      const 받 = 받침있나(새);
+      let 쓴것 = "";
+      if (짝[두] !== undefined) 쓴것 = 두;
+      else if (짝[한] !== undefined) 쓴것 = 한;
+      if (쓴것){
+        /* 받침 있으면 은·이·을·과·으로·아·이랑, 없으면 는·가·를·와·로·야·랑 */
+        const 받침용 = {"은": "은", "는": "은", "이": "이", "가": "이",
+                        "을": "을", "를": "을", "과": "과", "와": "과",
+                        "으로": "으로", "로": "으로", "아": "아", "야": "아",
+                        "이랑": "이랑", "랑": "이랑"};
+        const 민용 = {"은": "는", "는": "는", "이": "가", "가": "가",
+                      "을": "를", "를": "를", "과": "와", "와": "와",
+                      "으로": "로", "로": "로", "아": "야", "야": "야",
+                      "이랑": "랑", "랑": "랑"};
+        낸것 += 받 ? 받침용[쓴것] : 민용[쓴것];
+        i = 뒤자리 + 쓴것.length;
+      }
+    }
+  }
+  return 낸것;
+}
+
 function 프로필들(){
   try { return JSON.parse(localStorage.getItem("프로필") || "[]"); } catch(_){ return []; }
 }
 function 프로필담기(목){
   try { localStorage.setItem("프로필", JSON.stringify(목)); } catch(_){}
 }
+/* ★ 260912 회원님 지적 — 「프로필 생성 후 '기본프로필로 적용합니다' **체크 안했는데도**,
+   다음 생성 프로필에서는 '준'이라고 **내 프로필 이름이 노출**되네」
+
+   까닭이 여기 있었다 — `목.find(x => x.기본) || 목[0]`.
+   **체크를 안 해도 첫 번째 것이 기본 노릇을 하고 있었다.**
+   체크한 것만 기본이다. 없으면 없는 것이다 — 그때는 방마다 고르게 둔다. */
 function 기본프로필(){
-  const 목 = 프로필들();
-  return 목.find(x => x.기본) || 목[0] || null;
+  return 프로필들().find(x => x.기본) || null;
 }
-/* 이 방이 쓰는 프로필. 방에 매인 것 → 기본 → 플롯이 준 것 → 「나」 */
+/* ★ 260912 — **제타에서 받아 온 방은 도막에 그때의 이름이 박혀 있다.**
+
+   실측 — 정예원 방 도막이 「주노」였다. 회원님이 제타에서 그 이름으로 노신 방이다.
+   화면에도 「주노」로 떠 있는데, 앱은 프로필이 없다고 「나」를 모델에 보내고 있었다.
+   소개에는 또 「준」이 박혀 있어서 **이름이 셋으로 갈렸고**,
+   모델이 그중 「준」을 골라 「준의 눈이 멍하니 떠지는 꼴을 보며」라고 썼다 */
+function 방옛이름(방){
+  if (!방) return "";
+  const 도막 = D.도막[방.id] || [];
+  for (const m of 도막){
+    if (((m.sender && m.sender.type) === "BOT")) continue;
+    for (const c of (m.contents || [])){
+      const n = String(c.speakerName || "").trim();
+      if (n && n.indexOf("{{") < 0 && n !== "내레이터" && n.length <= 12) return n;
+    }
+  }
+  /* 유저 도막이 없으면 봇 도막의 RIGHT 조각에서 */
+  for (const m of 도막)
+    for (const c of (m.contents || [])){
+      if (c.position !== "RIGHT") continue;
+      const n = String(c.speakerName || "").trim();
+      if (n && n.indexOf("{{") < 0 && n.length <= 12) return n;
+    }
+  return "";
+}
+
+/* 이 방이 쓰는 프로필.
+   방에 매인 것 → 기본 → **방 도막에 박힌 이름** → 플롯이 준 것 → 「나」 */
 function 방프로필(방, 플롯){
   const 목 = 프로필들();
   if (방 && 방.프로필아이디){
@@ -1206,11 +1670,21 @@ function 방프로필(방, 플롯){
   }
   const 기 = 기본프로필();
   if (기) return 기;
+  /* ★ 260912 — 받아 온 방이면 그 방에 박힌 이름을 쓴다.
+     「나」로 보내면 이름이 아니라 대명사가 되어 더 나쁘다 */
+  const 옛 = 방옛이름(방);
+  if (옛) return {id: "", 이름: 옛, 설명: ""};
   /* ★ 260911 — 제타 플롯의 chatProfiles 이름이 「{{user}}」 인 것이 있다.
      그대로 쓰면 유저 이름이 「{{user}}」 가 되어 **치환이 안 된다.** 자리표는 건너뛴다 */
   const 플 = ((플롯 && 플롯.chatProfiles) || [])[0];
   const 자리표 = n => !n || (n.indexOf("{{") >= 0) || n === "user";
   if (플 && !자리표(플.name)) return {id: "", 이름: 플.name, 설명: 플.description || ""};
+  /* ★ 260912 — **플롯에 박힌 이름**을 쓴다.
+     정예원 플롯 소개에 「준」이 박혀 있다. 그것이 이 플롯이 정한 유저 이름이다.
+     「나」로 보내면 이름이 아니라 대명사라 모델이 소개의 「준」을 따라간다.
+     실측 — 「나」로 보냈더니 답이 「준을 노려본다」 「준의 가슴께를」 이었다 */
+  const 박 = 박힌이름(플롯);
+  if (박) return {id: "", 이름: 박, 설명: ""};
   return {id: "", 이름: "나", 설명: ""};
 }
 
@@ -1231,8 +1705,33 @@ function 프로필열기(더){
 }
 
 /* 만들기·고치기 — 제타와 같은 두 칸 */
+/* ★★★ 260912 — **유저 프로필이 밀당의 규칙집이다.**
+
+   회원님이 켜 두신 제타 창에서 실제 값을 읽었다 (대화 프로필 → 준) —
+
+     외모: 연예인 급 외모, 꽤 부유함, 안경 안쓰면 거의 장님
+     성격: 화가 나면 말도 못붙일 정도로 매우 무섭게 보임
+     비밀: 사건의 인과를 비틀고 사람의 마음을 조종하는 초능력자
+     {{char}}과의 관계: 준이 '{{char}}'이라는 풀네임으로 부를 때마다
+       {{char}}은 '을'이 되어 준의 요구를 그 무엇이든 따르는 관계 …
+     [저장된 명령] 자존심 앞세운 헛소리 금지 / 준에게 거짓말 절대 금지
+     [어제의 특별사건] {{char}}의 각성: {{char}}은 준의 선을 넘지 않으며 …
+
+   ★ 「{{char}}과의 관계」가 **조건부 스위치**다 — 풀네임으로 부르면 복종.
+     회원님이 **밀당의 규칙을 직접 만들어 두신 것**이다. 축 C 의 엔진이 여기 있었다.
+
+   ★ 회원님 : 「해당 프로필 설정값은 **대화를 진행하면서 같이 기록**하기도 해놓는거야.」
+     그래서 `[저장된 명령]` · `[어제의 특별사건]` 같은 칸이 자라난다.
+
+   데타는 여태 **이름 + 설명** 둘뿐이었다. B·C 의 재료가 처음부터 없었다.
+   ★ 이것은 **서식**이라 지정이 맞다 (CLAUDE.md 5.4 장 끝 ★). */
 function 프로필쓰기(있는것){
-  const p = 있는것 || {id: "", 이름: "", 설명: "", 기본: !프로필들().length};
+  const p = 있는것 || {id: "", 이름: "", 설명: "", 비밀: "", 관계: "", 기본: false};
+  const 칸 = (이름, 아이디, 채움, 밑, 높이) =>
+    "<div class='칸제목' style='padding-left:0;margin-top:12px'>" + 이름 +
+      " <span style='color:var(--흐림);font-weight:400'>(선택)</span></div>" +
+    "<textarea id='" + 아이디 + "' maxlength='1000' placeholder='" + 안전(밑) + "'" +
+      " style='width:100%;min-height:" + 높이 + "px'>" + 안전(채움) + "</textarea>";
   시트열기(있는것 ? "대화 프로필 고치기" : "새 대화 프로필",
     "<div style='padding:0 12px'>" +
       "<div class='칸제목' style='padding-left:0'>이름</div>" +
@@ -1241,8 +1740,15 @@ function 프로필쓰기(있는것){
       "<div class='글' style='color:var(--흐림);font-size:12px;margin:6px 0 14px'>" +
         "캐릭터가 날 이렇게 부를 거예요</div>" +
       "<div class='칸제목' style='padding-left:0'>설명 <span style='color:var(--흐림)'>(선택)</span></div>" +
-      "<textarea id='프로필설명' maxlength='1000' placeholder='어떤 사람인지 적어 두면 대화에 계속 씁니다'" +
-        " style='width:100%;min-height:120px'>" + 안전(p.설명) + "</textarea>" +
+      "<textarea id='프로필설명' maxlength='1000' placeholder='외모 · 성격 · 어떤 사람인지'" +
+        " style='width:100%;min-height:90px'>" + 안전(p.설명) + "</textarea>" +
+      /* ★ 비밀 — 상대는 모르는 것. 유저만 쥐고 있는 패다 */
+      칸("비밀", "프로필비밀", p.비밀 || "",
+         "상대는 모르는 것. 알려지면 판이 뒤집히는 것", 70) +
+      /* ★ 관계 — 축 C 의 엔진. 조건부 스위치를 여기에 적는다 */
+      칸("상대와의 관계", "프로필관계", p.관계 || "",
+         "이 사람과 나 사이에 이미 있는 것. 약속 · 빚 · 각서 · 서열 · 버릇.\n" +
+         "「내가 ~하면 상대는 ~한다」처럼 적으면 그 자리가 그대로 산다", 90) +
       "<label style='display:flex;gap:8px;align-items:center;margin-top:12px;font-size:13px'>" +
         "<input type='checkbox' id='프로필기본'" + (p.기본 ? " checked" : "") + ">" +
         "기본 대화 프로필로 두기</label>" +
@@ -1257,16 +1763,64 @@ function 프로필쓰기(있는것){
 /* ══ 새 대화 ══
    플롯 정보에서 「대화 시작하기」를 누르면 방을 하나 만든다.
    인트로가 있으면 그것을 첫 도막으로 놓는다 — 제타가 그렇게 한다 */
+/* ★ 260912 — **플롯당 방 하나.** 제타가 그렇게 돈다.
+   회원님 : 「플롯당 대화방은 하나만 만들어지는 제타 … 내가 원하는건 제타 방식이다.」
+
+   이미 그 플롯의 방이 있으면 **새로 만들지 않고 그 방으로 들어간다.** */
+function 플롯의방(플롯아이디){
+  if (!플롯아이디) return null;
+  const 것 = D.방.filter(r => r.플롯아이디 === 플롯아이디);
+  if (!것.length) return null;
+  /* 여럿이면 **가장 최근** 것 (회원님 지시) */
+  것.sort((a, b) => 방때(b) - 방때(a));
+  return 것[0];
+}
+
+/* 이 방이 마지막으로 움직인 때 */
+function 방때(방){
+  const 도막 = D.도막[방.id] || [];
+  const 끝 = 도막[도막.length - 1];
+  const t = 끝 && 끝.messageTime;
+  if (t){ const n = Date.parse(t); if (!isNaN(n)) return n; }
+  if (방.만든때){ const n = Date.parse(방.만든때); if (!isNaN(n)) return n; }
+  return 0;
+}
+
+/* 이 방에 든 값 — 걸린 시간 기록에서 모은다 */
+function 방값(방아이디){
+  let 목 = [];
+  try { 목 = JSON.parse(localStorage.getItem("시간") || "[]"); } catch(_){}
+  let 값 = 0;
+  for (const x of 목) if (x.방아이디 === 방아이디) 값 += Number(x.값 || 0);
+  return 값;
+}
+
+/* 턴 수 — 유저가 친 도막의 수 */
+function 턴수(도막){
+  let n = 0;
+  for (const m of (도막 || [])) if (((m.sender && m.sender.type) !== "BOT")) n++;
+  return n;
+}
+
 function 새대화(플롯){
   if (!플롯) return;
+  /* ★ 260912 — 이미 그 플롯의 방이 있으면 **그 방으로 들어간다.** 새로 안 만든다 */
+  const 있던 = 플롯의방(플롯.id);
+  if (있던){
+    S.플롯 = null; S.방 = 있던;
+    그리기();
+    알림("이어서 갑니다");
+    return;
+  }
   const id = "새-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
   const 프 = 기본프로필();
   const 방 = {id, 제목: 플롯.name, 그림: 플롯.imageUrl, 플롯아이디: 플롯.id,
               프로필아이디: (프 && 프.id) || "",
-              모델: "zeta", 끝말: "", 이어하기: [], 새것: true};
+              끝말: "", 이어하기: [], 새것: true,
+              만든때: new Date().toISOString()};
 
   /* 인트로를 첫 도막으로 — ★ 260910 꼴이 달라 여태 비어 있었다 */
-  const 도막 = 인트로도막(플롯).filter(m => (m.contents || []).length);
+  const 도막 = 인트로도막(플롯, 방).filter(m => (m.contents || []).length);
   /* 인트로가 없으면 소개라도 한 줄 놓는다 — 빈 화면으로 시작하면 막막하다 */
   if (!도막.length && (플롯.longDescription || 플롯.shortDescription)){
     도막.push({sender: {type: "BOT"}, contents: [{type: "TEXT", position: "NARRATOR",
@@ -1387,6 +1941,18 @@ async function 구글플롯직접(){
   S.보낸중 = false;
 }
 
+/* ★ 260912 회원님 : 「자동생성할 때에는 **캐릭터의 성별을 (남성향/여성향을) 고르게** 하는게
+   좋겠다.」 · 「기왕이면 **남성향 중심으로 먼저 완성**하고 싶다.」 — 그래서 기본이 남성향이다 */
+function 향읽기(){ return 설정("향") || "남성향"; }
+function 향열기(){
+  const 지금 = 향읽기();
+  시트열기("무엇을 지을까요",
+    ["남성향", "여성향"].map(x =>
+      시트줄(지금 === x ? "●" : "○", x, "향고름",
+        {값: x, 빛: 지금 === x ? "켬" : "",
+         밑: x === "남성향" ? "내가 남자 · 상대가 여자" : "내가 여자 · 상대가 남자"})).join("") +
+    시트줄("✨", "이 결로 하나 짓기", "자동생성"));
+}
 async function 자동생성(){
   const 중계 = 중계주소();
 
@@ -1410,7 +1976,7 @@ async function 자동생성(){
       method: "POST",
       headers: {"Content-Type": "application/json",
                 ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
-      body: JSON.stringify({모델: 고른모델().모델 || undefined})
+      body: JSON.stringify({모델: 고른모델().모델 || undefined, 향: 향읽기()})
     });
     const j = await r.json();
     if (j.error){ 알림((j.error && j.error.message) || "탈"); S.보낸중 = false; return; }
@@ -1473,7 +2039,9 @@ function 나그리기(){
       '<div class="칸"><h2>모델</h2>' +
         모델셋.map(x => {
           const 켬 = (설정("모델설정") || 기본모델) === x.값;
-          return 시트줄(켬 ? "●" : "○", x.이름, "모델고름",
+          /* ★ 260912 — 막힌 것은 **동그라미 대신 빗금**으로 바로 보이게 */
+          /* ★ 260912 — 아슬한 것은 **세모**. 못 쓰는 것이 아니라 자주 막히는 것이다 */
+          return 시트줄(x.아슬 ? "△" : (켬 ? "●" : "○"), x.이름, "모델고름",
                         {값: x.값, 밑: x.밑, 빛: 켬 ? "켬" : ""});
         }).join("") +
       '</div>' +
@@ -1697,6 +2265,8 @@ document.addEventListener('click', e => {
     const 무엇 = 가.dataset.가;
     if (무엇 === '뒤로'){ 뒤로가기(); return; }
     if (무엇 === '모델'){ return 모델열기(); }
+    /* ★ 260912 — 머리의 프로필 이름을 누르면 바로 고른다 (회원님 지적 · 제타와 같게) */
+    if (무엇 === '대화프로필'){ return 프로필열기(); }
     if (무엇 === '방메뉴'){ return 방메뉴열기(); }
     /* ★ 260910 회원님 : 「신고버튼 살려서 기록 남기게 해.」 — 메모장이다 */
     if (무엇 === '신고'){ return 메모열기(); }
@@ -1705,9 +2275,19 @@ document.addEventListener('click', e => {
     if (무엇 === '재실행'){ return 재실행(); }
     if (무엇 === '별표'){ return 별표넣기(); }
     if (무엇 === '시작'){ return 새대화(S.플롯); }
-    if (무엇 === '자동생성'){ return 자동생성(); }
+    /* ★ 260912 — 향을 먼저 고르게 한다 (회원님 지시) */
+    if (무엇 === '자동생성'){ return 향열기(); }
     if (무엇 === '수동생성'){ return 플롯편집(null); }
     if (무엇 === '플롯편집'){ return 플롯편집(S.플롯 || null); }
+    if (무엇 === '특징뽑기' || 무엇 === '특징다시'){
+      const p = S.플롯; if (!p) return;
+      알림("뽑는 중…");
+      특징뽑기(p, 무엇 === '특징다시').then(것 => {
+        if (것){ 그리기(); 알림("뽑았습니다"); }
+        else 알림("못 뽑았습니다 — 잠시 뒤 다시");
+      });
+      return;
+    }
     if (무엇 === '플롯보기'){
       const p = 지금플롯();
       if (p){ S.플롯 = p; S.방 = null; 그리기(); }
@@ -1771,44 +2351,35 @@ document.addEventListener("click", async e => {
   /* ★ 260910 회원님 : 「대화 프로필 누르면 나오는 것은 user 프로필 수정을
      가능케 해야된다. 해당 프로필 입력값으로 대화에 계속 적용되는 것이다.」 */
   if (가 === "대화프로필"){ return 프로필열기(); }
-  if (가 === "플롯보기"){ 시트닫기(); const p = 지금플롯();
-    if (p){ S.플롯 = p; S.방 = null; 그리기(); } return; }
-  if (가 === "모델"){ return 모델열기(); }
-  if (가 === "목록방열기"){
-    시트닫기();
-    const 방 = D.방.find(r => r.id === 값);
-    if (방){ S.방 = 방; S.플롯 = null; 그리기(); }
+
+  /* ★ 260912 회원님 : 「메모/기억 뿐만아니라 **수정 버튼도 추가**해서,
+     그거 누르면 **제목을 편집**할 수 있게 해.」
+     ★ 「지금 보고 있는 대화」는 방 자체이므로 방에 붙이고, 나머지는 이어하기 벌에 붙인다 */
+
+  /* ★ 260912 회원님 : 「메모/기억 뿐만아니라 **수정 버튼도 추가**해서,
+     그거 누르면 **제목을 편집**할 수 있게 해.」
+     ★ 「지금 보고 있는 대화」는 방 자체이므로 방에 붙이고, 나머지는 이어하기 벌에 붙인다 */
+  /* ★★★ 260912 — **되살린 것.** 내가 앞서 깨진 조각을 걷어내면서
+     프로필저장 · 플롯저장 · 메모 · 메모저장 · 메모턴담기 **다섯 분기를 함께 지웠다.**
+     화면에는 단추가 그대로 있는데 받는 데가 없어 **눌러도 아무 일이 없었다.**
+     index_260911_끊김전.html.bak 에서 그대로 되가져왔다 */
+  if (가 === "프로필저장"){
+    const 이 = ($("#프로필이름") || {}).value || "";
+    const 설 = ($("#프로필설명") || {}).value || "";
+    const 기 = !!($("#프로필기본") || {}).checked;
+    if (!이.trim()) return 알림("이름을 넣으십시오");
+    const 목 = 프로필들();
+    let 것 = 목.find(x => x.id === 값);
+    if (!것){ 것 = {id: "프-" + Date.now().toString(36)}; 목.push(것); }
+    것.이름 = 이.trim(); 것.설명 = 설;
+    /* ★ 260912 — 비밀 · 관계. 제타 프로필에 있는 칸이다 (축 B·C 의 재료) */
+    것.비밀 = ($("#프로필비밀") || {}).value || "";
+    것.관계 = ($("#프로필관계") || {}).value || "";
+    if (기) for (const p of 목) p.기본 = (p.id === 것.id); else 것.기본 = false;
+    프로필담기(목);
+    if (S.방){ S.방.프로필아이디 = 것.id; 새것담기(); }
+    시트닫기(); 그리기(); 알림("담았습니다");
     return;
-  }
-  if (가 === "목록방복사"){
-    const 글 = (D.도막[값] || []).map(m =>
-      ((m.sender && m.sender.type) === "BOT" ? "" : "> ") + 도막글꺼내기(m)).join(NL + NL);
-    try { navigator.clipboard.writeText(글); } catch(_){}
-    시트닫기(); 알림("복사했습니다"); return;
-  }
-  if (가 === "목록방지우기"){
-    방지우기속(값);
-    시트닫기(); 그리기(); 알림("지웠습니다");
-    return;
-  }
-  if (가 === "방내보내기"){ return 방내보내기(); }
-  if (가 === "다내보내기"){ return 다내보내기(); }
-  if (가 === "메모"){ return 메모열기(값); }
-  if (가 === "메모턴담기"){
-    const t = $("#메모칸"); if (!t) return;
-    const 붙일 = 지금턴글(값);
-    t.value = (t.value.trim() ? t.value.trim() + NL + NL : "") + 붙일 + NL + "  · ";
-    t.focus(); t.scrollTop = t.scrollHeight;
-    return;
-  }
-  if (가 === "메모저장"){
-    const t = $("#메모칸"); if (!t) return;
-    메모담기(S.방.id, t.value);
-    시트닫기(); 알림("메모를 담았습니다");
-    return;
-  }
-  if (가 === "플롯편집"){
-    return 플롯편집(S.플롯 || null);
   }
   if (가 === "플롯저장"){
     const 값칸 = 꼭 => { const t = $("#편_" + 꼭); return t ? t.value : ""; };
@@ -1840,35 +2411,51 @@ document.addEventListener("click", async e => {
     알림(값 ? "고쳤습니다" : "만들었습니다");
     return;
   }
-  if (가 === "프로필새로"){ return 프로필쓰기(null); }
-  if (가 === "프로필고치기"){
-    return 프로필쓰기(프로필들().find(x => x.id === 값) || null);
-  }
-  if (가 === "프로필고름"){
-    if (S.방){ S.방.프로필아이디 = 값; 새것담기(); }
-    else {
-      const 목 = 프로필들();
-      for (const p of 목) p.기본 = (p.id === 값);
-      프로필담기(목);
-    }
-    시트닫기();
-    const 것 = 프로필들().find(x => x.id === 값);
-    알림("프로필 — " + ((것 && 것.이름) || 값));
+  if (가 === "메모저장"){
+    const t = $("#메모칸"); if (!t) return;
+    메모담기(S.방.id, t.value);
+    시트닫기(); 알림("메모를 담았습니다");
     return;
   }
-  if (가 === "프로필저장"){
-    const 이 = ($("#프로필이름") || {}).value || "";
-    const 설 = ($("#프로필설명") || {}).value || "";
-    const 기 = !!($("#프로필기본") || {}).checked;
-    if (!이.trim()) return 알림("이름을 넣으십시오");
-    const 목 = 프로필들();
-    let 것 = 목.find(x => x.id === 값);
-    if (!것){ 것 = {id: "프-" + Date.now().toString(36)}; 목.push(것); }
-    것.이름 = 이.trim(); 것.설명 = 설;
-    if (기) for (const p of 목) p.기본 = (p.id === 것.id); else 것.기본 = false;
-    프로필담기(목);
-    if (S.방){ S.방.프로필아이디 = 것.id; 새것담기(); }
-    시트닫기(); 그리기(); 알림("담았습니다");
+  if (가 === "메모턴담기"){
+    const t = $("#메모칸"); if (!t) return;
+    const 붙일 = 지금턴글(값);
+    t.value = (t.value.trim() ? t.value.trim() + NL + NL : "") + 붙일 + NL + "  · ";
+    t.focus(); t.scrollTop = t.scrollHeight;
+    return;
+  }
+  if (가 === "메모"){ return 메모열기(값); }
+  if (가 === "제목고치기"){
+    if (!S.방) return;
+    const 벌 = (S.방.이어하기 || []).find(x => x.id === 값);
+    const 옛 = (벌 ? 벌.제목 : S.방.벌제목) || "";
+    시트열기("대화 제목",
+      "<div style='padding:0 12px'>" +
+        "<input id='벌제목' maxlength='40' placeholder='이 대화를 뭐라 부를까요' value='" +
+          안전(옛) + "'" +
+          " style='width:100%;background:var(--바탕2);border-radius:10px;padding:10px 12px;font-size:16px'>" +
+        "<div class='글' style='color:var(--흐림);font-size:12px;margin-top:6px'>" +
+          "비워 두면 날짜가 그대로 보입니다.</div>" +
+      "</div>" +
+      "<div class='시트단추'><button data-시트=닫기>그만</button>" +
+      "<button class='강' data-시트=제목저장 data-값='" + 안전(값) + "'>담기</button></div>");
+    setTimeout(() => { const el = $("#벌제목"); if (el) el.focus(); }, 120);
+    return;
+  }
+  if (가 === "제목저장"){
+    if (!S.방) return;
+    const 글 = (($("#벌제목") || {}).value || "").trim();
+    const 벌 = (S.방.이어하기 || []).find(x => x.id === 값);
+    if (벌) 벌.제목 = 글; else S.방.벌제목 = 글;
+    새것담기(); 시트닫기(); 이어하기열기();
+    알림(글 ? "제목을 담았습니다" : "제목을 비웠습니다");
+    return;
+  }
+  /* ★ 260912 — 남성향/여성향 (회원님 지시. 기본은 남성향) */
+  if (가 === "향고름"){
+    try { localStorage.setItem("향", 값); } catch(_){}
+    시트닫기(); 알림(값 + " 으로 짓습니다");
+    setTimeout(() => 자동생성(), 200);
     return;
   }
   if (가 === "모델고름"){
@@ -1879,18 +2466,23 @@ document.addEventListener("click", async e => {
     if (S.방) 머리그리기(); else 그리기();
     알림("모델 — " + ((짝 && 짝.이름) || 값)); return;
   }
-  if (가 === "기억"){ return 기억열기(); }
+  if (가 === "기억"){ return 기억열기(값); }
   if (가 === "지금갈무리"){
+    if (!S.방) return;
+    const 그방 = S.방.id;                     /* ★ 오래 걸리므로 아이디를 붙잡아 둔다 */
     시트닫기(); 알림("갈무리 중…");
-    const 기2 = 기억읽기(S.방.id);
+    const 기2 = 기억읽기(그방);
     기2.요약한데까지 = -1;                    /* 처음부터 다시 훑는다 */
     기억쓰기(기2);
-    await 요약해두기(S.방.id);
-    return 기억열기();
+    await 요약해두기(그방);
+    /* 그 사이 다른 데로 가셨으면 시트를 다시 열지 않는다 */
+    if (S.방 && S.방.id === 그방) 기억열기();
+    else 알림("갈무리했습니다");
+    return;
   }
   if (가 === "기억저장"){
     const t = $("#기억칸");
-    const 기 = 기억읽기(S.방.id);
+    const 기 = 기억읽기(S.기억대화 || S.방.id);
     /* 손으로 고친 것을 네 칸으로 도로 가른다 — 뭉개지 않는다 */
     const 갈 = 요약가르기(t ? t.value : "");
     if (갈.여태 || 갈.사이 || 갈.열린것.length || 갈.남길것.length){
@@ -1954,7 +2546,13 @@ function 새로하기(){
   const 새id = "저장-" + Date.now().toString(36);
   D.도막[새id] = 담을;
   방.이어하기 = 방.이어하기 || [];
-  방.이어하기.unshift({id: 새id, savedAt: new Date().toISOString(), 도막수: 담을.length});
+  방.이어하기.unshift({id: 새id, savedAt: new Date().toISOString(),
+                       만든때: 방.만든때 || new Date().toISOString(),
+                       도막수: 담을.length});
+  /* ★ 260912 — 메모와 기억이 그 대화를 따라간다 */
+  메모옮기기(방.id, 새id);
+  기억옮기기(방.id, 새id);
+  방.만든때 = new Date().toISOString();   /* 지금부터가 새 대화다 */
   /* 인트로만 남긴다 */
   D.도막[방.id] = 담을.length ? [담을[0]] : [];
   새것담기(); 시트닫기(); 방그리기();
@@ -1968,8 +2566,17 @@ function 이어열기(id){
   const 지금 = (D.도막[방.id] || []).slice();
   const 새id = "저장-" + Date.now().toString(36);
   D.도막[새id] = 지금;
+  const 골랐던 = (방.이어하기 || []).find(e => e.id === id) || {};
   방.이어하기 = (방.이어하기 || []).filter(e => e.id !== id);
-  방.이어하기.unshift({id: 새id, savedAt: new Date().toISOString(), 도막수: 지금.length});
+  방.이어하기.unshift({id: 새id, savedAt: new Date().toISOString(),
+                       만든때: 방.만든때 || new Date().toISOString(),
+                       도막수: 지금.length});
+  /* ★ 260912 — 메모와 기억이 함께 자리를 바꾼다 */
+  메모옮기기(방.id, 새id);
+  기억옮기기(방.id, 새id);
+  메모옮기기(id, 방.id);
+  기억옮기기(id, 방.id);
+  방.만든때 = 골랐던.만든때 || 방.만든때;
   D.도막[방.id] = 담긴;
   새것담기(); 방그리기();
   알림("이어서 갑니다");
@@ -2039,9 +2646,9 @@ function 입력붙이기(){
 /* ★ 260910 회원님 : 「완성되어 빌드를 내보내게 된다면
    마이페이지에 빌드넘버와 일자와 시간을 적어서 내보낸다.」
    ★ 아래 한 줄은 **빌드 도구가 갈아 끼운다.** 손으로 고치지 않는다 */
-const 빌드 = {번호: "v1.1.10", 때: "2026-09-11 17:40"};
+const 빌드 = {번호: "개발판", 때: ""};
 
-const 기본중계 = "https://zetaapp-relay.amuselk.workers.dev";
+const 기본중계 = "https://deta-relay.amuselk.workers.dev";
 
 /* 고를 수 있는 모델 — **업체와 모델 이름이 한 벌**이다.
    따로 두면 「or 인데 접두사 없는 이름」 같은 안 되는 짝이 생긴다.
@@ -2056,13 +2663,52 @@ const 기본중계 = "https://zetaapp-relay.amuselk.workers.dev";
       오픈라우터는 그냥 gemini 3.1 이렇게.」
 
    ★ 이름은 **좁은 자리에 들어가는 표딱지**다. 밑줄이 자세한 것을 맡는다 */
+/* ★★★ 260912 — **모델을 축 O·A·B·C 로 실측해 차례를 바꿨습니다.**
+
+   회원님은 260911 에 「전체 기본 모델은 딥시크다」라고 하셨지만,
+   같은 방·같은 말·같은 프롬프트로 다섯을 굴려 **전문을 읽어 보니** 딥시크가 가장 나빴습니다 —
+
+     *준은 잠시 나를 보다가, … 나는 문가에 서서 그를 보았다.*   ← 정예원 이름줄 아래인데
+                                                                 유저 시점 1인칭. 주체가 깨집니다
+
+   지문 천 자당 (정예원 5턴) —
+     deepseek       1인칭 7.4 · 인물이름 0.0 · 어미쏠림 22% · 닿기 4.3
+     gemini 3.1     1인칭 0.0 · 인물이름 13.7 · 어미쏠림 11% · 닿기 10.2  ← 가장 나음
+     gemini 3.7     1인칭 1.8 · 인물이름  6.2 · 어미쏠림  6% · 닿기  8.9
+
+   gemini 3.1 은 축 셋이 다 섭니다 —
+     축 A  「정예원의 엉덩이에 전해졌다」            주체가 또렷
+     축 B  「거절할 마음 따위는 애초에 없었다」      인물이 말 안 하는 속을 내레이터가 짚음
+     축 C  「소주 사 올 거면 네가 다녀와」          바로 안 받고 **조건을 건다**
+
+   ★ 딥시크는 목록에 남깁니다. 회원님이 고르실 수 있어야 하니까 */
 const 모델셋 = [
+  {값: "or|google/gemini-3.1-flash-lite",
+   이름: "gemini 3.1", 밑: "오픈라우터 · 축 A·B·C 가 가장 고르다 · 빠르고 싸다"},
   {값: "or|deepseek/deepseek-v4-flash",
-   이름: "deepseek", 밑: "오픈라우터 · 결이 가장 낫다 · 조금 느리다"},
+   이름: "deepseek", 밑: "오픈라우터 · ⚠ 지문에서 주체가 흔들린다 (260912 실측)"},
   {값: "gg|gemini-3.1-flash-lite",
    이름: "(무)google 3.1", 밑: "구글 무료키 · 빠르다 · 값이 안 든다"},
-  {값: "or|google/gemini-3.1-flash-lite",
-   이름: "gemini 3.1", 밑: "오픈라우터"},
+
+  /* ★ 260912 회원님 : 「gg 3.7과 or 3.7 모델도 데타에 추가해줘.」
+     실측 — gg 3.7 은 14.0초, or 3.7 은 3.9초 (같은 말 · 같은 방) */
+  /* ★ 260912 재실측 — **gg 3.7 은 된다. 다만 무료 할당량이 아주 적다.**
+
+     ★ 처음에 「구글 무료 등급에 3.7 이 아예 없다」고 적었다가 **틀렸다.**
+       429 를 두 번 보고 단정했는데, 8굴림을 돌려 보니 **두 번은 200 으로 답이 왔다.**
+       429 는 「없는 것」이 아니라 **그때 할당량에 걸린 것**이었다.
+       ★ 회원님이 짚어 주셨다 — 「구글키는 3.1 뿐만아니라 **3.7도 있었던 것 같아서**」
+
+     8굴림 실측 —
+       gg 3.7   성공 2 · 429 여섯 번  (25%)   한 턴 349자
+       or 3.7   성공 8 · 429 없음    (100%)  한 턴 255자
+
+     한두 턴은 되지만 **이어서 대화하기엔 자주 끊긴다.**
+     (gemini-3.7-flash-lite 라는 이름은 404 다 — 그런 모델은 없다) */
+  {값: "gg|gemini-3.7-flash", 아슬: true,
+   이름: "(무)google 3.7", 밑: "구글 무료키 · ⚠ 할당량이 적다 — 넷에 셋은 막힌다 (429)"},
+  {값: "or|google/gemini-3.7-flash",
+   이름: "gemini 3.7", 밑: "오픈라우터 · 글이 촘촘하다 · 값이 3.1 의 여섯 배"},
   /* ★ 260911 — **앱에서 구글을 바로 부른다.**
      중계는 홍콩에서 나가 구글에 막힌다 (400 User location is not supported).
      앱은 회원님 기기에서 도니 한국에서 나간다.
@@ -2113,7 +2759,7 @@ async function 구글직접(재료, 잰것, 방, 도막, 이어가기){
     const 글 = (((j.choices || [])[0] || {}).message || {}).content || "";
     if (!글){ 알림("빈 답이 왔습니다"); S.보낸중 = false; 그리기(); return; }
 
-    도막.push(답을도막으로(글, 유저이름(방)));
+    도막.push(답을도막으로(글, 유저이름(방), 묶음크기(플롯찾기(방))));
     D.도막[방.id] = 도막;
     새것담기();
     방그리기();
@@ -2362,12 +3008,81 @@ async function 말보내기(친말, 주문, 이어가기){
   }
 
   /* 도막 하나를 이름줄이 붙은 글로. 화면에 그리는 것과 같은 얼개다 */
+  /* ★★★ 260912 — **주어가 빠진 지문에 이름을 채워 보낸다.**
+
+     회원님이 **세 번째로** 같은 것을 짚으셨다 —
+       「**아직도 누구 옷인지 못알아쳐먹는다.** 씹, 진짜 달라진게 없잖아 몇 번째야 이게」
+       「너가 직접 저렇게 쳤어도 '준이 입고 있는 자신의 반팔 티셔츠'라고 안하냐?」
+
+     ★ 앞서 두 번은 **특징만 손댔다.** 특징은 잘 뽑힌다 (여덟 번 뽑아 8/8) —
+       「정예원은 … **준의 반팔을 입은 채** …」
+     그런데도 답이 뒤집힌다. 한 답 안에서 오락가락하기까지 한다 —
+       「지금 **네가 입고 있는 그 옷**까지」 · 「**준이 자기 옷을 입고** 뒹구는」
+
+     까닭은 **인트로 글 자체**다. 정예원 플롯 인트로가 이렇다 —
+       정예원
+       *또 정예원 방 침대에 누워 자고 있는 준을 보며*
+       *그리고 준의 반팔을 당당하게 입고 있다.*     ← **누가 입었는지 없다**
+
+     이름줄이 정예원이므로 사람은 안다. 그런데 **문장만 보면 준으로도 읽힌다.**
+     그리고 이 글은 특징보다 모델에게 **가까이** 놓인다. 가까운 쪽이 이긴다.
+
+     ★ 그래서 **모델에게 보낼 때만** 주어를 채운다. 화면에는 원본이 그대로 보인다.
+       회원님 인트로 원문은 손대지 않는다.
+
+     채우는 자리 — 이름줄 아래 별표 지문인데 **주어 표시(은/는/이/가)가 없는** 문장.
+     그런 문장의 임자는 **그 이름줄의 인물**이다. */
+  function 주어채우기(글, 이름){
+    if (!이름 || 이름 === "내레이터") return 글;
+    const 토막 = String(글).split("*");
+    /* 홀수 자리가 별표 안이다 */
+    for (let i = 1; i < 토막.length; i += 2){
+      const t = 토막[i];
+      if (!t || t.length < 6) continue;
+      /* ★★★ 260912 열한 번째 판정 — 「**조사 「은/는」 뒤에 괄호만 오고 서술어가 없습니다.**
+         한국어 문장이 아닙니다」 (판정자가 「지안은 (왜 옆에 앉았지?)」 를 짚었다)
+         속마음 괄호는 **그 인물의 것이 이름줄로 이미 정해져 있다.** 주어를 붙이면 비문이 된다.
+         모델에게만 보내는 것이지만 **되먹임으로 다음 턴에 그 꼴을 배운다.** */
+      const 첫 = t.trim()[0];
+      if (첫 === "(" || 첫 === "（") continue;
+      /* 이미 누가 하는지 적혀 있으면 둔다 */
+      if (t.indexOf(이름) >= 0) continue;
+      if (/[가-힣][은는이가]\s/.test(t.slice(0, 14))) continue;
+      /* 「그리고」 「그러다」 같은 이음말로 열면 그 뒤에 넣는다 */
+      const 이음 = t.match(/^(그리고|그러다가|그러다|그런데|이어서|동시에)\s+/);
+      토막[i] = 이음 ? (이음[0] + 이름 + "은 " + t.slice(이음[0].length))
+                     : (이름 + "은 " + t);
+      /* 받침이 없으면 「는」 */
+      if (!받침있나(이름)) 토막[i] = 토막[i].replace(이름 + "은 ", 이름 + "는 ");
+    }
+    return 토막.join("*");
+  }
+  /* 이름 끝 글자에 받침이 있나 — 조사를 맞추기 위한 것 */
+  function 받침있나(이름){
+    const c = String(이름 || "").trim().slice(-1).charCodeAt(0);
+    if (isNaN(c) || c < 0xac00 || c > 0xd7a3) return true;
+    return ((c - 0xac00) % 28) !== 0;
+  }
+
   function 보낼글(m){
     const 조각 = (m.contents || []).filter(c => c.type === "TEXT" && c.text);
     const 낸것 = []; let 앞 = null;
     for (const c of 조각){
       const 이름 = c.position === "NARRATOR" ? "내레이터" : (c.speakerName || "");
       if (이름 && 이름 !== 앞){ 낸것.push((낸것.length ? NL : "") + 이름); 앞 = 이름; }
+      /* ★★★ 260912 회원님 — 「옷 임자도 그래. 사실 문장을 뜯어보면 알 수 있는 건데,
+         **규칙으로 주체를 붙이려다 보니까 오류가 나는거 아니야? 조건문과 규칙으로는
+         해결할 수 없어.**」
+
+         맞으셨다. 「주어가 없으면 이름을 붙인다」는 조건문이 **속마음 괄호에 비문을 만들었다** —
+           모델이 낸 것    *(왜 옆에 앉았지?)*
+           주어채우기()   *지안은 (왜 옆에 앉았지?)*     ← 서술어가 없다
+         판정자가 그것을 찾아냈고, 나는 **「괄호면 건너뛴다」는 조건을 하나 더 붙였다.**
+         같은 짓을 또 한 것이다. 조건을 붙일수록 새 구멍이 난다.
+
+         그래서 **걷어낸다.** `주어채우기()` 는 위에 남겨 두었지만 부르지 않는다 —
+         옷 임자는 **조건문 자리가 아니다.** 인물의 특징과 본보기 쪽에서 잡는다
+         (규칙 11 의 갈래 ②·③ — 「규칙 < 본보기 < 그 인물의 특징」). */
       낸것.push(c.text);
     }
     return 낸것.join(NL);
@@ -2375,12 +3090,38 @@ async function 말보내기(친말, 주문, 이어가기){
 
   const 재료 = {
     모델: 고른모델().모델 || undefined,
-    인물: (플롯.characters || [])[0] || {name: 방.제목},
-    /* ★ 회원님이 적으신 대화 프로필이 매 턴 「나」로 들어간다 */
-    나: (() => { const p = 방프로필(방, 플롯);
-                 return {name: p.이름, description: p.설명 || ""}; })(),
-    소개: 플롯.longDescription || 플롯.shortDescription || "",
-    설정집: (플롯.lorebooks || []).map(l => l.description).join(NL).slice(0, 4000),
+    /* ★ 260912 — **인물 설명에도 박힌 유저 이름이 있다.**
+       「정예원은 준의 옷을 아무렇지 않게 입으며」 가 그 자리다 */
+    인물: (() => {
+      const c = (플롯.characters || [])[0] || {name: 방.제목};
+      return {...c, description: 이름채우기(c.description || "", 플롯, 방)};
+    })(),
+    /* ★ 회원님이 적으신 대화 프로필이 매 턴 「나」로 들어간다.
+
+       ★★★ 260912 — **비밀과 관계도 함께 보낸다.**
+         제타 실물 프로필에 있는 칸이다 (회원님 「준」 프로필을 읽었다) —
+           비밀 : 사건의 인과를 비틀고 사람의 마음을 조종하는 초능력자
+           관계 : 준이 '{{char}}' 이라는 풀네임으로 부를 때마다 {{char}}은 '을'이 되어 …
+         **「관계」가 축 C 의 엔진이다** — 조건부 스위치를 회원님이 직접 적어 두신다.
+         여태 이름과 설명만 보내느라 그 재료가 통째로 빠져 있었다.
+         ★ 「비밀」은 {{char}} 가 모르는 것이다. 그래서 따로 이름표를 붙여 보낸다 */
+    나: (() => {
+      const p = 방프로필(방, 플롯);
+      const 이름 = (플롯.characters || [])[0];
+      const 채움 = t => 이름채우기(String(t || ""), 플롯, 방)
+                        .split("{{char}}").join((이름 && 이름.name) || 방.제목 || "상대");
+      const 줄 = [];
+      if (p.설명) 줄.push(채움(p.설명));
+      if (p.비밀) 줄.push("[" + p.이름 + "만 아는 것 — " + ((이름 && 이름.name) || "상대") +
+                          "는 모른다]" + NL + 채움(p.비밀));
+      if (p.관계) 줄.push("[" + ((이름 && 이름.name) || "상대") + "와 " + p.이름 +
+                          " 사이에 이미 있는 것]" + NL + 채움(p.관계));
+      return {name: p.이름, description: 줄.join(NL + NL)};
+    })(),
+    /* ★ 260912 — **그 방 캐릭터 이름으로 채워 보낸다** (회원님 지시).
+       중계도 {{user}} 를 갈아 끼우지만 소개·설정집까지는 손대지 않는다 */
+    소개: 이름채우기(플롯.longDescription || 플롯.shortDescription || "", 플롯, 방),
+    설정집: 이름채우기((플롯.lorebooks || []).map(l => l.description).join(NL), 플롯, 방).slice(0, 4000),
     기억: 기억글(기억),
     /* 최근 것만 보낸다. 앞엣것은 **기억**이 든다 — 그것이 장기기억의 값이다 */
     /* ★ 260910 — **이름줄을 붙여 싣는다.**
@@ -2401,7 +3142,34 @@ async function 말보내기(친말, 주문, 이어가기){
        그대로 보내면 되먹임이 「준」 이름줄을 계속 가르치는데,
        꼴 규칙은 「{{user}}는 이름줄에 놓지 않는다」다. **규칙과 되먹임이 어긋난다.**
        데타에서 새로 만든 도막에는 이름이 없으니 같은 꼴로 맞춘다.                 */
-    도막들: 도막.slice(-14).map(m => {
+    /* ★ 260912 — **되먹임이 꼴을 굳힌다.**
+
+       실측 — 되먹임이 없는 **첫 턴**은 지문비 흔들림 0.21 로 제타(0.22)와 같은데,
+       이어 굴리면 0.11 로 절반이 된다. 자기 답을 받으면서 꼴이 굳는 것이다.
+       회원님 기억 — 「되먹임이 명령을 이긴다 — 앞 대화 패턴 > 직접 명령」
+
+       14 → 8 로 줄인다. 앞엣것은 **기억**이 든다 — 그것이 장기기억의 값이다 */
+    /* ★ 260912 — 14 → 8 로 줄여 봤으나 **되먹임 탓이 아니었다.**
+       지문비 흔들림은 0.12 → 0.10 으로 그대로였고 내레이터만 0.95 → 0.67 로 나빠졌다.
+       ★ 그리고 잣대가 틀렸었다 — 제타 0.23 은 **열아홉 방을 통째로** 잰 값이고,
+         한 방 안에서 재면 0.14 다. 데타 0.10 은 그 언저리다. **흠이 아니었다** */
+    /* ★★★ 260912 — **방금 친 말을 빼고 보낸다. 두 번 들어가고 있었다.**
+
+       위에서 친 말을 `도막` 에 먼저 넣어 화면에 띄운다(기다리는 동안 빈 화면이면 답답하다).
+       그런데 그 `도막` 을 통째로 `도막들` 로 보내고, 아래에서 `친말` 로 **또** 보냈다.
+       모델은 같은 말을 **두 번** 받았다.
+
+       맥락 없는 판정자가 찾아냈다 —
+         「다섯 턴 중 넷에서 **「두 번 말했다」**를 언급합니다.
+          파일에 적힌 친 말은 한 번뿐인데 답이 두 번을 전제합니다.」
+       실측 — 「같은 층」 방은 **8턴 중 6턴**이 「두 번」을 말했다.
+         「말이 두 번 반복되었다」 · 「준의 목소리… 두 번.」 · 「두 번 들었다.」
+
+       ★ 회원님이 겪으신 것과도 이어진다 — 「**내 마지막 2회의 입력에 따른 밀당이 없다**」.
+         같은 말이 두 번 들어오니 모델이 그것을 **재촉·되풀이**로 읽고,
+         새로 친 말에 답하는 대신 「왜 두 번 말해」를 붙들었다.
+       ★ 이어가기(빈 채로 보냄)일 때는 유저 도막을 안 만들므로 뺄 것도 없다 */
+    도막들: (이어가기 ? 도막.slice(-14) : 도막.slice(0, -1).slice(-14)).map(m => {
       const 봇 = ((m.sender && m.sender.type) === "BOT");
       let 글 = 보낼글(m);
       if (!봇){
@@ -2410,6 +3178,13 @@ async function 말보내기(친말, 주문, 이어가기){
       }
       return {봇, 글};
     }),
+    /* ★ 260912 — **보내는 도막의 이름도 맞춘다.**
+       제타에서 받아 온 방은 도막에 그때의 프로필 이름이 박혀 있다.
+       소개는 「준」, 도막은 「주노」, 지금 이름은 또 다르면 모델이 셋 중에 고른다.
+       ★ 화면은 안 건드린다 — 회원님 지시 :
+         「이미 입출력이 완료된 채팅방 내부 텍스트는 굳이 {{user}}로 표기할 필요 없다」 */
+    /* ★ 260912 — **인물 특징.** 화면엔 안 보이고 프롬프트에만 들어간다 */
+    특징: 특징읽기(방.플롯아이디) || undefined,
     /* ★ 그 방에서 뽑은 본보기. 없으면 중계에 박힌 것이 쓰인다 */
     본보기: 방본보기(방, 14) || undefined,
     /* ★ 아무것도 안 치고 보내면 **이어 가라**는 뜻이다 (260910 회원님).
@@ -2436,9 +3211,14 @@ async function 말보내기(친말, 주문, 이어가기){
     try {
       흐름 = await 흘려받기(중계 + "/" + 어디 + "/turn-stream", 머리, 본문, 흐름보이기);
     } catch(_){ 흐름 = null; }
-    흐름마치기();                   /* ★ 다 받았다 — 남은 글자를 마저 흘린다 */        /* 흐르다 끊겼다 — 아래에서 옛 길로 다시 한다 */
+    흐름마치기();                   /* ★ 다 받았다 — 남은 글자를 마저 흘린다 */
+    /* ★★★ 260912 — **다 흐를 때까지 기다린다.** 위 흐름끝나기다리기() 주석 참고.
+       이것이 없으면 아래에서 본문을 곧바로 그려 흐르던 것을 덮어쓴다 —
+       실측에서 464자가 마지막 한 칸에 통째로 튀었다 */
+    if (흐름 && 흐름.흘렀나) await 흐름끝나기다리기();
 
     let r, 글;
+    let 안흐른왜끝남 = "";   /* ★ 260912 — 블록 밖에 둔다. 아래 잘렸나 에서 쓴다 */
     if (흐름 && 흐름.흘렀나){
       r = 흐름.답;
       글 = 흐름.글;
@@ -2453,6 +3233,12 @@ async function 말보내기(친말, 주문, 이어가기){
       잰것.다받음 = Date.now();
       if (!r.ok){ 대기떼기(); 알림((j.error && j.error.message) || ("탈 " + r.status), 8000); S.보낸중 = false; return; }
       글 = (((j.choices || [])[0] || {}).message || {}).content || "";
+      /* ★★★ 260912 — **흘려받지 않은 길에서도 왜 끝났는지 본다.**
+         전에는  일 때만  을 봤다. 그래서 옛 길()로 받은 턴은
+         **length 로 잘려도 조용히 통과**했다.
+         실측 — 앱에서 네 턴이 다 37~39자로 잘렸는데 **알림은 한 번만** 떴다.
+         회원님은 나머지 세 턴은 영문도 모르고 넘어가셨을 것이다 */
+      안흐른왜끝남 = String((((j.choices || [])[0] || {}).finish_reason) || "");
     }
 
     if (!r.ok){ 대기떼기(); 알림("탈 " + r.status, 8000); S.보낸중 = false; return; }
@@ -2466,7 +3252,9 @@ async function 말보내기(친말, 주문, 이어가기){
          ⑵ 별표가 홀수다 — 지문을 열고 못 닫았다
          ⑶ 아주 짧은데 문장 끝맺음이 없다                                     */
     const 잘렸나 = (() => {
-      if (흐름 && 흐름.흘렀나 && 흐름.왜끝남 && 흐름.왜끝남 !== "stop") return "왜끝남 " + 흐름.왜끝남;
+      const 왜 = (흐름 && 흐름.흘렀나) ? String(흐름.왜끝남 || "")
+                                      : String(안흐른왜끝남 || "");
+      if (왜 && 왜 !== "stop") return "왜끝남 " + 왜;
       /* 별표가 홀수면 지문을 열고 못 닫은 것이다.
          정규식을 안 쓴다 (G6) — 스크립트로 이 파일을 고칠 때 역빗금이 벗겨진다.
          실제로 그 탓에 주석이 열려 앱이 통째로 죽었다 */
@@ -2478,7 +3266,7 @@ async function 말보내기(친말, 주문, 이어가기){
       return "";
     })();
 
-    도막.push(답을도막으로(글, 유저이름(방)));
+    도막.push(답을도막으로(글, 유저이름(방), 묶음크기(플롯찾기(방))));
     D.도막[방.id] = 도막;
     새것담기();
     방그리기();
@@ -2495,6 +3283,8 @@ async function 말보내기(친말, 주문, 이어가기){
     시간남기기({때: Date.now(), 걸림: Number(걸림), 첫: Number(첫),
                 흘림: !!(흐름 && 흐름.흘렀나), 중계: Number(중계잰것 || 0),
                 업체: 어디, 모델: 재료.모델 || "(기본)", 자수: 글.length,
+                /* ★ 260912 — 방마다 든 값을 세려면 어느 방인지 남겨야 한다 */
+                방아이디: 방 && 방.id,
                 방: (방 && 방.제목) || ""});
     if (잘렸나) 알림("답이 중간에 끊겼습니다 (" + 잘렸나 + ") — 다시 쓰기를 눌러 보십시오", 6000);
     else 알림((흐름 && 흐름.흘렀나) ? ("첫 글자 " + 첫 + "초 · 다 " + 걸림 + "초") : (걸림 + "초"));
@@ -2635,18 +3425,87 @@ function 유저이름(방){
 
 function 이름줄인가(t){
   if (!t || t.length > 14) return false;
+  /* ★★★ 260912 열한 번째 판정 — 「**화자 이름표가 별표 안에 들어갔습니다.**
+     `*내레이터*` … 그리고 내레이터 블록 안에 하린의 대사가 들어가 있습니다. 화자가 뒤섞였습니다」
+
+     모델이 이름줄을 별표로 감싸 내는 턴이 있다. 그러면 앱이 그것을 **지문으로** 그리고,
+     그 아래 대사가 앞 사람 것에 붙어 **누가 말하는지가 뒤섞인다.**
+     별표만 두른 짧은 낱말은 **벗겨서 다시 본다.**
+
+     ★ 다만 **아무 짧은 지문이나 벗기면 안 된다.** 처음에 그렇게 했다가
+       `*피식*` 과 `*눈이 치켜올라간다*`(본보기에 있는 문장)를 이름으로 먹었다.
+       실측에서 별표에 먹힌 것은 **「내레이터」 하나뿐**이었다. 거기만 받는다. */
+  let ㅅ = t;
+  if (ㅅ === "*내레이터*" || ㅅ === "＊내레이터＊") ㅅ = "내레이터";
+  if (!ㅅ || ㅅ.length > 14) return false;
   for (const c of [".", ",", "!", "?", "…", String.fromCharCode(34), "*", ">", "("])
-    if (t.indexOf(c) >= 0) return false;
+    if (ㅅ.indexOf(c) >= 0) return false;
   return true;
 }
-function 답을도막으로(글, 유저들){
+/* ★★★ 260912 — **한 말풍선에 문단을 몇 개나 담나.**
+
+   회원님 원문 — 「실제 제타는 **플롯의 의도를 잘 파악**한 반면,
+   데타는 **거의 일률적인 진행**이다.」
+
+   하루 종일 프롬프트에서 답을 찾았는데 **거기가 아니었다.**
+   제타 원자료를 「말풍선(contents)」과 「문단(빈 줄로 쪼갠 것)」으로 갈라 재니 —
+
+     방                제타 말풍선   제타 문단   한 풍선에 담는 문단
+     유승연 - 결혼         1.07        6.53          6.13   ← 여섯 문단을 한 풍선에
+     서이현               6.14        7.84          1.28   ← 한 문단씩 따로
+     ── 스물한 방 ──       4.03        8.85
+     흔들림               0.51        0.32
+
+   **제타는 글 자체는 방마다 비슷하게 쓴다**(문단 흔들림 0.32).
+   **몇 개 말풍선으로 묶느냐를 방마다 바꾼다**(풍선 흔들림 0.51).
+
+   데타는 **묶는 일을 안 했다.** 빈 줄마다 무조건 새 풍선이었다 —
+   그래서 어느 방이든 6.34 로 붙박이였다 (흔들림 0.14).
+   글은 이미 제타에 가까웠다 (데타 문단 6.34 대 제타 8.85).
+
+   ★ 이것은 **서식**이라 지정이 맞다 (CLAUDE.md 5.4 장 끝 ★).
+     「가름은 그 자리에서 여럿을 떠올릴 수 있느냐다」 — 묶는 개수는 그 자리가 아니다.
+
+   ★★★ 260912 저녁 — **여기까지가 260912 아침의 판단이고, 실측이 뒤집었다.**
+
+   위 표는 방마다 「한 풍선에 담는 문단」이 1.28 에서 6.13 까지 흔들린다고 읽었다.
+   맞다. 그런데 **그 흔들림이 어디서 나오는지**를 잘못 짚었다.
+
+   제타 원자료를 다시 재니 (스물한 방 · 말풍선 6,901개) —
+
+     바로 앞 말풍선과 말할 이가 같은 것     33개 = **0.5%**
+
+   **제타는 같은 사람의 말을 두 풍선으로 쪼개는 일이 없다.**
+   그러니 「한 풍선에 담는 문단」은 곧 **그 방의 모델이 한 사람 차례에 몇 문단을 쓰나**다.
+   제타는 자르는 한도를 두지 않는다 — 방마다 다른 것은 **쓰는 쪽**이지 **자르는 쪽**이 아니다.
+
+   한도를 1 로 두면(스물한 방 중 열 방이 그랬다) 같은 사람의 두 문단이 두 풍선이 되고,
+   글로 꺼낼 때 이름이 두 번 찍힌다 — 판정자가 첫 단서로 짚은 바로 그 꼴이다.
+   데타 실측 36% 대 제타 0.5% 였다.
+
+   그래서 **한도를 걷는다.** 말할 이가 같으면 끝까지 한 풍선이다.
+   방마다 다른 결은 앱이 자르는 것이 아니라 **중계 프롬프트가 쓰게 하는 것**으로 간다.
+
+   ★ 인자(플롯)와 함수는 그대로 둔다 — 부르는 자리가 다섯이고,
+     방마다 한도를 되살릴 일이 생기면 여기 한 곳만 고치면 된다. */
+function 묶음크기(플롯){
+  return 99;   /* 사실상 한도 없음. 말할 이가 같으면 끝까지 한 풍선 */
+}
+
+function 답을도막으로(글, 유저들, 묶음){
+  const 묶을수 = Math.max(1, Number(묶음) || 1);
   const 조각 = [];
   let 이름 = "";
   for (const 덩이 of String(글).split(NL + NL)){
     let 줄 = 덩이.split(NL).map(x => x.trim()).filter(Boolean);
     if (!줄.length) continue;
     /* 이름줄로 시작하면 자리를 바꾼다. 그 줄만 있어도 마찬가지다 */
-    while (줄.length && 이름줄인가(줄[0])){ 이름 = 줄[0]; 줄 = 줄.slice(1); }
+    /* ★ 260912 — 별표를 두른 이름줄(`*내레이터*`)은 **벗겨서** 쓴다. 위 「이름줄인가」 주석 참고 */
+    while (줄.length && 이름줄인가(줄[0])){
+      let ㄴ = 줄[0];
+      if (ㄴ.length > 2 && ㄴ[0] === "*" && ㄴ[ㄴ.length - 1] === "*") ㄴ = ㄴ.slice(1, -1).trim();
+      이름 = ㄴ; 줄 = 줄.slice(1);
+    }
     if (!줄.length) continue;        /* 이름만 있던 덩이 — 다음 덩이가 그 이름을 쓴다 */
     /* ★ 260910 【축 B】 — **{{user}} 이름줄은 내레이터로 받는다.**
 
@@ -2662,10 +3521,27 @@ function 답을도막으로(글, 유저들){
        내용은 비슷한데 **꼴만 달랐다.** 그래서 그리는 자리에서 바로잡는다.
        회원님이 안 하신 말이 회원님 인물의 말풍선으로 뜨면 밀당이 깨진다 */
     const 유저인가 = 이름 && (유저들 || []).indexOf(이름) >= 0;
-    조각.push({type: "TEXT",
-               position: (이름 === "내레이터" || 유저인가) ? "NARRATOR" : "LEFT",
-               speakerName: 유저인가 ? "내레이터" : 이름, text: 줄.join(NL)});
+    const 자리 = (이름 === "내레이터" || 유저인가) ? "NARRATOR" : "LEFT";
+    const 말할이 = 유저인가 ? "내레이터" : 이름;
+
+    /* ★ 260912 — **묶는다.** 바로 앞 조각과 말할 이가 같으면 같은 말풍선에 이어 붙인다.
+       제타가 그렇게 한다 — 한 말풍선 안에 문단이 1.28~6.13 개 들어 있고,
+       **앞 풍선과 말할 이가 같은 경우는 6,901개 중 33개(0.5%)뿐이다.**
+       말할 이가 바뀌면 반드시 새 풍선이다. 그건 묶을 수 없다.
+
+       ★ `묶을수` 는 이제 사실상 한도가 없다 (`묶음크기()` 가 99 를 준다).
+         까닭은 `묶음크기()` 위 주석에 적었다.
+         묶음을 안 주고 부르면 예전대로 한 문단씩이다 — 검사가 그 꼴을 본다. */
+    const 앞 = 조각[조각.length - 1];
+    if (앞 && 앞.position === 자리 && 앞.speakerName === 말할이 && 앞.담은수 < 묶을수){
+      앞.text += NL + NL + 줄.join(NL);
+      앞.담은수++;
+      continue;
+    }
+    조각.push({type: "TEXT", position: 자리, speakerName: 말할이,
+               text: 줄.join(NL), 담은수: 1});
   }
+  for (const c of 조각) delete c.담은수;
   return {sender: {type: "BOT"}, contents: 조각, messageTime: new Date().toISOString()};
 }
 
@@ -2688,10 +3564,14 @@ function 시간남기기(한줄){
    ══════════════════════════════════════════════════════ */
 
 /* 지금 방의 플롯 */
-function 지금플롯(){
-  if (!S.방) return null;
-  return D.플롯.find(x => x.id === S.방.플롯아이디) ||
-         D.인기.find(x => x.id === S.방.플롯아이디) || null;
+function 지금플롯(){ return 플롯찾기(S.방); }
+
+/* ★ 260912 — **방으로 플롯을 찾는다.** 지금 방이 아닌 것도 찾아야 해서 갈랐다
+   (답이 올 때는 S.방 이 딴 방으로 옮겨 가 있을 수 있다) */
+function 플롯찾기(방){
+  if (!방) return null;
+  return D.플롯.find(x => x.id === 방.플롯아이디) ||
+         D.인기.find(x => x.id === 방.플롯아이디) || null;
 }
 
 /* ── 인물 정보 ── */
@@ -2708,8 +3588,9 @@ function 인물열기(이름){
       '<div class="밑">' + 안전(p.name) + '</div></div>' +
     '</div>' +
     '<div class="인물글">' + 안전(c.description || "(설명 없음)") + '</div>' +
+    /* ★ 260912 — **방 안에서는 그 방 캐릭터 이름으로** (회원님 지시) */
     (p.longDescription ? '<div class="시트머리">상황</div><div class="인물글">' +
-      안전(p.longDescription) + '</div>' : ""));
+      안전(이름채우기(p.longDescription, p, S.방)) + '</div>' : ""));
 }
 
 /* ── 말풍선 메뉴 ── */
@@ -2728,11 +3609,36 @@ function 도막메뉴(몇){
     시트줄("🗑", "여기부터 지우기", "지우기", {값: 몇, 빛: "빨강"}));
 }
 
-/* 도막을 글로 (편집·복사에 쓴다) */
+/* 도막을 글로 (편집·복사에 쓴다. 섞어놓기 판도 이것으로 뜬다)
+
+   ★★★ 260912 — **말할 이가 안 바뀌면 이름을 다시 찍지 않는다.**
+
+   맥락 없는 판정자가 첫 열 줄만 보고 여섯 덩이를 다 갈라냈다. 그 첫째 단서가
+   「데타는 문단마다 이름을 다시 찍는다 — 지유 / 지유 / 지유 / 내레이터 / 지유」였다.
+
+   화면(`도막그리기()`)은 이미 이어지는 같은 사람을 **한 이름줄 아래로 묶어** 그린다.
+   그런데 **글로 꺼내는 이 자리만** 말풍선마다 이름을 다시 찍고 있었다.
+   판정자가 본 것은 화면이 아니라 이 글이다 — 화면과 글이 서로 달랐던 것이다.
+
+   제타 실측 (내 대화방 스물한 방 · 봇 도막 1,433턴 · 말풍선 6,901개)
+
+     바로 앞 말풍선과 말할 이가 같은 것        33개 = 0.5%
+     이름줄 하나에 딸린 문단                   1.99 개
+     한 턴에 찍히는 이름줄                     4.79 줄
+
+   데타는 같은 자리가 **36%** 였다 (앱에서 굴린 48턴 · 말풍선 278개 중 101개).
+   제타는 **같은 사람이 이어 말하면 이름을 다시 찍지 않는다.** 그대로 맞춘다. */
 function 도막글꺼내기(m){
-  return (m.contents || []).filter(c => c.type === "TEXT")
-    .map(c => (c.speakerName && c.position !== "RIGHT" ? c.speakerName + NL : "") + c.text)
-    .join(NL + NL);
+  const 낸것 = [];
+  let 앞이름 = null;
+  for (const c of (m.contents || [])){
+    if (c.type !== "TEXT") continue;
+    const 이름 = (c.speakerName && c.position !== "RIGHT") ? c.speakerName : "";
+    /* 말할 이가 바뀔 때만 이름줄을 얹는다. 안 바뀌면 글만 이어 붙인다 */
+    낸것.push((이름 && 이름 !== 앞이름 ? 이름 + NL : "") + c.text);
+    앞이름 = 이름;
+  }
+  return 낸것.join(NL + NL);
 }
 
 /* ── 고쳐 쓰기 ── */
@@ -2753,7 +3659,7 @@ function 편집저장(몇){
   const m = 도막[몇];
   if (!m) return;
   const 봇 = ((m.sender && m.sender.type) === "BOT");
-  도막[몇] = 봇 ? 답을도막으로(t.value, 유저이름(S.방))
+  도막[몇] = 봇 ? 답을도막으로(t.value, 유저이름(S.방), 묶음크기(지금플롯()))
                 : {sender: {type: "USER"},
                    contents: [{type: "TEXT", position: "RIGHT", text: t.value}],
                    messageTime: m.messageTime};
@@ -2856,14 +3762,81 @@ function 목록방메뉴(방){
 }
 
 /* ── 이어하기 ── */
+/* ★ 260912 회원님 : 「이어하기에서 고를 땐 일일이 들어가보지 않아도 목록에서
+   각 방의 **생성시각, 최종시각(마지막 상호작용시각), 턴수, 사용금액**을 확인할 수 있으면 좋고」
+
+   ★ 「이어하기 여부 결정 없이 바로 채팅 가능하게」 — 누르면 바로 들어갑니다.
+     API 는 상태를 안 가지므로 다른 방 내용이 새어 들어갈 일이 없습니다 */
+const 짧은때 = t => {
+  if (!t) return "—";
+  const d = new Date(t);
+  if (isNaN(d.getTime())) return "—";
+  const z = n => (n < 10 ? "0" : "") + n;
+  return z(d.getMonth() + 1) + "/" + z(d.getDate()) + " " + z(d.getHours()) + ":" + z(d.getMinutes());
+};
+const 값글 = v => v > 0 ? "$" + v.toFixed(4) : "—";
+
+/* ★ 260912 회원님 물음 — 「**9/12에 만들어서 9/6에 최종대화** 했다는건 잘 이해 안된다.」
+
+   버그가 아니라 **두 시각의 출처가 달랐다** —
+     만든때        앱이 그 방을 받아들인 때 (9/12)
+     끝 도막 시각   제타에서 실제로 주고받은 때 (9/6)
+
+   받아 온 방은 도막 쪽이 참값이다. **도막이 있으면 첫 도막 시각을 쓴다.** */
+function 연때(방이나벌, 도막){
+  const 첫 = (도막 || [])[0];
+  const ㄱ = 첫 && 첫.messageTime;
+  const ㄴ = 방이나벌 && (방이나벌.만든때 || 방이나벌.savedAt);
+  if (ㄱ && ㄴ) return (new Date(ㄱ) < new Date(ㄴ)) ? ㄱ : ㄴ;
+  return ㄱ || ㄴ || "";
+}
+
 function 이어하기열기(){
   const 방 = S.방;
   const 목 = 방.이어하기 || [];
-  시트열기("이어하기 " + (목.length ? "1/" + 목.length : ""),
-    (목.length ? 목.map((e, i) =>
-      시트줄("💾", (e.savedAt || "").slice(0, 16).split("T").join(" "), "이어열기",
-             {값: e.id, 밑: (e.도막수 || 0) + "도막"})).join("")
-      : '<div class="인물글">저장된 것이 없습니다.</div>'));
+  const 지금도막 = D.도막[방.id] || [];
+  /* 지금 보고 있는 것도 한 줄로 보인다 — 몇 번째 대화인지 알 수 있게 */
+  const 이줄 = (꼭, 말, 가, 더) => 시트줄(꼭, 말, 가, 더);
+  /* ★ 260912 회원님 : 「신고내역 및 기억도 방 별로 적용 및 **열고 닫을 수 있도록**」
+     벌마다 적어 둔 것이 있으면 그 자리에서 바로 열어 봅니다 */
+  /* ★ 260912 회원님 : 「메모/기억 뿐만아니라 **수정 버튼도 추가**해서,
+     그거 누르면 **제목을 편집**할 수 있게 해.」
+     ★ 수정은 늘 보인다 — 메모·기억이 없어도 제목은 붙일 수 있어야 한다 */
+  const 곁줄 = (대화, 있나) =>
+    '<div class="곁줄">' +
+      '<button class="곁단추" data-시트=제목고치기 data-값="' + 안전(대화) + '">✏ 수정</button>' +
+      (있나.메모 ? '<button class="곁단추" data-시트=메모 data-값="@' + 안전(대화) +
+                    '">📝 메모</button>' : "") +
+      (있나.기억 ? '<button class="곁단추" data-시트=기억 data-값="@' + 안전(대화) +
+                    '">🧠 기억</button>' : "") +
+    '</div>';
+  const 한벌 = (e) => {
+    const 도막 = D.도막[e.id] || [];
+    const 끝 = 도막[도막.length - 1];
+    const 있나 = 적은것있나(e.id);
+    /* ★ 260912 회원님 : 「제목은 09/12 18:10 -> 09/06 18:20 **보다 앞에** 들어가게끔.」
+       붙인 제목이 있으면 그것이 앞에 서고, 날짜는 뒤로 물러나 밑줄로 간다 */
+    const 때글 = 짧은때(연때(e, 도막)) + "  →  " +
+                 짧은때((끝 && 끝.messageTime) || e.savedAt);
+    return 이줄("💾", (e.제목 ? e.제목 : 때글), "이어열기",
+                {값: e.id,
+                 밑: (e.제목 ? 때글 + " · " : "") +
+                     턴수(도막) + "턴 · " + 도막.length + "도막 · " + 값글(방값(e.id)) +
+                     (있나.메모 ? " · 📝" : "") + (있나.기억 ? " · 🧠" : "")}) +
+           곁줄(e.id, 있나);
+  };
+  const 지금끝 = 지금도막[지금도막.length - 1];
+  const 지금있나 = 적은것있나(방.id);
+  시트열기("대화 " + (목.length + 1) + "개",
+    시트줄("▶", (방.벌제목 || "지금 보고 있는 대화"), "닫기",
+           {빛: "켬",
+            밑: 짧은때(연때(방, 지금도막)) + "  →  " +
+                짧은때(지금끝 && 지금끝.messageTime) + "   " +
+                턴수(지금도막) + "턴 · " + 값글(방값(방.id)) +
+                (지금있나.메모 ? " · 📝" : "") + (지금있나.기억 ? " · 🧠" : "")}) +
+    곁줄(방.id, 지금있나) +
+    (목.length ? 목.map(한벌).join("")
+      : '<div class="인물글">저장된 것이 없습니다. 방메뉴의 「새로하기」로 만듭니다.</div>'));
 }
 
 /* ── 모델 고르기 ── */
@@ -2877,16 +3850,24 @@ function 모델열기(){
 }
 
 /* ── 기억 ── */
-function 기억열기(){
-  const 기 = 기억읽기(S.방.id);
+function 기억열기(어느){
+  /* ★ 260912 — **방에서 나온 뒤에 불릴 수 있다.**
+     갈무리는 오래 걸린다. 그 사이 회원님이 뒤로 가시면 S.방 이 null 이 된다.
+     그때 터지면 화면이 멈춘다 */
+  if (!S.방) return;
+  /* ★ 260912 — 값이 `@아이디` 꼴이면 이어하기에 담긴 그 대화의 기억을 본다 */
+  const 딴대화 = (typeof 어느 === "string" && 어느.charAt(0) === "@") ? 어느.slice(1) : "";
+  const 대화 = 딴대화 || S.방.id;
+  S.기억대화 = 대화;
+  const 기 = 기억읽기(대화);
   const 글 = 기억글(기);
-  시트열기("기억 — 제타에 없는 것",
+  시트열기("기억 — " + (딴대화 ? "지난 대화" : "제타에 없는 것"),
     '<div style="padding:0 12px"><textarea id="기억칸" ' +
     'placeholder="여태 있었던 일 · 사이 · 아직 답이 안 난 것">' + 안전(글) + '</textarea></div>' +
     '<div class="인물글" style="color:var(--흐림)">여기 적은 것이 매 턴 함께 갑니다.' +
     ' 대화가 길어져도 앞의 일이 안 사라집니다.</div>' +
     '<div class="시트단추"><button data-시트=닫기>그만</button>' +
-    '<button data-시트=지금갈무리>지금 갈무리</button>' +
+    (딴대화 ? "" : '<button data-시트=지금갈무리>지금 갈무리</button>') +
     '<button class="강" data-시트=기억저장>담기</button></div>');
 }
 
@@ -2907,6 +3888,7 @@ async function 들이기(){
       for (const r of 새방) if (!D.방.some(x => x.id === r.id)) D.방.unshift(r);
       for (const p of 지은것읽기()) if (!D.플롯.some(x => x.id === p.id)) D.플롯.unshift(p);
       /* ★ 손으로 고친 플롯을 얹는다 — 자료.json 은 못 고치므로 따로 담아 둔다 */
+
       /* 지운 방은 되살리지 않는다 */
       const 지운 = 지운방들();
       if (지운.length){
@@ -2919,6 +3901,12 @@ async function 들이기(){
         if (i >= 0) D.플롯[i] = 고침[id]; else D.플롯.unshift(고침[id]);
       }
       for (const k of Object.keys(새도막)) D.도막[k] = 새도막[k];
+
+      /* ★ 260912 — **같은 플롯의 방을 하나로 합친다.** (제타 로직)
+         회원님 : 「플롯마다 가장 최근 방을 남기고 나머지를 이어하기로 넣는거다.」
+         이미 흩어진 것들도 다 합칩니다 — 「이거 난잡해서 쓰겠나」
+         ★ **도막을 다 얹은 뒤에** 합친다. 앞서 합치면 도막이 없어 이어하기가 빈다 */
+      합치기();
     } catch(_){}
     알림('방 ' + D.방.length + '개 · 플롯 ' + D.플롯.length + '개');
   } catch (e){
