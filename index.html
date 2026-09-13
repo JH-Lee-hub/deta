@@ -86,7 +86,13 @@ img{display:block;max-width:100%}
 
    그래서 **`visualViewport.height` 를 보고 `--보임` 에 담아 쓴다.**
    `visualViewport` 가 없는 곳(옛 브라우저·PC)에서는 `100dvh` 로 되돌아간다 */
+/* ★★★ 260913 — **max-height 가 안전망이다.**
+   회원님 신고 : 「pc 브라우저의 창을 줄이면, 아래 메뉴들이 모두 사라진다.」
+   `--보임` 이 어떤 까닭으로 낡으면 이 판이 창보다 커지고,
+   `html,body{overflow:hidden}` 이라 **넘친 아래가 잘린다.** 스크롤도 안 된다.
+   `max-height` 를 두면 `--보임` 이 낡아도 **창을 넘지 못한다.** */
 #앱{display:flex;flex-direction:column;height:var(--보임,100dvh);min-height:0;
+  max-height:100dvh;
   max-width:520px;margin:0 auto;position:relative;overflow:hidden}
 #머리자리,#입력자리,#발{flex:0 0 auto}
 #몸{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
@@ -1130,6 +1136,36 @@ function 인트로글(p, 방){
     .filter(x => x.trim()).join(NL + NL);
 }
 
+/* ★★★★★ 260913 — **로어북을 항목째로 보낸다.**
+
+   전에는 이렇게 보냈다 —
+     설정집: (플롯.lorebooks || []).map(l => l.description).join(NL)
+   `description` 은 **로어북 제목 밑의 제작자 메모**다. 정작 내용인 `items` 를 다 버렸다.
+   제타 원본 체육관 플롯을 재 보니 항목이 **186개 · 22,933자**인데
+   프롬프트에 간 것은 **258자**였고 그 내용이 「아마 이것 한 권으로 어떻게든 될 것이다」였다.
+
+   그 186개에 이런 것들이 있다 — 반복 억제 · 시점 고정 · 2인칭에 대하여 ·
+   메타 발언 금지 · 내면 외면 분리 · 거리감 제어 · 남발 금지 단어.
+   **내가 프롬프트에서 며칠 걸려 고친 것들이 플롯에 이미 적혀 있었다.**
+
+   ★ 통째로 보내면 프롬프트가 부푼다. **중계가 열쇠말로 걸러** 넣는다 —
+     그래서 여기서는 **항목을 그대로** 넘기고 고르는 일은 중계에 맡긴다.  */
+function 로어북글(플롯){
+  const 책들 = (플롯 && 플롯.lorebooks) || [];
+  if (!책들.length) return "";
+  const 줄 = [];
+  for (const b of 책들){
+    for (const it of (b.items || [])){
+      const 내용 = String(it.content || "").trim();
+      if (!내용) continue;
+      const 말 = (it.keywords || []).filter(Boolean).join(",");
+      /* 중계가 가를 수 있게 한 줄 꼴로 — 「이름|열쇠말|내용」 */
+      줄.push("◆" + String(it.name || "").trim() + "|" + 말 + "|" + 내용.split(NL).join(" "));
+    }
+  }
+  return 줄.join(NL);
+}
+
 /* ══ 내보내기 ══
 
    ★ 260910 회원님 —
@@ -1264,7 +1300,8 @@ async function 특징뽑기(플롯, 다시뽑기){
         인물: (플롯.characters || [])[0] || {name: 플롯.name},
         유저이름: (방프로필(S.방, 플롯) || {}).이름 || "나",
         유저설명: (방프로필(S.방, 플롯) || {}).설명 || "",
-        설정집: 이름채우기((플롯.lorebooks || []).map(l => l.description).join(NL), 플롯).slice(0, 3000),
+        /* ★ 260913 — description(제작자 메모) 이 아니라 **항목째로** 보낸다. 고르는 일은 중계가 한다 */
+    설정집: 이름채우기(로어북글(플롯), 플롯).slice(0, 30000),
         /* ★ 260912 — 인트로를 **원문 그대로** 보낸다.
            「부름」 칸이 플롯이 유저를 뭐라 부르는지 여기서도 본다 */
         인트로: 인트로글(플롯)
@@ -3121,7 +3158,8 @@ async function 말보내기(친말, 주문, 이어가기){
     /* ★ 260912 — **그 방 캐릭터 이름으로 채워 보낸다** (회원님 지시).
        중계도 {{user}} 를 갈아 끼우지만 소개·설정집까지는 손대지 않는다 */
     소개: 이름채우기(플롯.longDescription || 플롯.shortDescription || "", 플롯, 방),
-    설정집: 이름채우기((플롯.lorebooks || []).map(l => l.description).join(NL), 플롯, 방).slice(0, 4000),
+    /* ★ 260913 — description(제작자 메모) 이 아니라 **항목째로** 보낸다. 고르는 일은 중계가 한다 */
+    설정집: 이름채우기(로어북글(플롯), 플롯, 방).slice(0, 30000),
     기억: 기억글(기억),
     /* 최근 것만 보낸다. 앞엣것은 **기억**이 든다 — 그것이 장기기억의 값이다 */
     /* ★ 260910 — **이름줄을 붙여 싣는다.**
@@ -3932,13 +3970,17 @@ async function 들이기(){
 
    ★ `visualViewport` 가 없으면 아무것도 안 한다 — CSS 가 `100dvh` 로 되돌아간다
    ══════════════════════════════════════════════════════ */
+/* ★★★ 260913 — **window.resize 도 듣는다.**
+   전에는 `visualViewport` 의 resize·scroll 만 들었다. PC 에서 창틀을 끌어 줄일 때
+   그것이 안 터지거나 늦으면 `--보임` 이 옛 값으로 남아 아래가 잘렸다.
+   ★ 그리고 `visualViewport` 가 없는 곳에서도 `innerHeight` 로 세운다 —
+     전에는 `if (!vv) return` 으로 아무것도 안 했다. */
 (function 자판보기(){
   const vv = window.visualViewport;
-  if (!vv) return;
   let 앞높이 = -1;
   function 맞추기(){
-    const h = Math.round(vv.height);
-    const 위 = Math.round(vv.offsetTop || 0);
+    const h = Math.round((vv && vv.height) || window.innerHeight);
+    const 위 = Math.round((vv && vv.offsetTop) || 0);
     document.documentElement.style.setProperty('--보임', h + 'px');
     const 앱 = $('#앱');
     if (앱) 앱.style.transform = 위 ? 'translateY(' + 위 + 'px)' : '';
@@ -3948,8 +3990,12 @@ async function 들이기(){
     앞높이 = h;
     if (자판올라옴 && S.방) 맨아래로(false);
   }
-  vv.addEventListener('resize', 맞추기);
-  vv.addEventListener('scroll', 맞추기);
+  if (vv){
+    vv.addEventListener('resize', 맞추기);
+    vv.addEventListener('scroll', 맞추기);
+  }
+  /* ★ 260913 — **창틀을 끌어 줄일 때**가 이 자리다. PC 에서 이것이 없어 아래가 잘렸다 */
+  addEventListener('resize', 맞추기);
   addEventListener('orientationchange', () => setTimeout(맞추기, 250));
   맞추기();
 })();
