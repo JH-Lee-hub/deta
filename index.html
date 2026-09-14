@@ -24,6 +24,15 @@
   --바탕:#151516;          /* rgb(21,21,22) */
   --바탕2:#1e1e20;         /* 말풍선 · 카드 */
   --바탕3:#26262a;         /* 눌린 것 */
+  /* ★★★ 260914 — #6 회원님 : 「다크모드에서는 **대부분의 팝업이 배경 색과 비슷해져서
+     분간이 안감.** 다크모드 기준으로도 구분이 되게끔 해줄 것.」
+     ★ 실측 — 시트 rgb(30,30,32) vs 바탕 rgb(21,21,22) → **대비 1.1**.
+       1 이 「같은 색」이니 거의 같은 색이었다. 테두리도 그림자도 없었다.
+     ★ 빛깔만 바꾸지 않는다 — **테두리와 그림자**를 함께 준다.
+       빛깔은 화면 밝기에 따라 묻힐 수 있지만 테두리는 안 묻힌다 */
+  --팝바탕:#3a3a45;        /* 떠 있는 것 — 바탕과 대비 1.63 (실측). #2e2e36 은 1.36 이라 모자랐다 */
+  --팝선:#5e5e70;          /* 그 테두리 */
+  --팝눌림:#4e4e5e;        /* 팝업 안에서 눌린 것 — 팝바탕보다 더 밝게 */
   --글자:#ffffff;
   --흐림:#595b63;          /* rgb(89,91,99) — 마지막 메시지 */
   --흐림2:#8b8d95;         /* 이름줄. 제타 실측 「흰색 50%」와 사실상 같다 */
@@ -109,6 +118,21 @@ img{display:block;max-width:100%}
 .머리 .가운데{flex:1;min-width:0;font-size:15px;font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .머리 .단추{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;font-size:18px}
+/* ★★★ 260914 — #5 회원님 : 「채팅창 상단의 프로필 및 모델 표시칸이 **너무 협소**하니,
+   **프로필은 상단 중앙에**, **모델은 프로필과 채팅방메뉴(우상단) 사이**에 비치할 것.」
+   ★ `1fr auto 1fr` 이라야 가운데가 **화면 한가운데**에 온다.
+     양옆을 `flex:1` 로 미는 것과 다르다 — 그것은 양쪽 글 길이에 따라 흔들린다 */
+.머리.방머리{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;padding:0 10px}
+.방머리 .왼{display:flex;align-items:center;gap:4px;min-width:0}
+.방머리 .오{display:flex;align-items:center;gap:4px;min-width:0;justify-content:flex-end}
+.방머리 .제목줄{font-size:14px;font-weight:600;min-width:0;text-align:left;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 제타의 `zeta ˅` 배지 꼴 — 알약. 눌러야 할 것이 눌러 보이게 */
+.머리쪽지{flex:0 1 auto;min-width:0;font-size:12px;font-weight:600;
+  padding:5px 10px;border-radius:999px;background:var(--바탕2);color:var(--글자);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.머리쪽지:active{background:var(--바탕3)}
+.방머리 .오 .단추{flex:0 0 auto}
 .머리 .단추:active{background:var(--바탕3)}
 
 /* 발 — 하단 네비 넷 */
@@ -195,7 +219,10 @@ img{display:block;max-width:100%}
   background:var(--바탕3);margin-top:16px;display:flex;align-items:center;
   justify-content:center;font-size:13px;color:var(--흐림2);cursor:pointer}
 .내말벌 .묶음{min-width:0;display:flex;flex-direction:column;align-items:flex-end}
-.내말벌 .이름{font-size:12px;color:var(--지문);margin-bottom:4px;text-align:right}
+.내말벌 .이름{font-size:12px;color:var(--지문);margin-bottom:6px;text-align:right;
+  padding-right:34px}   /* ★ 260914 — 우상단 번호와 안 겹치게 오른쪽을 비운다 */
+/* ★ 260914 — #9 번호는 말풍선 **우상단 모서리**에 얹는다 (첫 앱과 같은 자리) */
+.내말벌 .내말{position:relative}
 /* ★ 260914 — 턴 셈을 이름줄 옆에. 이름보다 흐리게 둬서 이름이 먼저 읽히게 한다 */
 .내말벌 .이름 .턴셈{font-size:10px;color:var(--흐림);margin-left:2px}
 /* 벌 안에서는 벌이 정렬을 맡는다 — 홀로 쓰일 때의 `align-self` 를 되돌린다 */
@@ -263,6 +290,35 @@ img{display:block;max-width:100%}
   .대기방울 .점{animation:none;opacity:.4}
 }
 
+/* ★★★ 260914 — #16 **보내다 탈이 나면 그 자리에 남는 안내.**
+   알림은 사라지지만 이것은 남는다 — 무엇을 누르면 되는지가 늘 보여야 한다 */
+.탈박스{border:1px solid var(--빨강);background:rgba(240,68,56,.10);border-radius:14px;
+  padding:12px 12px 10px;margin:6px 2px}
+.탈박스 .머릿말{font-size:13px;font-weight:700;color:var(--빨강);padding-bottom:3px}
+.탈박스 .밑말{font-size:11.5px;color:var(--흐림);line-height:1.6;word-break:break-all;
+  padding-bottom:9px}
+.탈단추{display:flex;gap:6px;flex-wrap:wrap}
+.탈단추 button{padding:7px 11px;border-radius:9px;background:var(--팝눌림);
+  color:var(--글자);font-size:12px;border:0;cursor:pointer}
+.탈단추 button:active{background:var(--팝선)}
+
+/* ★★★ 260914 — #8 회원님 : 「대화 프로필 선택은 **팝업 형태가 아니라 채팅창 중간에 박스**가
+   위치해있었으면 좋겠음. **실수로라도 프로필 선택을 하지 않고 창을 닫을 수 없도록.**
+   해당 프로필을 고르지 않으면 **입력창에 입력할 수 없게** 만들어서.」
+   ★ 팝업은 덮개를 누르면 닫힌다 — 그래서 「실수로 안 고르고」가 났다.
+     박스는 대화 흐름 안에 있어 **닫을 수가 없다.** 고르는 것 말고는 길이 없다 */
+.고를박스{border:1px solid var(--팝선);background:var(--팝바탕);border-radius:16px;
+  padding:14px 12px 10px;margin:6px 2px;box-shadow:0 6px 22px rgba(0,0,0,.5)}
+.고를박스 .머릿말{font-size:14px;font-weight:700;padding:0 4px 2px}
+.고를박스 .밑말{font-size:12px;color:var(--흐림);padding:0 4px 10px;line-height:1.6}
+.고를박스 .고를줄{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:11px 12px;border-radius:12px;background:var(--바탕);margin-bottom:6px}
+.고를박스 .고를줄:active{background:var(--팝눌림)}
+.고를박스 .고를줄 .꼭{width:20px;text-align:center;font-size:15px;flex:0 0 auto}
+.고를박스 .고를줄 .이{font-size:14px;font-weight:600}
+.고를박스 .고를줄 .설{font-size:11px;color:var(--흐림);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:250px}
+
 /* 내레이션 — 말풍선 없이 ≡ */
 .나레{display:flex;gap:8px;color:var(--나레);font-style:italic;font-size:13px;   /* 260911 실측 — 흰색 60% */
   padding:0 4px;line-height:1.7}
@@ -278,14 +334,29 @@ img{display:block;max-width:100%}
    입력할 수 있는 칸은 전부 16px 로 둔다 */
 #입력{flex:1;resize:none;max-height:110px;font-size:16px;padding:6px 0;line-height:1.45}
 #입력::placeholder{color:var(--흐림)}
+/* ★★★ 260914 — #2 회원님 : 「채팅창 안에서 **입력창 선택 시**: 상단메뉴들 유지 →
+   하단 자판 및 바로 위에 입력창 위치시키기 → **채팅창 간격 줄이기**(상단메뉴~입력창) →
+   줄어든 간격에는 현재까지 출력된 텍스트 중 **최하단 내용**을 보여주기」
+   ★ 머리는 **그대로 둔다** — 「상단메뉴들 유지」.
+     줄이는 것은 입력칸 둘레다. 도구 단추는 **안 숨긴다** —
+     글을 치는 그때가 ✳(별표)·🖼 를 가장 많이 누르는 때다 */
+body.자판 #연장{padding:2px 16px 0}
+body.자판 #입력칸{padding-top:4px}
+body.자판 #대화판{padding-bottom:2px}
 #보내기{width:34px;height:34px;flex:0 0 auto;border-radius:50%;background:var(--강조);
   display:grid;place-items:center;font-size:15px}
 #보내기[disabled]{background:var(--바탕3);color:var(--흐림)}
 #연장{display:flex;gap:14px;padding:6px 16px 2px;color:var(--흐림2);font-size:16px}
 /* ★ 260913 — 유저 말풍선 우상단 턴 번호 (회원님 : 개발 목적) */
 .내말{position:relative}
-.턴번호{position:absolute;top:-7px;right:6px;font-size:10px;color:var(--흐림);
-  background:var(--바탕);padding:0 4px;border-radius:6px;pointer-events:none}
+/* ★★★ 260914 — **말풍선 안 우상단으로 넣는다.** 회원님 : 「유저의 말풍선 **우상단**마다 (1)」
+   전에는 `top:-7px` 이라 말풍선 **밖 위**로 삐져나가 있었다 — 실측 240/240 이 밖이었다.
+   이제 안쪽 모서리에 얹고, 첫 줄이 번호를 비켜 가도록 말풍선 오른쪽을 비운다 */
+.턴번호{position:absolute;top:4px;right:9px;font-size:10px;
+  color:rgba(255,255,255,.5);pointer-events:none;background:none;padding:0}
+.내말벌 .내말{padding-right:32px}
+/* 인물 쪽 말풍선에 쓰일 때는 바탕이 어두우니 흐림 빛으로 */
+.방울 .턴번호{color:var(--흐림)}
 /* ── 그림 도막 ──────────────────────────────────────
    ★ 260913 회원님 : 「제타는 채팅방 안의 15 재화가 있는 그 버튼 위치에,
      우리 데타에서는 이미지 생성 버튼을 넣어서 **채팅방 중간에 출력**하게 해주고.」
@@ -327,7 +398,8 @@ img{display:block;max-width:100%}
 .빈말{padding:40px 20px;text-align:center;color:var(--흐림);font-size:13px;line-height:1.9}
 
 /* ── 바닥시트 · 덮개 ── */
-#덮개{position:fixed;inset:0;background:#000a;z-index:60;opacity:0;pointer-events:none;
+/* ★ #6 — 덮개를 더 어둡게. 뒤가 물러나야 앞이 떠 보인다 */
+#덮개{position:fixed;inset:0;background:#000d;z-index:60;opacity:0;pointer-events:none;
   transition:opacity .18s}
 #덮개.보임{opacity:1;pointer-events:auto}
 /* ★ 260911 회원님 v1.2 메모 2번 — 「채팅방 메모장/수정창 손잡이 작음.
@@ -339,7 +411,8 @@ img{display:block;max-width:100%}
      감추는 거리를 `101%` 에서 `101% + 34px` 으로 늘렸다. 손잡이까지 같이 내려간다
    ★ 잡는 자리는 눈에 보이는 것보다 훨씬 넓다 — 위아래 22px · 좌우 30px 더 준다 */
 #시트{position:fixed;left:0;right:0;bottom:0;z-index:70;max-width:520px;margin:0 auto;
-  background:var(--바탕2);border-radius:18px 18px 0 0;
+  background:var(--팝바탕);border-radius:18px 18px 0 0;
+  border-top:1px solid var(--팝선);box-shadow:0 -12px 34px rgba(0,0,0,.62);
   transform:translateY(calc(101% + 34px));
   transition:transform .22s;display:flex;flex-direction:column;
   /* 자판이 올라오면 보이는 높이도 줄어든다. `dvh` 는 그것을 모른다 */
@@ -358,20 +431,40 @@ img{display:block;max-width:100%}
 #시트 .시트단추{flex:0 0 auto}
 .시트줄{display:flex;align-items:center;gap:12px;padding:13px 12px;border-radius:12px;
   font-size:14px;width:100%;text-align:left}
-.시트줄:active{background:var(--바탕3)}
+.시트줄:active{background:var(--팝눌림)}
 .시트줄 .꼭{width:22px;text-align:center;font-size:16px}
 .시트줄 .밑{font-size:11px;color:var(--흐림);margin-top:2px}
+/* ★ 260914 — #11 마이페이지 모델 목록만 절반으로 (13px → 6px) */
+.모델줄들 .시트줄{padding:6px 12px}
+/* ★★★ 260914 — #4 제타는 「대화 프로필   이지운 ›」 처럼 **값을 오른쪽**에 적는다.
+   회원님 : 「최대한 제타의 UI/UX를 따라할 것.」 */
+.시트줄 .우{margin-left:auto;flex:0 1 auto;min-width:0;color:var(--흐림);font-size:13px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:8px}
 .시트줄.빨강{color:var(--빨강)}
 /* ★ 260912 — 이어하기 목록에서 그 대화의 메모·기억을 바로 연다 */
 .곁줄{display:flex;gap:6px;padding:0 12px 10px 46px}
-.곁단추{padding:5px 11px;border-radius:9px;background:var(--바탕3);color:var(--흐림);
+/* ★★★ 260914 — #15 회원님 : 「'이어하기'의 대화목록 **간격을 더 좁히고**,
+   메모/기억/수정/삭제(추가)버튼을 **하단이 아닌 우측**에 배치할 것
+   (**1줄로** 배치하고, 그러기 위해 **버튼 내의 간격 좁힐 것**)」
+   ★ 단추를 글자 없이 꼭지만으로 줄였다. 넷이 한 줄에 들어간다 */
+.이어벌{display:flex;align-items:center;gap:4px;padding-right:8px}
+.이어벌 .시트줄{flex:1;min-width:0;padding:7px 10px}
+.이어벌 .시트줄 .밑{font-size:10.5px}
+.이어곁{display:flex;gap:3px;flex:0 0 auto}
+.곁꼭{width:29px;height:29px;border-radius:9px;background:var(--팝눌림);
+  display:grid;place-items:center;font-size:13px;border:0;cursor:pointer;
+  color:var(--글자);padding:0}
+.곁꼭:active{background:var(--팝선)}
+.곁꼭.빨{color:var(--빨강)}
+.곁꼭.빔{opacity:.4}
+.곁단추{padding:5px 11px;border-radius:9px;background:var(--팝눌림);color:var(--흐림);
   font-size:11px;border:0;cursor:pointer}
 .곁단추:active{background:var(--바탕2)}
-.시트줄.켬{background:var(--바탕3)}
+.시트줄.켬{background:var(--팝눌림)}
 #시트 textarea{width:100%;background:var(--바탕);border-radius:12px;padding:12px;
   font-size:14px;min-height:120px;resize:vertical;line-height:1.6}
 #시트 .시트단추{display:flex;gap:8px;padding:10px 12px}
-#시트 .시트단추 button{flex:1;height:44px;border-radius:12px;background:var(--바탕3);
+#시트 .시트단추 button{flex:1;height:44px;border-radius:12px;background:var(--팝눌림);
   font-size:14px;font-weight:600}
 #시트 .시트단추 button.강{background:var(--강조)}
 
@@ -389,6 +482,9 @@ img{display:block;max-width:100%}
   background:rgba(0,0,0,.55);border-radius:8px;padding:3px 8px;pointer-events:none;
   opacity:0;transition:opacity .2s}
 .확대칸.큼 .배{opacity:1}
+
+/* ★ 260914 — R7 이어하기 지우기 단추 */
+.곁단추.빨{color:#ff6b6b}
 
 /* ★ 260914 — #25 그림 만들기 — 이력 줄과 그림 칸 */
 .이력줄{display:flex;gap:8px;overflow-x:auto;padding:6px 14px 10px}
@@ -429,33 +525,43 @@ img{display:block;max-width:100%}
   background:var(--바탕3);color:var(--글)}
 .그림줄 .단추들 button.빨{color:#ff6b6b}
 
+/* ★★★★★ 260914 — **제타 실물을 보고 다시 짰다.**
+   제타(받아 둔 화면 그림 「상호_프사」) 는 이렇다 —
+     ✕ + 이름(헤더)  →  글 몇 줄 + 「더보기」  →  **큰 이미지**
+   **접혀 있을 때도 그림이 아래**다. 앞서 내가 만든 것은 그림이 위였다 */
 .인물카드{display:flex;flex-direction:column}
-.인물그림{order:0;position:relative;margin:0 12px 12px;border-radius:14px;overflow:hidden;
-  background:var(--바탕3);aspect-ratio:1/1;max-height:300px}
-.인물그림 img{width:100%;height:100%;object-fit:cover;display:block}
-/* 이름은 그림 위에 뜬다 — 아래쪽이 어두워지게 덮개를 깐다 */
-.인물그림 .덮{position:absolute;left:0;right:0;bottom:0;padding:14px 14px 12px;
-  background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,0))}
-.인물그림 .덮 .이름{font-size:19px;font-weight:700;color:#fff}
-.인물그림 .덮 .밑{font-size:12px;color:rgba(255,255,255,.72);margin-top:2px}
-/* 그림이 없을 때 — 자리만 차지하지 않게 납작하게 */
-.인물그림.빔{aspect-ratio:auto;background:none;margin-bottom:4px}
-.인물그림.빔 .덮{position:static;background:none;padding:4px 0 10px}
-.인물그림.빔 .덮 .이름{color:var(--글)}
-.인물그림.빔 .덮 .밑{color:var(--흐림2)}
+/* ★ 260914 — 제타 글의 마크다운을 그린다 */
+.인물글.결{line-height:1.75}
+.인물글.결 .빈줄{height:8px}
+.인물글.결 .결줄,.인물글.결 hr.결줄{border:0;border-top:1px solid var(--선);margin:9px 0}
+.인물글.결 .결제목{font-size:14px;font-weight:700;color:var(--글);margin:8px 0 3px}
+.인물글.결 .결목록{margin:2px 0 2px 2px;padding-left:16px}
+.인물글.결 .결목록 li{margin:1px 0}
+.인물글.결 b{color:var(--글);font-weight:700}
+.인물글.결 i{color:var(--지문);font-style:italic}
 
+.인물머리줄{display:flex;align-items:center;gap:10px;padding:2px 12px 10px}
+.인물머리줄 .이름{font-size:17px;font-weight:700;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.인물머리줄 .밑{font-size:12px;color:var(--흐림2);flex:0 0 auto}
+/* 글이 먼저 — 제타와 같은 자리 */
 .인물속{order:1;position:relative}
-/* 접힌 동안은 키를 묶고 밑을 흐린다 */
-.인물속.접힘{max-height:190px;overflow:hidden}
-.인물속.접힘::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;
+.인물속.접힘{max-height:132px;overflow:hidden}
+.인물속.접힘::after{content:"";position:absolute;left:0;right:0;bottom:0;height:52px;
   background:linear-gradient(to top,var(--바탕2),rgba(0,0,0,0));pointer-events:none}
-.인물펼침{order:2;display:flex;align-items:center;justify-content:center;gap:6px;
-  margin:2px 12px 6px;padding:9px 0;border-radius:12px;background:var(--바탕3);
-  font-size:13px;color:var(--흐림2);cursor:pointer;user-select:none}
-.인물펼침 .살{transition:transform .18s}
-/* ★ 펼치면 **그림이 아래로 간다** — 회원님이 말씀하신 그대로다 */
-.인물카드.편 .인물그림{order:3;margin-top:4px}
+.인물펼침{order:2;padding:6px 12px 10px;font-size:13px;color:#8ab4ff;cursor:pointer;
+  user-select:none;display:flex;align-items:center;gap:4px}
+/* ★★★ 260914 — **이 한 줄이 없으면 `hidden` 이 안 먹는다.**
+   위의 `display:flex` 가 브라우저 기본 `[hidden]{display:none}` 을 이긴다.
+   그래서 짧은 글에도 「더보기」가 그대로 보였다 — 화면 갈무리를 눈으로 보고 찾았다 */
+.인물펼침[hidden]{display:none}
+.인물펼침 .살{font-size:11px;transition:transform .18s}
 .인물카드.편 .인물펼침 .살{transform:rotate(180deg)}
+/* 그림은 늘 아래 */
+.인물그림{order:3;margin:0 12px 12px;border-radius:12px;overflow:hidden;
+  background:var(--바탕3);max-height:420px}
+.인물그림 img{width:100%;display:block;object-fit:cover}
+.인물그림.빔{display:none}
 
 .인물머리{display:flex;gap:12px;padding:4px 12px 14px;align-items:center}
 .인물머리 img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:var(--바탕3)}
@@ -469,9 +575,14 @@ img{display:block;max-width:100%}
 
 /* 알림 */
 #알림{position:fixed;left:50%;transform:translateX(-50%);bottom:76px;z-index:90;
-  background:#000c;color:#fff;font-size:13px;padding:9px 16px;border-radius:999px;
+  background:var(--팝바탕);border:1px solid var(--팝선);box-shadow:0 6px 20px rgba(0,0,0,.6);
+  color:#fff;font-size:13px;padding:9px 16px;border-radius:999px;
   opacity:0;transition:opacity .2s;pointer-events:none;max-width:88%}
 #알림.보임{opacity:1}
+/* ★ 260914 — **시트가 열려 있으면 알림을 위로 올린다.**
+   갈무리에서 알림이 시트의 「이 프로필 고치기」를 덮고 있었다.
+   알림을 없애지는 않는다 — 특징 뽑기처럼 값이 드는 일은 알려야 한다 */
+body.시트열림 #알림{bottom:auto;top:76px}
 </style>
 </head>
 <body>
@@ -575,6 +686,10 @@ function 조각그리기(글){
 let 지금시트 = null;          /* {제목, 속} — 지금 떠 있는 것 */
 const 시트길 = [];             /* 그 밑에 깔린 것들 */
 
+/* ★ 260914 — 알림이 시트를 덮지 않게 몸에 표를 붙인다 (위 CSS 가 본다) */
+function 시트표붙이기(열렸나){
+  try { document.body.classList.toggle("시트열림", !!열렸나); } catch(_){}
+}
 function 시트그리기(제목, 속){
   const 시 = $("#시트");
   시.innerHTML = '<div class="손잡이"></div>' +
@@ -616,13 +731,19 @@ function 시트값고치기(칸, 값){
   앞.값[칸] = 값;
   return true;
 }
-function 시트열기(제목, 속){
+/* ★★★ 260914 — #4 **세 번째 칸 `다시` 는 그 시트를 다시 그려 내는 함수**다.
+   밑에 깔렸다가 도로 뜰 때 이것이 있으면 **그때 새로 만들어** 붙인다.
+   없으면 여태처럼 만들어 둔 글자를 그대로 쓴다.
+   회원님 #4 : 「해당 메뉴 안에 들어가서 고른 경우에도 **디바이스 뒤로가기** 버튼을 눌렀을 때
+     **해당 창으로 돌아오며 변경된 값이 출력**되어야 함」 */
+function 시트열기(제목, 속, 다시){
+  시트표붙이기(true);
   if (지금시트){
     /* ★ 260914 — 밀어 넣기 전에 치던 값을 챙긴다 */
     지금시트.값 = 시트값챙기기() || 지금시트.값 || null;
     시트길.push(지금시트);
   }
-  지금시트 = {제목: 제목, 속: 속};
+  지금시트 = {제목: 제목, 속: 속, 다시: 다시 || null};
   시트그리기(제목, 속);
   자리쌓기();
 }
@@ -631,7 +752,7 @@ function 시트뒤로(){
   const 앞 = 시트길.pop();
   if (!앞){ 시트닫기(); return; }
   지금시트 = 앞;
-  시트그리기(앞.제목, 앞.속);
+  시트그리기(앞.제목, 앞.다시 ? 앞.다시() : 앞.속);
   /* ★ 260914 — 챙겨 둔 값을 되돌린다. 안 그러면 치던 글이 사라진다 */
   시트값되돌리기(앞.값);
 }
@@ -693,6 +814,7 @@ function 시트열렸나(){
   return !!(시 && 시.classList.contains("보임"));
 }
 function 시트닫기(){
+  시트표붙이기(false);
   const 시 = $("#시트");
   /* ★ 260911 — 통째로 닫으니 밑에 깔린 것도 함께 버린다 */
   지금시트 = null; 시트길.length = 0;
@@ -708,19 +830,23 @@ const 시트줄 = (꼭, 말, 가, 더) =>
   '<button class="시트줄 ' + (더 && 더.빛 ? 더.빛 : "") + '" data-시트="' + 가 + '"' +
   (더 && 더.값 ? ' data-값="' + 안전(더.값) + '"' : "") + '>' +
   '<span class="꼭">' + 꼭 + '</span><span><span>' + 안전(말) + '</span>' +
-  (더 && 더.밑 ? '<div class="밑">' + 안전(더.밑) + '</div>' : "") + '</span></button>';
+  (더 && 더.밑 ? '<div class="밑">' + 안전(더.밑) + '</div>' : "") + '</span>' +
+  (더 && 더.우 ? '<span class="우">' + 안전(더.우) + '</span>' : "") + '</button>';
 
 /* ══ 머리 ══ */
 function 머리그리기(){
   const 자리 = $('#머리자리');
   if (S.방){
+    /* ★★★ 260914 — #5 **왼쪽 제목 · 가운데 프로필 · 오른쪽 모델+메뉴** 세 칸이다.
+       전에는 넷이 한 줄에 나란히 밀려 프로필과 모델이 12px 로 짜부라져 있었다 */
     자리.innerHTML =
-      '<div class="머리">' +
-        '<div style="width:38px"></div>' +   /* 뒤로는 떠 있는 단추가 맡는다 */
+      '<div class="머리 방머리">' +
+        '<div class="왼">' +
+        '<div style="width:44px;flex:0 0 auto"></div>' +   /* 뒤로는 떠 있는 단추가 맡는다 */
         /* ★ 260911 회원님 : 「채팅방 안에서 채팅방 제목을 누르면
            플롯 정보가 동일하게 떠야한다.」 */
-        '<button class="가운데" data-가=플롯보기 style="text-align:left">' +
-          안전(S.방.제목) + '</button>' +
+        '<button class="제목줄" data-가=플롯보기>' + 안전(S.방.제목) + '</button>' +
+        '</div>' +
         /* ★★★ 260912 회원님 지적 — 「대화 시작했을 때 누구인지 안고르고 '그만' 눌렀더니,
            **다시 고를 방도가 없다.** 제타는 이렇지 않다. 다시 만들어.」
 
@@ -728,11 +854,12 @@ function 머리그리기(){
            제타는 방 안 머리에 **지금 쓰는 프로필 이름을 늘 띄워 두고** 그것을 누르면 열린다.
            ★ 회원님 : 「각 채팅방에서 **보라색 작은 체크표시** 있는게 현재 선택되어있는 프로필」
              — 방마다 따로 잡히므로 **어느 것인지 늘 보여야 한다** */
-        '<button class="단추" data-가=대화프로필 style="font-size:12px;font-weight:600">' +
+        '<button class="머리쪽지" data-가=대화프로필>👤 ' +
           안전((방프로필(S.방, 지금플롯()) || {}).이름 || "프로필") + ' ˅</button>' +
-        '<button class="단추" data-가=모델 style="font-size:12px;font-weight:600">' +
-          안전(고른모델().이름) + ' ˅</button>' +
-        '<button class="단추" data-가=방메뉴>☰</button>' +
+        '<div class="오">' +
+          '<button class="머리쪽지" data-가=모델>' + 안전(고른모델().이름) + ' ˅</button>' +
+          '<button class="단추" data-가=방메뉴>☰</button>' +
+        '</div>' +
       '</div>';
     return;
   }
@@ -817,7 +944,54 @@ function 대화그리기(){
       : '<div class="빈말">아직 대화가 없습니다.</div>'));
 }
 
+/* ★★★ 260914 — #16 **보내다 난 탈을 담아 둔다.**
+   회원님 : 「유저 발송 메시지가 오류가 날 경우, **어떻게 대응해야할 지 모르겠음.**」
+   여태는 알림이 8초 뜨고 사라지는 것이 다였다. 무엇을 하면 되는지 알 길이 없었다.
+   ★ 이제 **대화 맨 아래에 남는다** — 무엇이 났는지, 무엇을 누르면 되는지 */
+let 보내기탈 = null;
+function 탈박스(){
+  if (!보내기탈) return "";
+  return '<div class="탈박스">' +
+    '<div class="머릿말">보내지 못했습니다</div>' +
+    '<div class="밑말">' + 안전(보내기탈.왜 || '') + '</div>' +
+    '<div class="탈단추">' +
+      '<button data-가=탈다시>↺ 다시 보내기</button>' +
+      '<button data-가=탈되돌리기>✎ 입력창으로 되돌리기</button>' +
+      '<button data-가=탈치우기>✕ 이 알림 치우기</button>' +
+    '</div></div>';
+}
+
 /* ══ 방 안 ══ */
+/* ★★★ 260914 — #8 채팅창 안에 놓는 **대화 프로필 고르는 박스**.
+   `프로필열기()` 가 시트로 내던 것과 **같은 줄들**을 박스 꼴로 낸다 */
+function 프로필박스(){
+  const 목 = 프로필들();
+  const 플 = 지금플롯();
+  const 줄 = (꼭, 이, 설, 가, 값) =>
+    '<button class="고를줄" data-시트="' + 가 + '" data-값="' + 안전(값) + '">' +
+    '<span class="꼭">' + 꼭 + '</span><span><div class="이">' + 안전(이) + '</div>' +
+    (설 ? '<div class="설">' + 안전(설) + '</div>' : "") + '</span></button>';
+  let 속 = 목.map(p => 줄("○", p.이름, (p.설명 || "").slice(0, 40) + (p.기본 ? "   · 기본" : ""),
+                          "프로필고름", p.id)).join("");
+  /* 이 플롯이 들고 있는 유저 캐릭터도 함께 (프로필열기() 와 같은 결) */
+  const 것들 = (플 && 플.chatProfiles) || [];
+  const 플글 = c => [c.summary, c.description].map(x => String(x || "").trim()).filter(Boolean).join(NL);
+  const 딴줄 = 것들.map((c, i) => {
+    const 이 = String(c.name || "").trim();
+    if (!이) return "";
+    const 글 = 플글(c);
+    const 같은것 = 목.find(x => String(x.이름 || "").trim() === 이);
+    if (같은것 && String(같은것.설명 || "").trim() === 글) return "";
+    const 보임이 = 이름채우기(이, 플, S.방) || 이;
+    return 줄("⤓", 보임이 + (같은것 ? "  (이 플롯 것)" : ""),
+              이름채우기(글, 플, S.방).slice(0, 40) || "이 플롯이 준 캐릭터", "플롯프로필", String(i));
+  }).join("");
+  속 += 딴줄 + 줄("＋", "새 프로필 만들기", "이름과 설명을 적습니다", "프로필새로", "");
+  return '<div class="고를박스">' +
+    '<div class="머릿말">누구로 이야기할까요?</div>' +
+    '<div class="밑말">고른 이름과 설명이 대화 내내 갑니다. ' +
+      '하나를 골라야 글을 칠 수 있습니다.</div>' + 속 + '</div>';
+}
 /* ★★★ 260913 회원님 : 「**출력도중 타이핑한 것은 출력 끝나도 입력창에 유지**되게 하기.」
 
    왜 날아갔나 — 이 함수가 도막이 늘 때마다 `넣기('#입력자리', …)` 로 **입력칸을
@@ -828,15 +1002,37 @@ function 대화그리기(){
      커서까지 챙기지 않으면 글 끝으로 튀어 이어 치기가 어긋난다 */
 function 방그리기(){
   /* 치던 글을 챙긴다 */
-  let 치던글 = '', 치던자리 = 0;
+  let 치던글 = '', 치던자리 = 0, 잡고있었나 = false;
   try {
     const 옛입 = $('#입력');
-    if (옛입){ 치던글 = 옛입.value || ''; 치던자리 = 옛입.selectionStart || 치던글.length; }
+    if (옛입){ 치던글 = 옛입.value || ''; 치던자리 = 옛입.selectionStart || 치던글.length;
+      /* ★★★ 260914 — **입력칸을 잡고 있었는지도 챙긴다.**
+         이 함수가 입력칸을 통째로 갈아 끼우므로, 잡고 있던 것이 풀린다.
+         폰에서는 그것이 곧 **자판이 닫히는 것**이다 — 치다 말고 자판이 내려간다.
+         실측으로 찾았다 : 입력칸을 눌렀는데 focus 가 BODY 로 돌아가 있었다 */
+      잡고있었나 = (document.activeElement === 옛입); }
   } catch(_){}
   const 도막 = D.도막[S.방.id] || [];
-  넣기('#몸', '<div id="대화판">' + 도막.map((m, i) => 도막그리기(m, i)).join('') + '</div>');
+  /* ★★★ 260914 — 특징이 비어 있으면 조용히 뽑는다. 위 `특징없으면조용히뽑기()` 주석을 본다 */
+  try { 특징없으면조용히뽑기((D.플롯 || []).find(x => x && x.id === S.방.플롯아이디)); } catch(_){}
+  /* ★ #8 — 프로필을 아직 안 골랐으면 **대화 맨 아래에 고르는 박스**를 붙인다 */
+  const 골라야하나 = !!S.프로필고르기;
+  넣기('#몸', '<div id="대화판">' + 도막.map((m, i) => 도막그리기(m, i)).join('') +
+    (골라야하나 ? 프로필박스() : '') + 탈박스() + '</div>');
+  /* ★★★ 260914 — **모양이 그대로면 안 갈아 끼운다.**
+     갈아 끼우면 잡고 있던 것이 풀려 폰에서 자판이 내려간다 (실측).
+     바뀌는 것은 둘뿐이다 — 잠겼나 · 그림이 몇 장 남았나 */
+  const 있던칸 = document.querySelector('#입력칸');
+  const 모양 = (골라야하나 ? '잠김' : '열림');
+  if (있던칸 && 있던칸.dataset.모양 === 모양){
+    /* 남은 장수만 고쳐 놓는다 */
+    try { const 수 = 있던칸.querySelector('.그림수');
+      if (수) 수.textContent = 그림남은수() + '/' + 그림하루한도; } catch(_){}
+    맨아래로(true);
+    return;
+  }
   넣기('#입력자리',
-    '<div id="입력칸">' +
+    '<div id="입력칸" data-모양="' + 모양 + '">' +
       '<div id="연장">' +
         '<button data-가=신고 title="신고">🔔</button>' +
         '<button data-가=편집 title="편집">✏</button>' +
@@ -851,8 +1047,10 @@ function 방그리기(){
         '<button data-가=별표 title="별표 넣기">✳</button>' +
       '</div>' +
       '<div id="입력줄">' +
-        '<textarea id="입력" rows="1" placeholder="내용 입력하기"></textarea>' +
-        '<button id="보내기" disabled>▶</button>' +
+        '<textarea id="입력" rows="1"' + (골라야하나 ? ' disabled' : '') +
+          ' placeholder="' + (골라야하나 ? '위에서 대화 프로필을 먼저 고르십시오' : '내용 입력하기') +
+          '"></textarea>' +
+        '<button id="보내기"' + (골라야하나 ? ' disabled' : '') + '>▶</button>' +
       '</div>' +
     '</div>');
   맨아래로(true);
@@ -870,6 +1068,16 @@ function 방그리기(){
       }
     } catch(_){}
   }
+  /* ★ 잡고 있었으면 다시 잡아 준다 — 자판이 안 내려간다 */
+  if (잡고있었나){
+    try {
+      const 입 = $('#입력');
+      if (입 && !입.disabled){
+        입.focus({preventScroll: true});
+        try { 입.setSelectionRange(치던자리, 치던자리); } catch(_){}
+      }
+    } catch(_){}
+  }
 }
 
 /* ── 맨 아래로 ────────────────────────────────────────
@@ -883,7 +1091,9 @@ function 방그리기(){
 
    ★ 바닥에 붙어 있을 때만 따라 내려간다 (`억지로` 가 아니면).
      위를 읽고 계신데 끌어내리면 안 된다 */
-const 바닥여유 = 80;
+/* ★ 260914 — 80 → 40. 손가락으로 조금 올린 것까지 「바닥」으로 보면
+   따라가기가 안 끊긴다. 회원님이 「올렸는데 도로 내려온다」고 느끼시는 자리다 */
+const 바닥여유 = 40;
 function 바닥에붙었나(){
   const 판 = 몸();
   if (!판) return true;
@@ -901,13 +1111,54 @@ function 바닥에붙었나(){
      · 흐르는 글이 길어졌다 → **바닥에 붙어 있을 때만** 따라간다
    바닥에서 떨어지면 그 자리에 머물고, 다시 바닥까지 내리면 저절로 따라간다.
    전환에 아무 제한이 없다 — 스크롤 자리 하나로만 가린다 */
+/* ★★★★★ 260914 — **사람이 손을 대면 따라가기를 끈다.**
+   회원님 : 「출력도중 스크롤 올리는거 **아직도 불가능**.」
+
+   앞서 고친 것은 반쪽이었다 — `맨아래로()` 가 맨 앞에서 한 번만 재고
+   **뒤따르는 네 번(rAF 둘 · 120ms · 320ms)은 다시 재지 않고 내렸다.**
+   흐르는 동안 예약이 겹겹이 쌓이니, 올린 그 순간에도 앞서 쌓인 것이 끌어내렸다.
+
+   ★ 이제 두 겹이다 —
+     ① 예약된 내리기도 **그때 다시 잰다**
+     ② 사람이 **손을 대면**(휠 · 터치 · 키) 따라가기를 끊는다.
+        바닥까지 내리면 저절로 다시 붙는다 — 「두 방법의 전환에 제한이 없도록」 */
+let 사람이잡았나 = false;
+function 따라가기다시(){ 사람이잡았나 = false; }
+(function 손댐보기(){
+  const 붙이기 = () => {
+    const 판 = 몸();
+    if (!판 || 판.__손댐) return;
+    판.__손댐 = true;
+    /* 사람이 올리면 잡은 것으로 본다. 바닥에 닿으면 도로 놓는다 */
+    const 살피기 = () => {
+      const p = 몸(); if (!p) return;
+      if (바닥에붙었나()) 사람이잡았나 = false;
+    };
+    판.addEventListener("wheel", e => { if (e.deltaY < 0) 사람이잡았나 = true; }, {passive: true});
+    판.addEventListener("touchstart", () => { 사람이잡았나 = true; }, {passive: true});
+    판.addEventListener("touchmove", () => { 사람이잡았나 = true; }, {passive: true});
+    판.addEventListener("scroll", 살피기, {passive: true});
+    판.addEventListener("touchend", () => setTimeout(살피기, 240), {passive: true});
+  };
+  붙이기();
+  /* 방을 다시 그리면 판이 새로 생길 수 있다 — 가끔 다시 붙인다 */
+  setInterval(붙이기, 1200);
+})();
+
 function 맨아래로(억지로){
   const 판 = 몸();
   if (!판) return;
-  /* ★ 사람이 위로 올려 읽는 중이면 억지로라도 안 끌어내린다.
-     `억지로` 는 이제 「사람이 방금 한 일이라 내려도 된다」는 뜻이다 */
-  if (!억지로 && !바닥에붙었나()) return;
-  const 내리기 = () => { const p = 몸(); if (p) p.scrollTop = p.scrollHeight; };
+  /* ★ 사람이 방금 한 일(말 보내기 · 방 열기 · 그림)이면 잡은 것을 놓는다 */
+  if (억지로) 사람이잡았나 = false;
+  /* ★ 매번 다시 잰다 — 예약된 것이 뒤늦게 터져도 끌어내리지 않게 */
+  const 내려도되나 = () => 억지로 || (!사람이잡았나 && 바닥에붙었나());
+  if (!내려도되나()) return;
+  const 내리기 = () => {
+    const p = 몸();
+    if (!p) return;
+    if (!내려도되나()) return;      /* ★ 여기가 핵심이다. 그때그때 다시 잰다 */
+    p.scrollTop = p.scrollHeight;
+  };
   내리기();
   requestAnimationFrame(() => { 내리기(); requestAnimationFrame(내리기); });
   setTimeout(내리기, 120);
@@ -1004,14 +1255,14 @@ function 도막그리기(m, 몇){
       /* ★ 260914 — 화면을 보니 이름줄 밑에 턴번호가 겹쳐 답답했다.
          이름줄이 있으면 **그 옆**에 놓는다 — 「준 (1)」. 없으면 옛 자리 그대로 */
       const 턴 = '(' + 내턴번호(몇) + ')';
+      /* ★★★ 260914 — #9 **말풍선 우상단에 놓는다.** 회원님 :
+         「유저의 말풍선 **우상단**마다 (1) 이런식으로 표기(첫 앱처럼)」
+         앞서 이름줄 옆으로 옮겼던 것을 되돌린다 — 회원님이 말씀하신 자리가 아니었다 */
       낸것.push('<div class="내말벌">' +
         '<div class="묶음">' +
-          (나.이름
-            ? '<div class="이름">' + 안전(나.이름) +
-              ' <span class="턴셈">' + 턴 + '</span></div>'
-            : "") +
+          (나.이름 ? '<div class="이름">' + 안전(나.이름) + '</div>' : "") +
           '<div class="내말" data-도막="' + 몇 + '">' +
-            (나.이름 ? "" : '<span class="턴번호">' + 턴 + '</span>') +
+            '<span class="턴번호">' + 턴 + '</span>' +
             조각그리기(c.text) + '</div>' +
         '</div>' +
         (나.그림
@@ -1178,7 +1429,7 @@ function 흐름그리기(){
   /* ★ 260913 — 흐르는 동안은 **바닥에 붙어 있을 때만** 따라간다.
      `붙었나` 는 이 글이 늘어나기 **전에** 바닥이었는지를 담고 있다 —
      위로 올려 읽는 중이면 거짓이라 여기서 멈춘다 (회원님 지시 #11) */
-  if (붙었나) 맨아래로(false);
+  if (붙었나 && !사람이잡았나) 맨아래로(false);
 
   /* 아직 못 따라잡았으면 또 돈다.
      ★ 260912 — **고른 간격으로** 돈다. 끝났다고 빨라지지 않는다 —
@@ -1262,6 +1513,15 @@ function 얼굴찾기(이름){
 }
 
 /* ══ 플롯 정보 ══ */
+/* ★ 260914 — **지은이가 객체일 때가 있다.** 체육관 창고는 `{"nickname":""}` 라
+   `안전(p.creator)` 가 화면에 `[object Object]` 를 찍었다. 제타 것은 문자열이라 안 걸렸다 */
+function 지은이글(v){
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "object") return String(v.nickname || v.name || v.id || "").trim();
+  return String(v);
+}
+
 function 플롯그리기(){
   const p = S.플롯;
   넣기('#몸',
@@ -1275,7 +1535,7 @@ function 플롯그리기(){
       '<div class="태그">' + (p.hashtags || []).map(t => '#' + 안전(t)).join(' ') + '</div>' +
       (p.creator ? '<div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">' +
         '<div style="width:34px;height:34px;border-radius:50%;background:var(--바탕3)"></div>' +
-        '<div style="flex:1;font-size:13px;font-weight:600">' + 안전(p.creator) + '</div>' +
+        '<div style="flex:1;font-size:13px;font-weight:600">' + 안전(지은이글(p.creator)) + '</div>' +
         '<button style="padding:6px 14px;border-radius:999px;background:var(--강조);' +
           'font-size:12px;font-weight:700">팔로우</button></div>' : '') +
       '<div class="배지줄">' +
@@ -1961,8 +2221,30 @@ function 다내보내기(){
 function 특징들(){
   try { return JSON.parse(localStorage.getItem("특징") || "{}"); } catch(_){ return {}; }
 }
+/* ★★★ 260914 — #16 이름을 바꿨다. **이미 담긴 것은 옛 이름**이라 옮겨 준다.
+   회원님이 손으로 고치신 칸이 들어 있을 수 있다 — 잃으면 안 된다 */
+const 옛칸이름 = {"의도": "바람", "방향": "기울기", "상태": "임자", "거절": "안주는것", "부름": "부름말", "자리": "이야기결", "오늘거리": "오늘바라는것", "부름결": "아직안한것", "어긋남": "말과몸", "말본": "한마디보기"};
+/* ★★★ 260914 — **없어진 칸도 함께 걷어낸다.**
+   260914 개편으로 열 칸을 지웠는데(세갈래·새는것·풀리는자리·혼자거리 ·
+   안끝나는못·저절로·쓸것·자리꼴·때·어긋난자리) **이미 뽑아 둔 특징에는 그대로 남아**
+   정예원 같은 기존 플롯 화면에 계속 보였다. 독립 검증이 짚었다.
+   ★ 값을 지우지는 않는다 — `_지난칸` 에 옮겨 둔다. 회원님이 손으로 쓰신 것일 수 있다 */
+const 없앤칸 = ["세갈래", "새는것", "풀리는자리", "혼자거리",
+                "안끝나는못", "저절로", "쓸것", "자리꼴", "때", "어긋난자리"];
+function 칸이름고치기(것){
+  if (!것 || typeof 것 !== "object") return 것;
+  const 낸것 = {};
+  const 지난 = {};
+  for (const k of Object.keys(것)){
+    if (k[0] === "_"){ 낸것[k] = 것[k]; continue; }
+    if (없앤칸.indexOf(k) >= 0){ 지난[k] = 것[k]; continue; }
+    낸것[옛칸이름[k] || k] = 것[k];
+  }
+  if (Object.keys(지난).length) 낸것._지난칸 = Object.assign({}, 것._지난칸 || {}, 지난);
+  return 낸것;
+}
 function 특징읽기(플롯아이디){
-  return 특징들()[플롯아이디] || null;
+  return 칸이름고치기(특징들()[플롯아이디] || null);
 }
 function 특징담기(플롯아이디, 것){
   const 표 = 특징들();
@@ -1995,7 +2277,7 @@ function 특징담기(플롯아이디, 것){
 const 칸한도 = 180;
 const 특징글한도 = 1600;
 /* 칸목록이 아직 안 왔을 때 쓰는 자 — 중계 `특징글`·`판글` 이 건너뛰는 칸과 같은 벌 */
-const 안실릴칸 = ["부름", "자리", "어긋난자리"];
+const 안실릴칸 = ["부름말", "이야기결", "어긋난자리"];
 
 function 칸목록읽기(){
   try {
@@ -2170,12 +2452,12 @@ function 특징칸열기(칸){
         '<b>무엇을 묻는 칸인가</b><br>' + 안전(c.물음) + '</div>' : '') +
       /* ★ 이 둘은 앱이 기계로 읽는 칸이다. 값을 박지 않고 **무엇을 보는 칸인지**만 알린다
          (CLAUDE.md 5.4 — 제한·지정이 아니라 방향 제시) */
-      (칸 === "부름"
+      (칸 === "부름말"
         ? '<div class="글" style="font-size:12px;color:var(--흐림);margin-bottom:8px">' +
           '앱이 <b>플롯에 박힌 유저 이름을 지금 이름으로 갈아 끼우는 데</b> 쓰는 칸입니다. ' +
           '이름만 적습니다. 인물 이름을 적거나 열두 자를 넘기면 갈아 끼우기가 쉽니다. ' +
           '없으면 — 로 둡니다.</div>' : '') +
-      (칸 === "자리"
+      (칸 === "이야기결"
         ? '<div class="글" style="font-size:12px;color:var(--흐림);margin-bottom:8px">' +
           '앱이 <b>한 턴을 얼마나 쪼갤지</b> 정하는 데 쓰는 칸입니다. ' +
           '「마주」 · 「움직임」 · 「섞임」 가운데 하나를 먼저 적고, 쉼표 뒤에 그렇게 본 까닭을 적습니다. ' +
@@ -2257,6 +2539,61 @@ async function 특징뽑기(플롯, 다시뽑기){
     }
   } catch(_){}
   return null;
+}
+
+/* ★★★★★ 260914 — **방을 처음 열 때 특징이 없으면 조용히 뽑는다.**
+
+   회원님 #8 — 「인물이 너무 고분고분함 … 상의, 하의, 속옷에 걸쳐 모두 벗기만 했음.」
+   회원님 #14 — 「실제로 어떤 사람인가에 입력한 내용이 프롬프트에도 적용이 되는지 궁금함」
+
+   재 보니 그 방에 특징이 **아예 비어 있었다.** `특징뽑기()` 는 단추를 눌러야만 돌아서,
+   회원님이 그 단추를 찾아 누르지 않으면 밀당·기울기·세기가 모두 바닥값으로 돈다.
+   그래서 인물의 결(「준을 당황시키는 것을 세상에서 제일 즐김」)이 글에 실리지 않고,
+   실제로 나온 글은 **「지금 당황한 건 박아영 쪽이었다」** 로 결이 뒤집혀 있었다.
+
+   ★ 값을 아끼려고 **한 플롯에 한 번만** 시도한다. 실패하면 되풀지 않는다.
+   ★ 조용히 한다 — 대화를 막지 않고, 안 되면 그냥 넘어간다.
+   ★ 이미 있으면 건드리지 않는다. 회원님이 손으로 고친 칸은 `사람칸지키기()` 가 지킨다 */
+/* ★★★ 260914 — **뽑는 동안을 붙잡아 둔다.**
+   묶음 C 에서 찾은 흠 — 방을 열면 특징을 조용히 뽑는데 몇 초 걸린다.
+   그 사이에 한 마디 치면 **특징 없이 나간다.** 첫 턴이 가장 값진 턴인데 그렇다.
+   ★ 뽑는 일을 여기 담아 두고, 말을 보낼 때 **잠깐만 기다린다** (아래 말보내기).
+     아주 기다리지는 않는다 — 늦어지면 그냥 간다. 멈춰 있는 것이 더 나쁘다 */
+const 특징뽑아본플롯 = {};
+let 특징뽑는중 = null;
+function 특징없으면조용히뽑기(플롯){
+  try {
+    if (!플롯 || !플롯.id) return;
+    if (특징뽑아본플롯[플롯.id]) return;
+    const 있던 = 특징읽기(플롯.id);
+    if (있던 && Object.keys(있던).filter(k => k[0] !== "_").length) return;
+    특징뽑아본플롯[플롯.id] = true;
+    특징뽑는중 = 특징뽑기(플롯, false).then(것 => {
+      if (!것) return;
+      /* ★ 값이 드는 일이니 **한 줄 알린다.** 조용히만 하면 왜 값이 줄었는지 알 수 없다 */
+      try { 알림("「어떤 사람인가」를 뽑았습니다 — " +
+                 Object.keys(것).filter(k => k[0] !== "_").length + "칸", 3000); } catch(_){}
+      /* ★★★ 260914 — **여기서 통째로 다시 그리지 않는다.**
+         실측 — 회원님이 입력칸을 누른 그 순간에 뽑기가 끝나면  가 돌아
+         입력칸을 갈아 끼우고, **자판이 곧바로 닫혔다.** 치던 흐름이 끊긴다.
+         ★ 특징은 **다음 턴 프롬프트에 실리는 것**이라 화면에 당장 보일 것이 없다.
+           인물 시트를 열어 두셨을 때만 그 시트를 다시 낸다 */
+      try {
+        if (S.방 && S.방.플롯아이디 === 플롯.id && 시트열렸나()
+            && 지금시트 && String(지금시트.제목 || "").indexOf("어떤 사람") >= 0){
+          시트그리기(지금시트.제목, 지금시트.다시 ? 지금시트.다시() : 지금시트.속);
+        }
+      } catch(_){}
+    }).catch(() => {}).finally(() => { 특징뽑는중 = null; });
+  } catch(_){}
+}
+/* ★ 뽑는 중이면 잠깐 기다린다. 최대 8초 — 그 뒤에는 그냥 간다 */
+function 특징기다리기(){
+  if (!특징뽑는중) return Promise.resolve(false);
+  return Promise.race([
+    특징뽑는중.then(() => true).catch(() => false),
+    new Promise(r => setTimeout(() => r(false), 8000))
+  ]);
 }
 
 /* ══ 메모장 ══
@@ -2455,6 +2792,22 @@ function 사람칸들(p){
           '</div>';
     글 += '<div id="속p' + i + '"' + (접힘 ? ' style="display:none"' : '') + '>' +
           칸틀('프로이름' + i, '이 판에서 나를 무엇이라 부르나', c.name || '', 0, 12) +
+          /* ★★★ 260914 — #25 **내 프로필 이미지.** 회원님 :
+             「플롯 만들기(대표이미지, 캐릭터(인물)이미지, **내 프로필 이미지**)」
+             자리 넷 중 이것만 빠져 있었다 (독립 검증이 짚었다) */
+          '<div class="칸제목" style="padding-left:0;margin-top:12px">내 프로필 이미지' +
+            ' <span style="color:var(--흐림);font-weight:400">(선택)</span></div>' +
+          '<div class="그림칸벌">' +
+            (그림풀기(c.imageUrl) ? '<img class="미리" src="' + 안전(그림풀기(c.imageUrl)) + '">'
+                                  : '<div class="미리"></div>') +
+            '<div class="속">' +
+              '<input id="편_프로그림' + i + '" placeholder="그림 주소 — 비워 두셔도 됩니다"' +
+                ' value="' + 안전(c.imageUrl || '') + '"' +
+                ' style="width:100%;background:var(--바탕2);border-radius:10px;padding:10px 12px;font-size:14px">' +
+              '<button data-시트="그림짓기" data-자리="유저' + i + '" data-칸="편_프로그림' + i + '"' +
+                ' data-힌트="' + 안전(String(c.description || c.summary || '').slice(0, 200)) + '">🖼 그림 만들기</button>' +
+            '</div>' +
+          '</div>' +
           칸틀('프로한줄' + i, '한 줄로 — 이 인물과 어떤 사이인가', c.summary || '', 0, 40) +
           칸틀('프로설명' + i, '나는 어떤 사람인가. 나이 · 이 인물과의 사이 · 지금 무엇을 하고 있었나.',
                c.description || '', 2, 0) +
@@ -2491,7 +2844,12 @@ function 사람칸거두기(p){
     const 한줄 = String(s || '').trim();
     const 설명 = String(d || '').trim();
     if (!이름 && !한줄 && !설명) continue;
-    새프로.push({name: 이름, summary: 한줄, description: 설명});
+    /* ★ 260914 — #25 내 프로필 이미지도 거둔다 */
+    const 프그림 = 값('편_프로그림' + i);
+    const 옛프 = ((p.chatProfiles || [])[i] || {});
+    새프로.push({name: 이름, summary: 한줄, description: 설명,
+                 imageUrl: (프그림 == null ? (옛프.imageUrl || null)
+                                           : (String(프그림).trim() || null))});
   }
   if (새프로.length) p.chatProfiles = 새프로;
   return p;
@@ -2916,9 +3274,13 @@ function 프로필열기(더){
         const 글 = 플글(c);
         const 같은것 = 목.find(x => String(x.이름 || "").trim() === 이);
         if (같은것 && String(같은것.설명 || "").trim() === 글) return "";   /* 이미 들여왔다 */
-        return 시트줄("⤓", 이 + (같은것 ? "  (이 플롯 것)" : ""), "플롯프로필",
+        /* ★★★ 260914 — **여기도 {{user}} 를 채운다.** 회원님 : 「얘뿐만이 아닐 것 같음」
+           인물 시트는 고쳤는데 이 줄이 남아 있었다 — 「야 나 들어가도돼?」 는
+           chatProfiles 이름이 셋 다 `{{user}}` 라 그대로 보였다 */
+        const 보임이 = 이름채우기(이, 플, S.방) || 이;
+        return 시트줄("⤓", 보임이 + (같은것 ? "  (이 플롯 것)" : ""), "플롯프로필",
           {값: String(i),
-           밑: (글.slice(0, 40) || "이 플롯이 준 캐릭터")});
+           밑: (이름채우기(글, 플, S.방).slice(0, 40) || "이 플롯이 준 캐릭터")});
       }).join("");
       if (!줄) return "";
       return "<div class='시트머리'>이 플롯에 있는 캐릭터</div>" + 줄;
@@ -3083,7 +3445,9 @@ function 새대화(플롯){
   그리기();
   /* ★ 제타와 같게 — 방에 들어간 뒤 대화 프로필을 고른다.
      제타는 새 방에 들어가면 곧바로 「선택 · 대화 프로필 추가」가 뜬다 */
-  setTimeout(() => { if (프로필들().length) 프로필열기(); else 프로필쓰기(null); }, 420);
+  /* ★★★ 260914 — #8 **시트로 띄우지 않는다.** 대화 안 박스로 고르게 한다 */
+  S.프로필고르기 = true;
+  방그리기(); 맨아래로(true);
   알림("새 대화를 시작했습니다");
 }
 
@@ -3295,7 +3659,9 @@ function 향열기(){
       시트줄(지금 === x ? "●" : "○", x, "향고름",
         {값: x, 빛: 지금 === x ? "켬" : "",
          밑: x === "남성향" ? "내가 남자 · 상대가 여자" : "내가 여자 · 상대가 남자"})).join("") +
-    시트줄("✨", "이 결로 하나 짓기", "자동생성"));
+    /* ★★★ 260914 — 이 이름을 `자동생성` 으로 두었더니 **누르기 분기가 먼저 채 가서**
+       시트가 다시 열리기만 했다. `자동생성()` 함수가 한 번도 안 불렸다 */
+    시트줄("✨", "이 결로 하나 짓기", "짓기시작"));
 }
 async function 자동생성(){
   const 중계 = 중계주소();
@@ -3370,6 +3736,10 @@ function 플롯가르기(글, 자리){
   }
   const 이름 = (칸["이름"] || "").trim();
   if (!이름) return null;
+  /* ★★★ 260914 — **인트로가 비면 플롯이 아니다.** 모델이 그 칸을 빼먹을 때가 있고,
+     그대로 담으면 그 플롯으로 여는 방이 **빈 방**이 된다 (회원님 R1·R2 와 같은 갈래).
+     ★ 스무 자를 바닥으로 둔다 — 제타 원본 중 가장 짧은 인트로가 스물여섯 자다 */
+  if ((칸["인트로"] || "").trim().length < 20) return null;
   /* ★ 260913 — 인물 이름을 **세 곳에서** 찾는다. 캐릭터 꼴을 회원님 카드 꼴로 바꾸면서
      첫 줄이 「[성장배경] …」 이 될 수 있어 첫 줄만 보던 것이 깨졌다 */
   const 인물이름 = (() => {
@@ -3415,7 +3785,7 @@ function 플롯가르기(글, 자리){
        여태 받고도 버렸다. 판벌은 `특징.js` 판벌과 짝이라 특징 자리에 들어가 프롬프트에 실린다 */
     지은판: {붙잡는것: (칸["붙잡는것"] || "").trim(),
              안끝나는못: (칸["안끝나는못"] || "").trim(),
-             오늘거리: (칸["오늘거리"] || "").trim(),
+             오늘거리: (칸["오늘바라는것"] || "").trim(),
              저절로: (칸["저절로"] || "").trim(),
              쓸것: (칸["쓸것"] || "").trim()},
     지은본보기: (칸["본보기"] || "").trim(),
@@ -3428,13 +3798,16 @@ function 나그리기(){
   넣기("#몸",
     '<div class="만들기판">' +
       '<div class="칸"><h2>모델</h2>' +
+        /* ★★★ 260914 — #11 회원님 : 「마이페이지의 모델리스트 선택항목 간격을
+           **현재의 절반으로 줄이고**」 — 시트줄은 위아래 13px 이라 여기서만 6px 로 */
+        '<div class="모델줄들">' +
         모델셋.map(x => {
-          const 켬 = (설정("모델설정") || 기본모델) === x.값;
+          const 켬 = 성한모델(설정("모델설정") || 기본모델) === x.값;
           /* ★ 260912 — 막힌 것은 **동그라미 대신 빗금**으로 바로 보이게 */
           /* ★ 260912 — 아슬한 것은 **세모**. 못 쓰는 것이 아니라 자주 막히는 것이다 */
           return 시트줄(x.아슬 ? "△" : (켬 ? "●" : "○"), x.이름, "모델고름",
                         {값: x.값, 밑: x.밑, 빛: 켬 ? "켬" : ""});
-        }).join("") +
+        }).join("") + '</div>' +
       '</div>' +
       '<div class="칸"><h2>중계</h2>' +
         '<div class="글" style="margin-bottom:8px;color:var(--흐림2)">' +
@@ -3443,15 +3816,10 @@ function 나그리기(){
         설정칸("중계", 기본중계, 값("중계")) +
         설정칸("초대", "초대 코드 (없으면 비움)", 값("초대")) +
       '</div>' +
-      /* ★ 260911 — **구글을 이 기기에서 바로 부를 때만** 쓰는 열쇠.
-         중계는 홍콩에서 나가 구글에 막힌다. 이 기기는 한국에서 나간다.
-         ★ 이 열쇠는 **이 기기 안에만** 있다. 코드에도 저장소에도 안 들어간다 */
-      '<div class="칸"><h2>구글 키</h2>' +
-        '<div class="글" style="margin-bottom:8px;color:var(--흐림2)">' +
-          '모델에서 <b>(무)google 직접</b> 을 고르실 때만 씁니다.<br>' +
-          '이 기기 안에만 저장됩니다. 값이 안 듭니다.</div>' +
-        설정칸("구글키", "AIza… (없으면 비움)", 값("구글키")) +
-      '</div>' +
+      /* ★ 260914 — #11 「(무)google 직접」을 뺐으니 **그 열쇠 칸도 함께 뺀다.**
+         그 모델 하나만 쓰던 칸이라 남겨 두면 쓸 데 없는 칸이 된다.
+         ★ 담아 두신 열쇠는 **안 지웠다** — localStorage 에 그대로 있다 */
+
       /* ★ 260910 회원님 : 「실제 제타처럼, 나도 내 프로필을 관리할 수 있는 창을 구현하라.」 */
       '<div class="칸"><h2>내 프로필</h2>' +
         (프로필들().length
@@ -3616,6 +3984,19 @@ function 길살피기(){
 function 뒤로가기(){
   /* ① 시트가 떠 있으면 시트에서 한 겹 */
   if (시트열렸나()){ 시트뒤로(); return true; }
+  /* ★★★ 260914 — R6 **대화창에서 뒤로는 곧바로 대화 목록으로.**
+     회원님 : 「뒤로가기 누르니까 **아까 전 채팅내용 있던 방이 떳다가** 대화목록으로 가는 문제,
+              이건 **대화창에서 뒤로 가기 누르면 대화 목록으로 나가지는게 맞는 듯.**」
+     `온길` 을 되짚으면 앞서 들렀던 방이 먼저 뜬다. 한 걸음에 목록으로 간다 */
+  if (S.방){
+    되돌리는중 = true;
+    try {
+      S.방 = null; S.플롯 = null; S.화면 = "대화";
+      온길.length = 0;              /* 되짚을 길도 비운다 — 또 앞 방이 뜨지 않게 */
+      그리기();
+    } finally { 되돌리는중 = false; }
+    return true;
+  }
   /* ② 온 길이 있으면 그 길로 */
   const 앞 = 온길.pop();
   if (앞){
@@ -3641,6 +4022,13 @@ function 뒤로가기(){
   }
   return false;                       /* 더 갈 데가 없다 */
 }
+/* ★★★ 260914 — #9 회원님 : 「A 플롯에서 스크롤을 내린 뒤 끄면, **왜 그 위치가 저장되는지**
+   모르겠음. B 플롯에서도 … **해당 위치에서 시작할 이유가 없는데도.**」
+   ★ 앱 안 얼개로는 길 넷(플롯 닫기 · 앱 껐다 켜기 · 탭 옮기기 · 같은 플롯 다시)에서
+     **재현되지 않았다.** 남은 것은 **브라우저 제 기능**이다 —
+     크롬·사파리는 되돌아가거나 새로고침할 때 스크롤 자리를 저 혼자 되살린다.
+     그것은 앱이 정한 자리를 덮는다. 여기서 끈다 */
+try { if (history.scrollRestoration) history.scrollRestoration = "manual"; } catch(_){}
 function 자리쌓기(){ try { history.pushState({앱: 1}, ""); } catch(_){} }
 window.addEventListener("popstate", () => { if (뒤로가기()) 자리쌓기(); });
 
@@ -3687,24 +4075,54 @@ let 앞화면 = "";
    ★ 화면마다 자리를 기억해 두었다가 되돌린다.
      대화 화면은 빼 둔다 — 거기는 `맨아래로()` 가 맡고, 늘 바닥이 맞다 */
 const 스크롤자리 = {};
+/* ★★★ 260914 — **앞 상태로 적는다.**
+   `스크롤챙기기()` 는 `그리기()` 맨 앞에서 도는데 그때 `S.플롯` 은 이미 새 값이다.
+   플롯을 여는 그 순간 `!S.플롯` 이 거짓이라 목록 자리를 못 적었다(실측 2500→0).
+   앞 상태를 들고 있다가 **그것이 목록이었을 때만** 적는다 */
+let 앞자리상태 = {화면: "", 상세냐: false};
 function 스크롤챙기기(){
   try {
     const 판 = 몸();
-    if (판 && S.화면 && S.화면 !== '대화') 스크롤자리[S.화면 + '|' + (S.플롯 ? S.플롯.id : '')] = 판.scrollTop;
+    /* ★ 목록일 때만 적는다. 상세(플롯·방)에서 나올 때 적으면 목록 자리를 덮어쓴다 */
+    if (판 && 앞자리상태.화면 && !앞자리상태.상세냐)
+      스크롤자리[앞자리상태.화면 + "|"] = 판.scrollTop;
   } catch(_){}
+  try { 앞자리상태 = {화면: S.화면, 상세냐: !!(S.플롯 || S.방)}; } catch(_){}
 }
 function 스크롤되돌리기(){
   try {
-    if (!S.화면 || S.화면 === '대화') return;
-    const 키 = S.화면 + '|' + (S.플롯 ? S.플롯.id : '');
+    /* ★★★ 260914 — **열쇠를 적는 쪽과 맞춘다.**
+       적는 쪽은 `화면 + "|"` 인데 여기는 플롯 id 까지 붙여 읽어
+       목록 자리를 영영 못 찾았다(실측 2500 내려도 0 으로 돌아옴).
+       ★ 상세(플롯·방)는 **맨 위에서 열리는 것이 맞다** — 되돌리지 않는다 */
+    if (!S.화면 || S.플롯 || S.방) return;
+    const 키 = S.화면 + "|";
     const 자리 = 스크롤자리[키];
     if (!자리) return;
     const 판 = 몸();
     if (!판) return;
-    const 놓기 = () => { const q = 몸(); if (q) q.scrollTop = 자리; };
-    놓기();
-    requestAnimationFrame(놓기);
-    setTimeout(놓기, 80);
+    /* ★★★ 260914 — **붙을 때까지 되돌린다.**
+       실측 — 1400 까지 내리고 플롯을 봤다 돌아오니 **196** 이었다.
+       까닭은 그림이다. 다시 그린 그 순간에는 인물 그림이 아직 안 떠서
+       판이 짧다. 1400 을 넣어도 짧은 판의 끝인 196 으로 깎인다.
+       그림이 뜨면 판은 길어지지만 자리는 196 에 남는다.
+       ★ 그래서 **판이 길어지는 동안 여러 번** 다시 놓는다.
+         제자리에 붙으면 그만둔다 — 사람이 손으로 굴린 뒤에 끌어내리지 않게 */
+    let 놓은적 = 0;
+    const 놓기 = () => {
+      const q = 몸(); if (!q) return true;
+      if (Math.abs(q.scrollTop - 자리) <= 2) return true;        /* 이미 제자리 */
+      if (q.scrollHeight - q.clientHeight < 자리 - 2) { q.scrollTop = 자리; return false; }
+      q.scrollTop = 자리; 놓은적++;
+      return Math.abs(q.scrollTop - 자리) <= 2;
+    };
+    if (!놓기()){
+      requestAnimationFrame(놓기);
+      for (const ms of [60, 140, 260, 420, 650, 900]) setTimeout(() => {
+        try { if (S.플롯 || S.방 || S.화면 + "|" !== 키) return;   /* 그 사이 딴 데로 갔다 */
+          놓기(); } catch(_){}
+      }, ms);
+    }
   } catch(_){}
 }
 
@@ -3723,15 +4141,26 @@ function 그리기(){
        다시 스크롤이 맨 위에 있는 문제.」
        여기서 0 으로 박고 있었다. **기억해 둔 자리가 있으면 그리로** 되돌린다 —
        없을 때만 맨 위로 간다(처음 보는 화면이면 위가 맞다) */
-    const 옛자리 = 스크롤자리[S.화면 + "|" + (S.플롯 ? S.플롯.id : "")];
+    /* ★★★ 260914 — **상세는 옛자리를 보지 않는다.**
+       열쇠에 플롯 id 가 붙어 있던 탓에 목록 자리가 상세로 새어
+       플롯을 누르면 상세가 2500 에서 열렸다(실측 900·1633·3270). */
+    /* ★★★ 260914 — #9 **상세(플롯)는 언제나 맨 위에서 연다.**
+       회원님 : 「B 플롯에서도 … 해당 위치에서 **시작할 이유가 없는데도**」
+       그리기 앞뒤로 두 번 박는다 — 그린 뒤 높이가 늘면 남은 자리가 되살아날 수 있다 */
+    const 옛자리 = (S.플롯 ? 0 : 스크롤자리[S.화면 + "|"]);
     if (판 && !S.방 && !옛자리) 판.scrollTop = 0;
+    if (판 && S.플롯){ const 위로 = () => { const q = $("#몸"); if (q) q.scrollTop = 0; };
+      위로(); requestAnimationFrame(위로); setTimeout(위로, 60); setTimeout(위로, 180); }
   }
   /* ★ 260911 회원님 : 「최상위 메뉴(홈/대화/만들기/마이페이지)는
      좌상단 < 버튼 필요없다.」
      탭 넷은 아래 바로 오가므로 뒤로 갈 데가 없다. 방·플롯에서만 띄운다 */
   const 떠 = $("#뒤로떠");
   if (떠) 떠.classList.toggle("보임", !!(S.방 || S.플롯));
-  $('#입력자리').innerHTML = '';
+  /* ★★★ 260914 — **방 안에서는 안 비운다.**
+     비우면  가 입력칸을 새로 만들게 되고, 잡고 있던 것이 풀려
+     폰에서 자판이 내려간다. 방이 아니면 입력칸이 있을 데가 없으니 비운다 */
+  if (!S.방) $('#입력자리').innerHTML = '';
   /* ★ 260913 — 그린 **뒤에** 스크롤 자리를 되돌린다. 그리기 전에 하면 높이가 없어 안 먹는다 */
   const 그린뒤 = () => { try { 스크롤되돌리기(); } catch(_){} };
   if (S.방){ 방그리기(); return; }
@@ -3761,6 +4190,35 @@ document.addEventListener('click', e => {
     if (무엇 === '편집'){ return 마지막도막(m => 편집열기(m)); }
     if (무엇 === '주문'){ return 주문열기(); }
     if (무엇 === '재실행'){ return 재실행(); }
+    /* ★★★ 260914 — #16 보내다 난 탈에 대응하는 세 갈래 */
+    if (무엇 === '탈다시'){
+      const 말 = (보내기탈 && 보내기탈.친말) || "";
+      /* 내 말은 이미 도막에 들어가 있다 — 그것을 걷어내고 다시 보낸다 */
+      try {
+        const 도 = D.도막[S.방.id] || [];
+        const 끝 = 도[도.length - 1];
+        if (끝 && (끝.sender && 끝.sender.type) !== "BOT") 도.pop();
+        D.도막[S.방.id] = 도;
+      } catch(_){}
+      보내기탈 = null; 방그리기();
+      return 말보내기(말 || "…");
+    }
+    if (무엇 === '탈되돌리기'){
+      const 말 = (보내기탈 && 보내기탈.친말) || "";
+      try {
+        const 도 = D.도막[S.방.id] || [];
+        const 끝 = 도[도.length - 1];
+        if (끝 && (끝.sender && 끝.sender.type) !== "BOT") 도.pop();
+        D.도막[S.방.id] = 도;
+      } catch(_){}
+      보내기탈 = null; 방그리기();
+      try { const 입 = $("#입력");
+        if (입){ 입.value = 말; 입.style.height = "auto";
+          입.style.height = Math.min(입.scrollHeight, 110) + "px"; 입.focus(); }
+      } catch(_){}
+      return 알림("친 말을 입력창에 되돌렸습니다");
+    }
+    if (무엇 === '탈치우기'){ 보내기탈 = null; 방그리기(); return; }
     /* ★ 260913 회원님 : 「이미지 생성 기능 넣어줘.」 — 막는 것은 그림내기() 안에 있다 */
     if (무엇 === '그림'){ return 그림내기(); }
     if (무엇 === '별표'){ return 별표넣기(); }
@@ -3872,6 +4330,11 @@ document.addEventListener("click", async e => {
   const 가 = 줄.dataset.시트;
   const 값 = 줄.dataset.값;
   if (가 === "닫기") return 시트닫기();
+  /* ★★★ 260914 — 향 시트의 「✨ 이 결로 하나 짓기」.
+     회원님 260912 지시로 향 고르기를 넣으면서 시트 단추 이름도 `자동생성` 으로 두었더니
+     `data-가` 분기가 먼저 채 가서 **시트만 다시 열렸다** — `자동생성()` 이 한 번도 안 불렸다.
+     ★ 시트줄은 `data-시트` 로 그린다. 그래서 받는 자리도 여기다 */
+  if (가 === "짓기시작"){ 시트닫기(); return 자동생성(); }
   /* ★ 260914 — 겹친 시트에서 한 겹만 물러난다. 앞 시트에 치던 값이 되살아난다 */
   if (가 === "시트뒤로") return 시트뒤로();
   if (가 === "편집"){ 시트닫기(); return 편집열기(Number(값)); }
@@ -3909,9 +4372,25 @@ document.addEventListener("click", async e => {
     } catch(_){}
     시트닫기(); 그리기(); return 알림("담아 둔 그림을 비웠습니다");
   }
-  if (가 === "새로하기") return 새로하기();
+  /* ★ 260914 — #14 곧바로 하지 않고 먼저 묻는다 */
+  if (가 === "새로하기") return 새로하기묻기();
+  if (가 === "새로담고") return 새로하기(true);
+  if (가 === "새로안담고") return 새로하기(false);
   if (가 === "이어하기"){ return 이어하기열기(); }
   if (가 === "이어열기"){ 시트닫기(); return 이어열기(값); }
+  /* ★ 260914 — R7 이어하기 한 벌을 지운다. 회원님 : 「이어하기 목록을 삭제할 수가 없음」 */
+  if (가 === "이어지우기"){
+    const 방 = S.방;
+    if (!방) return;
+    방.이어하기 = (방.이어하기 || []).filter(e => e.id !== 값);
+    try { delete D.도막[값]; } catch(_){}
+    /* 그 벌에 딸린 메모·기억도 함께 */
+    try { localStorage.removeItem("메모_" + 값); localStorage.removeItem("기억_" + 값); } catch(_){}
+    새것담기();
+    이어하기열기();
+    알림("지웠습니다");
+    return;
+  }
   /* ★ 260910 회원님 : 「대화 프로필 누르면 나오는 것은 user 프로필 수정을
      가능케 해야된다. 해당 프로필 입력값으로 대화에 계속 적용되는 것이다.」 */
   if (가 === "대화프로필"){ return 프로필열기(); }
@@ -3943,6 +4422,7 @@ document.addEventListener("click", async e => {
     것.관계 = ($("#프로필관계") || {}).value || "";
     if (기) for (const p of 목) p.기본 = (p.id === 것.id); else 것.기본 = false;
     프로필담기(목);
+    S.프로필고르기 = false;   /* #8 — 골랐으니 박스를 내린다 */
     if (S.방){ S.방.프로필아이디 = 것.id; 새것담기(); }
     시트닫기(); 그리기(); 알림("담았습니다");
     return;
@@ -4115,7 +4595,10 @@ document.addEventListener("click", async e => {
        여태 전역만 바꿔서, 보이는 딱지(방 모델)와 실제로 쓰는 값이 어긋났다 */
     const 어디 = 방모델정하기(값);
     const 짝 = 모델셋.find(x => x.값 === 값);
-    시트닫기();
+    /* ★★★ 260914 — #4 「해당 메뉴 안에 들어가서 고른 경우에도 … **해당 창으로 돌아오며
+       변경된 값이 출력**되어야 함」 — 통째로 닫지 않고 **한 겹만** 물러난다.
+       밑에 깔린 방 메뉴가 `다시` 로 새로 그려져 바뀐 모델이 찍힌다 */
+    if (시트길.length) 시트뒤로(); else 시트닫기();
     /* ★ 곧바로 반영한다. 방 안이면 머리만 — 다시 그리면 스크롤이 튄다 */
     if (S.방) 머리그리기(); else 그리기();
     알림((어디 === "방" ? "이 방 모델 — " : "모델 — ") + ((짝 && 짝.이름) || 값)); return;
@@ -4156,7 +4639,7 @@ document.addEventListener("click", async e => {
     /* ★ 「부름」을 잘못 적으면 이름 갈아끼우기가 **조용히** 쉰다.
        `박힌이름` 이 인물 이름·열두 자 넘는 것·자리표가 든 것을 버린다.
        조용히 두지 않고 그 자리에서 알린다 */
-    if (값 === "부름"){
+    if (값 === "부름말"){
       const 적었나 = String(새값 || "").replace(/\s+/g, " ").trim();
       if (적었나 && 적었나 !== "—" && !박힌이름(p))
         알림("담았지만 이름 갈아끼우기에는 안 씁니다 — 인물 이름이거나 너무 깁니다");
@@ -4220,6 +4703,7 @@ document.addEventListener("click", async e => {
     const 목 = 프로필들();
     const 것 = 목.find(x => x.id === 값);
     if (!것) return 알림("그 프로필이 없습니다");
+    S.프로필고르기 = false;   /* #8 — 골랐으니 박스를 내린다 */
     if (S.방){ S.방.프로필아이디 = 것.id; 새것담기(); }
     /* 방이 없으면(마이페이지) 기본을 옮긴다 — 다음 방부터 이 이름으로 간다 */
     else { for (const x of 목) x.기본 = (x.id === 것.id); 프로필담기(목); }
@@ -4278,9 +4762,10 @@ document.addEventListener("click", async e => {
     const c = ((플 && 플.chatProfiles) || [])[Number(값)];
     if (!c) return 알림("그 캐릭터가 없습니다");
     const 목 = 프로필들();
-    const 이 = String(c.name || "").trim() || "나";
-    const 글 = [c.summary, c.description].map(x => String(x || "").trim())
-                 .filter(Boolean).join(NL);
+    /* ★ 260914 — 자리표를 실제 이름으로 바꿔 들여온다 */
+    const 이 = (이름채우기(String(c.name || "").trim(), 플, S.방) || "").trim() || "나";
+    const 글 = 이름채우기([c.summary, c.description].map(x => String(x || "").trim())
+                 .filter(Boolean).join(NL), 플, S.방);
     /* ★ 260914 — **회원님이 적어 두신 값을 덮지 않는다** (「지우지 않는다」 규칙).
        이름이 같고 글이 다르면 딴 프로필로 만든다 — 둘 다 남아 골라 쓸 수 있다 */
     let 것 = 목.find(x => String(x.이름 || "").trim() === 이 &&
@@ -4293,6 +4778,7 @@ document.addEventListener("click", async e => {
       목.push(것);
     }
     프로필담기(목);
+    S.프로필고르기 = false;   /* #8 — 골랐으니 박스를 내린다 */
     if (S.방){ S.방.프로필아이디 = 것.id; 새것담기(); }
     시트닫기(); 그리기(); return 알림("「" + 이 + "」 을 들여왔습니다");
   }
@@ -4316,10 +4802,29 @@ document.addEventListener("click", async e => {
     글복사((D.도막[값] || []).map(도막글꺼내기).join(NL + NL));
     return 시트닫기();
   }
-  if (가 === "목록방지우기"){ 시트닫기(); return 방지우기속(값); }
+  if (가 === "목록방지우기"){
+    /* ★★★ 260914 — #10 회원님 : 「대화 리스트에서 ··· 눌러 '이 대화 지우기'를 선택하면,
+       **목록을 새로고침하여 실시간 반영**이 되도록 할 것.」
+       ★ 여태 지우기만 하고 **다시 그리지 않았다.** 실측 —
+         자료는 30개 → 29개인데 화면 줄은 **30개 그대로**였다.
+         새로고침해야 사라졌으니 「지워지지 않았다」고 보이는 것이 맞다 */
+    const 이름 = (D.방.find(r => r.id === 값) || {}).제목 || "";
+    시트닫기();
+    방지우기속(값);
+    그리기();
+    알림(이름 ? "「" + 이름 + "」 을 지웠습니다" : "지웠습니다");
+    return;
+  }
   if (가 === "방지우기"){
-    D.도막[S.방.id] = [];
-    새것담기(); 시트닫기(); 방그리기(); 알림("지웠습니다"); return;
+    /* ★★★ 260914 — R1 **인트로는 남긴다.** 회원님 : 「대화 내용만 지우기 했더니
+       **인트로까지 사라지고**, 다시 시작하기 눌러도 인트로 없는 문제」
+       인트로는 「대화 내용」이 아니라 그 방의 첫 장면이다. 플롯에서 다시 깐다 */
+    D.도막[S.방.id] = (() => {
+      try { const 것 = 인트로도막(플롯찾기(S.방), S.방); if (것 && 것.length) return 것; } catch(_){}
+      return [];
+    })();
+    새것담기(); 시트닫기(); 방그리기(); 맨아래로(true);
+    알림("대화를 지웠습니다 — 첫 장면은 남았습니다"); return;
   }
 });
 
@@ -4331,6 +4836,10 @@ document.addEventListener("click", e => {
   if (!S.방) return;
   const 얼 = e.target.closest("[data-인물]");
   if (얼) return 인물열기(얼.dataset.인물);
+  /* ★★★ 260914 — **유저 프사.** 회원님 #26 의 「좌우대칭」이 이 자리다.
+     그려만 놓고 여기 줄이 없어서 눌러도 아무 일이 없었다 */
+  const 내얼 = e.target.closest("[data-가=내프사]");
+  if (내얼) return 내프로필열기();
   /* ★ 260913 — 그림은 **말풍선 메뉴가 아니다.** 크게 보기로 간다 */
   const 그림 = e.target.closest("[data-그림]");
   if (그림) return 그림열기(Number(그림.dataset.그림));
@@ -4359,24 +4868,68 @@ function 별표넣기(){
   입.focus();
   입.selectionStart = 입.selectionEnd = (a === b) ? a + 1 : b + 2;
 }
-function 새로하기(){
+/* ★★★★★ 260914 — R1 · R2 · R14 를 함께 고친다. (회원님 재지적)
+   · R2 **빈 방은 이어하기로 안 담는다** — 「이빈 방 상태에서 새로 시작해도 빈 방이 저장되는 문제」
+   · R1 **인트로를 플롯에서 다시 깐다** — 「다시 시작하기 눌러도 인트로 없는 문제」
+   · R14 **캐릭터 고르기를 띄운다** — 「캐릭터 고르는것도 띄워줘야될거아니야」 */
+/* ★★★ 260914 — #14 회원님 : 「새로하기 눌렀을 때, **바로 저장되고 새 대화가 열리는 것이
+   아니라, 현재 대화를 저장할 것인지를 먼저 묻도록** 하기. 물어볼 때에는
+   **생성시각/최종대화시각/턴수/생성된 이미지 수/총 비용(텍스트/이미지)** 를 보여주면서」 */
+function 새로하기묻기(){
   const 방 = S.방;
-  /* 지금 것을 이어하기로 담고 처음부터 */
+  if (!방) return;
+  const 도 = D.도막[방.id] || [];
+  const 끝 = 도[도.length - 1];
+  const c = 값세기(방.id);
+  const 그림수 = 도.filter(m => m && (m.그림키 || m.그림)).length;
+  const 줄 = (이, 값) =>
+    '<div style="display:flex;gap:10px;padding:5px 16px;font-size:13px">' +
+      '<span style="width:96px;flex:0 0 auto;color:var(--흐림)">' + 안전(이) + '</span>' +
+      '<span>' + 안전(값) + '</span></div>';
+  시트열기("새로 시작할까요?",
+    '<div class="인물글" style="padding-bottom:6px">지금 대화를 <b>저장할지</b> 먼저 고르십시오.<br>' +
+      '저장하면 「이어하기」 목록에 들어가 언제든 되돌아올 수 있습니다.</div>' +
+    줄("만든 때", 짧은때(연때(방, 도))) +
+    줄("마지막 대화", 짧은때((끝 && 끝.messageTime) || "")) +
+    줄("턴", 턴수(도) + "턴 · 도막 " + 도.length + "개") +
+    줄("만든 그림", 그림수 + "장") +
+    줄("글 값", 돈글(c.글값) + "  (" + c.글턴 + "턴)") +
+    줄("그림 값", 돈글(c.그림값) + "  (" + c.그림장 + "장)") +
+    줄("합", 돈글(c.다)) +
+    '<div class="시트단추"><button data-시트=닫기>그만</button>' +
+      '<button data-시트=새로안담고>저장 않고 새로</button>' +
+      '<button class="강" data-시트=새로담고>저장하고 새로</button></div>');
+}
+function 새로하기(담을까){
+  const 방 = S.방;
+  const 플 = 플롯찾기(방);
   const 담을 = (D.도막[방.id] || []).slice();
-  const 새id = "저장-" + Date.now().toString(36);
-  D.도막[새id] = 담을;
-  방.이어하기 = 방.이어하기 || [];
-  방.이어하기.unshift({id: 새id, savedAt: new Date().toISOString(),
-                       만든때: 방.만든때 || new Date().toISOString(),
-                       도막수: 담을.length});
-  /* ★ 260912 — 메모와 기억이 그 대화를 따라간다 */
-  메모옮기기(방.id, 새id);
-  기억옮기기(방.id, 새id);
+  /* ★ R2 — **볼 것이 있을 때만** 담는다.
+     인트로만 있거나 아예 비었으면 담을 것이 없다 */
+  const 인트로수 = (() => { try { return 인트로도막(플, 방).length; } catch(_){ return 1; } })();
+  /* ★ #14 — 회원님이 「저장 않고」를 고르시면 담지 않는다 */
+  const 담을만한가 = (담을까 !== false) && 담을.length > Math.max(1, 인트로수);
+  if (담을만한가){
+    const 새id = "저장-" + Date.now().toString(36);
+    D.도막[새id] = 담을;
+    방.이어하기 = 방.이어하기 || [];
+    방.이어하기.unshift({id: 새id, savedAt: new Date().toISOString(),
+                         만든때: 방.만든때 || new Date().toISOString(),
+                         도막수: 담을.length});
+    /* ★ 260912 — 메모와 기억이 그 대화를 따라간다 */
+    메모옮기기(방.id, 새id);
+    기억옮기기(방.id, 새id);
+  }
   방.만든때 = new Date().toISOString();   /* 지금부터가 새 대화다 */
-  /* 인트로만 남긴다 */
-  D.도막[방.id] = 담을.length ? [담을[0]] : [];
-  새것담기(); 시트닫기(); 방그리기();
-  알림("저장하고 새로 시작합니다");
+  /* ★ R1 — **인트로를 플롯에서 다시 깐다.** 「대화 내용만 지우기」 로 비워졌어도 되살아난다 */
+  D.도막[방.id] = (() => {
+    try { const 것 = 인트로도막(플, 방); if (것 && 것.length) return 것; } catch(_){}
+    return 담을.length ? [담을[0]] : [];
+  })();
+  /* ★★★ 260914 — #8 **시트로 띄우지 않는다.** 대화 안 박스로 고르게 한다 */
+  S.프로필고르기 = true;
+  새것담기(); 시트닫기(); 방그리기(); 맨아래로(true);
+  알림(담을만한가 ? "저장하고 새로 시작합니다" : "새로 시작합니다");
 }
 function 이어열기(id){
   const 담긴 = D.도막[id];
@@ -4421,13 +4974,22 @@ function 입력붙이기(){
   /* ★ 260911 신고 — 「첫 대화때 자판누르면 첫대화가 안보임.」
      자판이 올라오는 것은 `visualViewport` 가 알려 준다(맨 아래 `자판보기`).
      다만 기기에 따라 그 알림이 늦게 오거나 아예 안 온다. 그래서 여기서도 한 번 더 본다 */
+  /* ★★★ 260914 — #2 **억지로 내린다.** 「줄어든 간격에는 … **최하단 내용**을 보여주기」
+     여태 `맨아래로(false)` 라 **바닥에 붙어 있을 때만** 내려갔다.
+     인트로를 위에서 읽다 입력창을 누르면 그 자리에 그대로 머물러,
+     회원님이 겪으신 「입력창 누르면 인트로가 … 안보이게」가 여기서 났다.
+     입력창을 누르는 것은 **사람이 방금 한 일**이므로 억지로가 맞다 */
   입.addEventListener('focus', () => {
-    맨아래로(false);
-    setTimeout(() => 맨아래로(false), 180);
-    setTimeout(() => 맨아래로(false), 420);
+    document.body.classList.add('자판');
+    맨아래로(true);
+    setTimeout(() => 맨아래로(true), 180);
+    setTimeout(() => 맨아래로(true), 420);
   });
+  입.addEventListener('blur', () => { document.body.classList.remove('자판'); });
   /* ★ 빈 채로도 보낼 수 있으므로 단추를 잠그지 않는다 */
-  보.disabled = false;
+  /* ★ #8 — 다만 프로필을 아직 안 골랐으면 잠근 채 둔다 */
+  보.disabled = !!S.프로필고르기;
+  if (S.프로필고르기) 입.disabled = true;
   /* ★ 260910 회원님 —
        「pc 브라우저에서 … 엔터를 치면 줄바꿈이 일어난다.
         shift 엔터로 줄바꿈되게 하고, 엔터는 발송되게 하라.」
@@ -4466,7 +5028,7 @@ function 입력붙이기(){
 /* ★ 260910 회원님 : 「완성되어 빌드를 내보내게 된다면
    마이페이지에 빌드넘버와 일자와 시간을 적어서 내보낸다.」
    ★ 아래 한 줄은 **빌드 도구가 갈아 끼운다.** 손으로 고치지 않는다 */
-const 빌드 = {번호: "v1.2.3", 때: "2026-09-14 02:11"};
+const 빌드 = {번호: "v1.1.17", 때: "2026-09-14 19:50"};
 
 const 기본중계 = "https://deta-relay.amuselk.workers.dev";
 
@@ -4529,14 +5091,17 @@ const 모델셋 = [
    이름: "(무)google 3.7", 밑: "구글 무료키 · ⚠ 할당량이 적다 — 넷에 셋은 막힌다 (429)"},
   {값: "or|google/gemini-3.7-flash",
    이름: "gemini 3.7", 밑: "오픈라우터 · 글이 촘촘하다 · 값이 3.1 의 여섯 배"},
-  /* ★ 260911 — **앱에서 구글을 바로 부른다.**
-     중계는 홍콩에서 나가 구글에 막힌다 (400 User location is not supported).
-     앱은 회원님 기기에서 도니 한국에서 나간다.
-     열쇠는 **이 기기 안에만** 둔다 — 마이페이지에서 넣으신다 */
-  {값: "gd|gemini-3.1-flash-lite",
-   이름: "(무)google 직접", 밑: "이 기기에서 바로 · 값이 안 든다 · 열쇠를 넣으셔야 한다"}
+  /* ★★★ 260914 — #11 회원님 : 「'(무)google 직접'은 **삭제할 것**.」
+     ★ 고르는 목록에서만 뺀다. **부르는 길(`gd`)은 남겨 둔다** —
+       이미 그것으로 맞춰 두신 방이 있으면 말이 안 나가게 된다.
+       대신 아래 `성한모델()` 이 없는 값을 만나면 기본으로 돌린다 */
 ];
 const 기본모델 = 모델셋[0].값;          /* 딥시크 */
+/* ★ 260914 — #11 목록에서 뺀 값이 설정에 남아 있으면 기본으로 돌린다.
+   안 그러면 마이페이지에 아무것도 안 켜져 보이고, 무엇으로 가는지 알 수 없다 */
+function 성한모델(값){
+  return 모델셋.some(x => x.값 === 값) ? 값 : 기본모델;
+}
 
 /* ── 앱에서 구글을 바로 부른다 ──
 
@@ -4589,6 +5154,10 @@ async function 구글직접(재료, 잰것, 방, 도막, 이어가기){
     const 걸림 = ((잰것.다받음 - 잰것.보냄) / 1000).toFixed(1);
     시간남기기({때: Date.now(), 걸림: Number(걸림), 중계: 0,
                 업체: "gd", 모델: 고른모델().모델, 자수: 글.length,
+                /* ★ 260914 — **값 키가 아예 없었다.** 구글 무료키는 값이 0 이지만,
+                   키가 없으면 값세기() 가 그 줄을 셈에서 빠뜨린 것처럼 보인다.
+                   0 이라도 적어 둔다 — 「글턴」 셈은 맞아야 한다 */
+                값: 0,
                 /* ★ 260913 — 설정집이 그 턴에 몇 자 실렸나. 값을 되짚을 때 쓴다 */
                 설정: 설정자수,
 
@@ -4779,6 +5348,7 @@ async function 흘려받기(주소, 머리, 본문, 닿을때){
      그런데 앱은 그것을 **정상으로 여기고 그대로 저장**했다. 알려 주지도 않았다.
      stop 이 아니면 잘린 것이다 — length(토큰 한도) · content_filter · 그 밖 */
   let 왜끝남 = "";
+  let 쓴값 = null;   /* ★ 260914 — 마지막 조각의 usage */
 
   for (;;){
     const 온것 = await 읽개.read();
@@ -4794,6 +5364,9 @@ async function 흘려받기(주소, 머리, 본문, 닿을때){
       if (!속 || 속 === "[DONE]") continue;
       let j;
       try { j = JSON.parse(속); } catch(_){ continue; }
+      /* ★★★ 260914 — #3·#4 **마지막 조각의 usage 를 잡는다.**
+         흘려 받으면 몸통이 없어 값이 늘 0 이었다 — 지출액이 $0.0000 이던 까닭 */
+      if (j.usage) 쓴값 = j.usage;
       const 고 = (j.choices || [])[0] || {};
       if (고.finish_reason) 왜끝남 = String(고.finish_reason);
       const d = 고.delta || {};
@@ -4805,7 +5378,7 @@ async function 흘려받기(주소, 머리, 본문, 닿을때){
       }
     }
   }
-  return {흘렀나: true, 글: 글, 첫글자: 첫글자, 왜끝남: 왜끝남, 답: r};
+  return {흘렀나: true, 글: 글, 첫글자: 첫글자, 왜끝남: 왜끝남, 답: r, 쓴값: 쓴값};
 }
 
 async function 말보내기(친말, 주문, 이어가기){
@@ -4821,6 +5394,11 @@ async function 말보내기(친말, 주문, 이어가기){
 
   /* 내가 친 말을 먼저 화면에 놓는다 — 기다리는 동안 빈 화면이면 답답하다.
      ★ 빈 채로 보냈으면(이어가기) 유저 도막을 만들지 않는다. 화면에 빈 말풍선이 뜨면 안 된다 */
+  /* ★★★ 260914 — **특징을 뽑는 중이면 잠깐 기다린다.**
+     방을 열자마자 치면 특징 없이 나가던 자리다 (묶음 C 에서 찾은 흠).
+     ★ 화면에 내 말풍선을 먼저 놓고 나서 기다린다 — 눌렀는데 아무 일도 안 나면 답답하다 */
+  /* ★ #16 — 새로 보내니 앞서 난 탈 알림은 내린다 */
+  보내기탈 = null;
   if (!이어가기){
     도막.push({sender: {type: "USER"}, contents: [{type: "TEXT", position: "RIGHT", text: 친말}],
                messageTime: new Date().toISOString()});
@@ -4830,6 +5408,15 @@ async function 말보내기(친말, 주문, 이어가기){
      신고 : 「출력대기중엔 ᆞ ᆞ ᆞ 표시가 움직이도록.」
      ★ 그리고 **맨 아래로 내린다** — 방금 친 말풍선이 통째로 보여야 한다 */
   대기붙이기();
+
+  /* ★★★ 260914 — 여기서 기다린다. **재료를 짜기 바로 전**이라야 뽑힌 특징이 실린다.
+     말풍선과 점 셋은 이미 떠 있으니 화면은 죽어 보이지 않는다 */
+  try {
+    if (특징뽑는중){
+      알림("「어떤 사람인가」를 뽑는 중입니다 — 잠깐만", 4000);
+      await 특징기다리기();
+    }
+  } catch(_){}
 
   /* 재료만 보낸다. 프롬프트는 중계가 짠다 */
   /* **이 방에서 본보기를 뽑는다.**
@@ -5185,8 +5772,12 @@ async function 말보내기(친말, 주문, 이어가기){
                 업체: 어디, 모델: 재료.모델 || "(기본)", 자수: 글.length,
                 /* ★★★ 260914 — **값을 남긴다** (회원님 지시 #3·#4).
                    오픈라우터가 답 몸통에 `usage.cost` 를 준다. 구글은 안 준다 — 0 으로 둔다 */
-                값: (() => { try { return Number((j && j.usage && j.usage.cost) || 0); }
-                             catch(_){ return 0; } })(),
+                /* ★★★ 260914 — 흘려 받을 때는 **마지막 조각의 usage** 를 쓴다.
+                   몸통(j)은 흘려 받으면 없다 — 그래서 여태 늘 0 이었다 */
+                값: (() => { try {
+                  const u = (흐름 && 흐름.쓴값) || (j && j.usage) || null;
+                  return Number((u && (u.cost != null ? u.cost : u.total_cost)) || 0);
+                } catch(_){ return 0; } })(),
                 /* ★ 260912 — 방마다 든 값을 세려면 어느 방인지 남겨야 한다 */
                 방아이디: 방 && 방.id,
                 /* ★ 260913 — 설정집이 그 턴에 몇 자 실렸나. 값을 되짚을 때 쓴다 */
@@ -5200,7 +5791,11 @@ async function 말보내기(친말, 주문, 이어가기){
     /* ★ 답을 받은 뒤에 조용히 돌린다. 대화를 안 막는다 */
     요약해두기(방.id);
   } catch (e){
-    알림("못 보냈습니다 — " + String(e.message).slice(0, 40), 8000);
+    /* ★★★ 260914 — #16 **친 말을 안 지운다.** 그 자리에 두고 무엇을 할지 알려 준다 */
+    보내기탈 = {왜: String((e && e.message) || "까닭을 모르겠습니다").slice(0, 160),
+                친말: 친말 || "", 때: new Date().toISOString()};
+    알림("못 보냈습니다 — 아래에서 다시 보내실 수 있습니다", 6000);
+    try { 방그리기(); } catch(_){}
   }
   /* ★ 260911 — 어느 길로 끝나든 점 셋을 반드시 뗀다.
      성공하면 `방그리기()` 가 통째로 다시 그려 저절로 사라지지만,
@@ -5321,15 +5916,40 @@ function 요약가르기(글){
    제타 원본이 그렇게 생겼다 (contents 여럿 · speakerName 이 같으면 한 묶음으로 그린다) */
 /* **이 방에서 회원님(유저)의 이름.**
    플롯의 대화 프로필에서, 없으면 그 방 도막의 RIGHT 조각에서 찾는다 */
+/* ★★★★★ 260914 — **방에 붙은 대화 프로필 이름을 빠뜨리고 있었다.**
+   회원님 : 「유저의 이름을 라벨로 사용하는 말픙선까지」
+
+   여태 본 것은 둘뿐이었다 — 플롯의 chatProfiles · 지난 도막의 RIGHT speakerName.
+   **회원님이 고르신 대화 프로필 이름이 그 안에 없다.** 그래서 모델이 「준」 이름줄을 내면
+   유저인 줄 모르고 말풍선을 만들었다.
+   게다가 「야 나 들어가도돼?」 의 chatProfiles 이름은 셋 다 `{{user}}` 라 쓸모가 없다 */
 function 유저이름(방){
   const 것 = [];
   const 플 = (D.플롯 || []).find(x => x && 방 && x.id === 방.플롯아이디);
-  for (const p of ((플 && 플.chatProfiles) || [])) if (p && p.name) 것.push(p.name);
+  /* ① 이 방에 붙은 대화 프로필 — 가장 확실한 것이다 */
+  try {
+    const 프 = 방프로필(방, 플) || {};
+    if (프.이름) 것.push(String(프.이름).trim());
+  } catch(_){}
+  /* ② 담아 둔 프로필 전부 — 회원님이 만드신 이름들 */
+  try {
+    for (const x of (프로필들() || [])) if (x && x.이름) 것.push(String(x.이름).trim());
+  } catch(_){}
+  /* ③ 플롯이 들고 있는 유저 캐릭터 */
+  for (const q of ((플 && 플.chatProfiles) || [])) if (q && q.name) 것.push(q.name);
+  /* ④ 지난 도막에서 내가 말한 자리의 이름 */
   for (const m of ((D.도막 || {})[(방 && 방.id)] || []))
     for (const c of (m.contents || []))
-      if (c.position === "RIGHT" && c.speakerName && 것.indexOf(c.speakerName) < 0)
-        것.push(c.speakerName);
-  return 것.filter(x => x && x !== "나");
+      if (c.position === "RIGHT" && c.speakerName) 것.push(c.speakerName);
+  /* 자리표와 빈 것을 걸러 내고 겹친 것을 줄인다.
+     ★ 「나」 는 뺀다 — 인물 이름일 수도 있어 잘못 잡으면 인물 말풍선이 사라진다 */
+  const 낸것 = [];
+  for (const x of 것){
+    const t = String(x || "").trim();
+    if (!t || t === "나" || t.indexOf("{{") >= 0) continue;
+    if (낸것.indexOf(t) < 0) 낸것.push(t);
+  }
+  return 낸것;
 }
 
 function 이름줄인가(t){
@@ -5431,7 +6051,18 @@ function 답을도막으로(글, 유저들, 묶음){
        회원님이 안 하신 말이 회원님 인물의 말풍선으로 뜨면 밀당이 깨진다 */
     const 유저인가 = 이름 && (유저들 || []).indexOf(이름) >= 0;
     const 자리 = (이름 === "내레이터" || 유저인가) ? "NARRATOR" : "LEFT";
-    const 말할이 = 유저인가 ? "내레이터" : 이름;
+    /* ★★★ 260914 — R4 **이름줄이 없으면 그 방 인물 이름을 쓴다.**
+       회원님 : 「출력표현에도 정예원 **썸네일은 붙지만 정예원 이름 라벨은 안 붙었던** 문제.」
+       모델이 이름줄 없이 바로 지문을 내면 `이름` 이 비어 라벨이 안 붙었다.
+       썸네일은 얼굴찾기("") 가 플롯 그림으로 떨어져 붙으니 이름만 비어 보였다 */
+    const 첫인물 = (() => {
+      try {
+        const 플 = 지금플롯();
+        const c = ((플 && 플.characters) || [])[0];
+        return (c && c.name) ? c.name : "";
+      } catch(_){ return ""; }
+    })();
+    const 말할이 = 유저인가 ? "내레이터" : (이름 || 첫인물);
 
     /* ★ 260912 — **묶는다.** 바로 앞 조각과 말할 이가 같으면 같은 말풍선에 이어 붙인다.
        제타가 그렇게 한다 — 한 말풍선 안에 문단이 1.28~6.13 개 들어 있고,
@@ -5477,7 +6108,10 @@ const 그림창고한도 = 60;        /* 실물로 남겨 두는 장 수. ★ 26
 /* ★ 260914 — 400 → 700. 회원님 : 「요약이 **잘려있고** 만족스럽지 않음」
    중계가 어차피 영어 한 줄로 줄이므로 넉넉히 보내도 그림 밑말은 길어지지 않는다.
    ★ 중계도 함께 늘렸다 (worker.js 600 → 900) — 한쪽만 늘리면 거기서 잘린다 */
-const 그림보낼자 = 700;         /* 중계로 보내는 장면 글의 최대 글자 수 */
+/* ★ 260914 — 700 → 2000. 회원님 : 「**직전 요약이 아니라 전체 내용을 기준으로**
+   현재 장면을 요약시키면 안되나」 — 흐름을 담으려면 넉넉해야 한다.
+   중계가 영어 한 줄로 줄이므로 그림 밑말은 안 길어진다 */
+const 그림보낼자 = 2000;        /* 중계로 보내는 장면 글의 최대 글자 수 */
 const 그림잠금초 = 8;           /* 그린 뒤 이만큼은 못 누른다 */
 let 그림중 = false;
 let 그림마지막 = 0;
@@ -5725,59 +6359,109 @@ function 도막지문(m){
    ★ 이제 **직전 봇 도막**을 먼저 통째로 담는다. 그것만으로 짧으면 그 앞 봇 도막을 보탠다
      (자리·옷 같은 것은 앞 도막에 적혀 있을 수 있다).
    ★ 담는 단위를 **조각(문장)** 으로 둔다. 글자로 자르지 않으니 중간에서 안 끊긴다 */
+/* ★★★★★ 260914 — **흐름 전체를 담는다.** (회원님 R11)
+
+   어제 나는 이것을 「**직전** 봇 도막만」으로 고쳤다. 회원님이 그 반대를 원하신다 —
+     「직전 요약이 아니라 **전체 내용을 기준으로 현재 장면을 요약**시키면 안되나.
+      **쓸데없는 값이 너무 많다.**」
+
+   ★ 흐름은 **앞에서 뒤로** 담는다. 중계 물음이 「뒤로 갈수록 지금」이라 일러 두었고,
+     그 끝의 **한 장면**만 그리라고 못박았다. 그래서 지나간 것이 안 섞인다.
+   ★ 자리가 모자라면 **앞을 버린다** — 지금에 가까운 것을 남긴다.
+   ★ 유저 지문도 담는다 — 흐름이니까. 다만 그릴 것은 끝 장면이다 */
 function 장면뽑기(){
   const 방 = S.방;
   if (!방) return "";
   const 플롯 = 플롯찾기(방);
   const 도막 = D.도막[방.id] || [];
 
-  /* 봇 도막만 뒤에서 훑는다 — 직전 것이 첫째, 그 앞이 둘째 */
-  const 벌들 = [];
-  for (let i = 도막.length - 1; i >= 0 && 벌들.length < 3; i--){
+  /* 뒤에서 앞으로 모으되, 담을 때는 앞뒤를 되돌려 **흐름 차례**로 만든다 */
+  const 벌 = [];
+  let 자 = 0;
+  for (let i = 도막.length - 1; i >= 0; i--){
     const m = 도막[i];
     if (!m || m.그림 || m.그림키) continue;
-    if (((m.sender || {}).type) === "USER") continue;   /* 유저 지문은 그릴 자리가 아니다 */
-    const 것 = 도막지문(m);
-    if (것.length) 벌들.push(것);
+    const 조각 = 도막지문(m);
+    if (!조각.length) continue;
+    for (let k = 조각.length - 1; k >= 0; k--){
+      const x = 조각[k];
+      if (자 + x.length + 1 > 그림보낼자){ i = -1; break; }
+      벌.unshift(x);
+      자 += x.length + 1;
+    }
   }
 
-  /* ★ 조각 단위로 담는다. 직전 것(벌들[0]) 을 먼저 다 넣고, 남으면 앞것을 앞에 보탠다 */
-  let 담긴 = [], 자 = 0;
-  const 넣기 = (조각들, 앞에) => {
-    const 몫 = [];
-    for (let i = 조각들.length - 1; i >= 0; i--){
-      const x = 조각들[i];
-      if (자 + x.length + 1 > 그림보낼자) break;
-      몫.unshift(x); 자 += x.length + 1;
-    }
-    담긴 = 앞에 ? 몫.concat(담긴) : 담긴.concat(몫);
+  /* ★★★ 260914 — F·28 회원님 : 「'이 자리를 그림으로' 요약이 **잘려있고**」
+
+     ★ 글자로 자른 것이 아니었다. 조각은 온전한데 **마지막 조각이 매달린 꼴**이었다 —
+       실측으로 끝이 「… 시선을 피하며 작아진 목소리로」 였다.
+       이것은 대사 앞에 붙는 지문이라 **뒤에 올 말이 있어야** 문장이 선다.
+       우리는 지문만 담으니 그 말이 안 오고, 그래서 잘린 것처럼 읽힌다.
+
+     ★ 그래서 **맺은 조각에서 끝낸다.** 매달린 것은 뒤에서부터 걷어낸다.
+       맺었다는 것은 — 마침표 꼴로 끝나거나, 맺는 씨끝(…다 · …요 · …까 …)으로 끝나는 것이다.
+       ★ 다 걷어내지는 않는다. 하나는 남긴다 — 빈 글을 보내면 그릴 것이 없다 */
+  const 맺었나 = x => {
+    const s = String(x || "").trim();
+    if (!s) return false;
+    if (/[.!?…"\u201d\u2019]$/.test(s)) return true;
+    return /(다|라|요|까|네|군|지|음|임|함|셈|뿐)$/.test(s);
   };
-  if (벌들[0]) 넣기(벌들[0], false);
-  for (let k = 1; k < 벌들.length && 자 < 그림보낼자 * 0.7; k++) 넣기(벌들[k], true);
-
-  let 글 = 담긴.join(" ");
-  /* 직전 도막의 첫 조각 하나가 이미 한도를 넘을 때 — 문장 끝을 찾아 앞을 뗀다 */
-  if (!글.trim() && 벌들[0] && 벌들[0].length){
-    let x = 벌들[0][벌들[0].length - 1];
-    if (x.length > 그림보낼자){
-      x = x.slice(x.length - 그림보낼자);
-      /* 문장 시작을 찾는다 — 마침표나 「다 」 뒤부터. 정규식을 안 쓴다 (G6) */
-      let 자리 = -1;
-      for (const 표 of [". ", "! ", "? ", "다 "]){
-        const j = x.indexOf(표);
-        if (j >= 0 && (자리 < 0 || j < 자리)) 자리 = j + 표.length;
-      }
-      if (자리 > 0 && 자리 < x.length - 40) x = x.slice(자리);
-    }
-    글 = x;
-  }
-  /* 지문이 하나도 없으면 있는 글이라도 쓴다 — 아무것도 안 보내면 그릴 것이 없다 */
+  while (벌.length > 1 && !맺었나(벌[벌.length - 1])) 벌.pop();
+  let 글 = 벌.join(" ");
+  /* 한 조각도 못 담았으면 마지막 것을 문장 끝에서 자른다 */
   if (!글.trim()){
     const m = 도막[도막.length - 1];
     글 = m ? 별표벗기기(도막글꺼내기(m)) : "";
     if (글.length > 그림보낼자) 글 = 글.slice(글.length - 그림보낼자);
   }
   return 이름지우기(글, 방, 플롯).trim();
+}
+
+/* ★★★ 260914 — R12 **이 방 인물의 생김새.** (회원님 : 「원래 … 인물외형을 최대한 따르게」)
+   제타 글에 「👀 **외형** · 165cm · G컵 …」 처럼 마디가 있다. 그 마디를 먼저 찾고,
+   없으면 앞머리를 쓴다. 이름은 빼고 보낸다 — 그림 모델에 이름은 쓸모가 없다 */
+function 생김새뽑기(){
+  const 방 = S.방;
+  const 플 = 플롯찾기(방);
+  const c = ((플 && 플.characters) || [])[0];
+  if (!플 || !c) return "";
+  let 글 = "";
+  try { 글 = 인물글꺼내기(플, c) || ""; } catch(_){ 글 = String((c || {}).description || ""); }
+  if (!글) return "";
+  const 줄들 = String(글).split(NL);
+  /* 외형 마디를 찾는다 */
+  const 표 = ["외형", "외모", "겉면", "생김", "모습"];
+  let 시작 = -1;
+  for (let i = 0; i < 줄들.length; i++){
+    const t = 줄들[i];
+    if (표.some(w => t.indexOf(w) >= 0)){ 시작 = i; break; }
+  }
+  let 몫 = [];
+  if (시작 >= 0){
+    for (let i = 시작 + 1; i < 줄들.length && 몫.join(" ").length < 260; i++){
+      const t = 줄들[i].trim();
+      if (!t) continue;
+      /* 다음 마디를 만나면 멈춘다 — 제타 글은 마디마다 표가 붙는다 */
+      if (i > 시작 + 1 && /^[-*_#]{3,}$/.test(t.split(" ").join(""))) break;
+      if (i > 시작 + 1 && /^(📌|🪪|⚡|😈|💬|🎯|❤|🔥)/.test(t)) break;
+      몫.push(t.replace(/^[*\-\s]+/, ""));
+    }
+  }
+  if (!몫.length) 몫 = [String(글).split(NL).filter(Boolean).slice(0, 4).join(" ")];
+  return 이름지우기(몫.join(", ").slice(0, 300), 방, 플);
+}
+
+/* ★★★ 260914 — R12 **방마다 그림 결을 고정한다.**
+   회원님 : 「그림체가 너무 지멋대로니까, 각 채팅방별로 **원래 그림체**를 최대한 따르게」
+   방 설정에 적어 두신 것이 있으면 그것, 없으면 한 가지로 굳힌다.
+   ★ 굳히는 것이 핵심이다 — 매번 모델이 제 마음대로 고르면 방마다 그림체가 튄다 */
+const 기본그림결 = "anime style, clean line art, soft cel shading, natural daylight, detailed illustration";
+function 그림결(){
+  try {
+    const v = String((S.방 && S.방.그림결) || 설정("그림결") || "").trim();
+    return v || 기본그림결;
+  } catch(_){ return 기본그림결; }
 }
 
 /* ★★★★★ 260914 — #25 **어느 자리에서든 그림을 짓는다.**
@@ -5832,7 +6516,8 @@ async function 밑말바꾸기(){
       method: "POST",
       headers: {"Content-Type": "application/json",
                 ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
-      body: JSON.stringify({장면: 말, 업체: 고른모델().업체, 모델: 고른모델().모델})
+      body: JSON.stringify({장면: 말, 업체: 고른모델().업체, 모델: 고른모델().모델,
+                            생김새: 생김새뽑기(), 결: 그림결()})
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok || !j.밑그림말){
@@ -5863,7 +6548,8 @@ async function 짓기보내기(){
       method: "POST",
       headers: {"Content-Type": "application/json",
                 ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
-      body: JSON.stringify({장면: 말, 업체: 고른모델().업체, 모델: 고른모델().모델})
+      body: JSON.stringify({장면: 말, 업체: 고른모델().업체, 모델: 고른모델().모델,
+                            생김새: 생김새뽑기(), 결: 그림결()})
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok || !j.그림){
@@ -5910,7 +6596,10 @@ function 그림내기(){
     '<div class="글" style="padding:0 14px;color:var(--흐림2);line-height:1.8">' +
       '보내는 글 <b>' + 장면.length + '자</b> · 오늘 남은 장 <b>' + 그림남은수() + '/' +
       그림하루한도 + '</b><br>' +
-      '<b>직전 출력</b>의 지문을 담았습니다 — 중계가 이것을 영어 한 줄로 줄여 그립니다.<br>' +
+      /* ★ 260914 — 안내가 낡아 있었다. 코드는 260914 에 **흐름 전체**를 담게 바뀌었는데
+         이 글만 「직전 출력」으로 남아 있었다 (회원님 R11 로 고친 그 자리다) */
+      '<b>여기까지의 흐름</b>에서 지문을 모았습니다 — 중계가 그 <b>끝 장면</b>을' +
+      ' 영어 한 줄로 줄여 그립니다.<br>' +
       '사람 이름과 나이는 뺐습니다. 열쇠는 앱에 없고 중계가 들고 있습니다.' +
     '</div>' +
     '<div style="padding:10px 14px"><textarea id="그림칸" style="width:100%;height:120px;' +
@@ -5935,7 +6624,9 @@ async function 그림보내기(장면){
       headers: {"Content-Type": "application/json",
                 ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
       /* 업체·모델은 **밑그림말을 다듬는 글 모델**이다. 그림 모델은 중계가 정한다 */
-      body: JSON.stringify({장면: 장면, 업체: 고른모델().업체, 모델: 고른모델().모델})
+      /* ★ 260914 — R12 생김새와 결을 함께 보낸다. 방마다 같은 얼굴 · 같은 그림체로 */
+      body: JSON.stringify({장면: 장면, 업체: 고른모델().업체, 모델: 고른모델().모델,
+                            생김새: 생김새뽑기(), 결: 그림결()})
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok || !j.그림){
@@ -5976,17 +6667,49 @@ async function 그림보내기(장면){
 /* ★★★★★ 260914 — #32 **그림을 방 너머로 모아 본다.**
    도막에 `그림키`(데타가 낸 것) 나 `그림`(제타에서 온 인트로 그림) 이 있으면 그림 도막이다.
    새것이 위로 오게 때순으로 되짚는다 */
+/* ★★★ 260914 — #12 회원님 : 「마이페이지의 '그림'에는 '남겨 둔 실물'이 **3/60장**이면서,
+   '그림 목록'은 '**아직 없습니다**'라고 오류가 떠있음.」
+
+   ★ 까닭 — 여기는 **지금 열려 있는 방의 도막만** 돌았다.
+     그런데 그림은 **이어하기로 저장된 벌**에도 붙어 있다. 그 벌들의 도막은
+     `D.도막["저장-…"]` 에 있고 그 아이디는 `D.방` 에 없다 — 못 보고 지나쳤다.
+     창고에는 실물 3장이 있는데 목록은 0장, 두 숫자가 어긋난 것이 그래서다.
+
+   ★ 이제 셋을 다 본다 — ⑴ 방의 도막 ⑵ **이어하기 벌의 도막** ⑶ **어느 도막도
+     안 가리키는 떠돌이 실물**(방을 지웠거나 도막이 사라진 것). 셋을 합치면
+     「남겨 둔 실물」과 「그림 목록」이 어긋날 수 없다 */
 function 그림들모으기(){
   const 낸것 = [];
-  for (const 방 of (D.방 || [])){
-    const 도 = D.도막[방.id] || [];
-    도.forEach((m, i) => {
+  const 본키 = {};
+  const 한벌담기 = (도, 방아이디, 방제목, 벌) => {
+    (도 || []).forEach((m, i) => {
       if (!m || (!m.그림키 && !m.그림)) return;
-      낸것.push({방아이디: 방.id, 방제목: 방.제목 || "(이름 없음)", 몇: i,
+      if (m.그림키) 본키[m.그림키] = true;
+      낸것.push({방아이디, 방제목, 몇: i, 벌: 벌 || "",
                  키: m.그림키 || "", 주소: m.그림 || 그림꺼내기(m.그림키) || "",
                  때: m.messageTime || "", 말: String(m.그림말 || "")});
     });
+  };
+  for (const 방 of (D.방 || [])){
+    const 이름 = 방.제목 || "(이름 없음)";
+    한벌담기(D.도막[방.id], 방.id, 이름, "");
+    /* ⑵ 이어하기로 저장해 둔 벌들 */
+    for (const e of (방.이어하기 || [])){
+      if (!e || !e.id) continue;
+      한벌담기(D.도막[e.id], 방.id, 이름, e.id);
+    }
   }
+  /* ⑶ 어느 도막도 안 가리키는 떠돌이 실물 */
+  try {
+    for (const k of Object.keys(그림창고() || {})){
+      if (본키[k]) continue;
+      낸것.push({방아이디: "", 방제목: "(대화에 없는 그림)", 몇: -1, 벌: "",
+                 키: k, 주소: 그림꺼내기(k) || "",
+                 때: (String(k).charAt(0) === "g" && Number(String(k).slice(1)))
+                       ? new Date(Number(String(k).slice(1))).toISOString() : "",
+                 말: ""});
+    }
+  } catch(_){}
   낸것.sort((a, b) => String(b.때).localeCompare(String(a.때)));
   return 낸것;
 }
@@ -6019,8 +6742,17 @@ function 그림목록열기(){
 function 그림자리로(k){
   const g = 그림들모으기()[Number(k)];
   if (!g) return 알림("그 그림이 없습니다");
+  /* ★ 260914 — #12 로 **이어하기 벌의 그림**과 **떠돌이 실물**도 목록에 들어왔다.
+     그 둘은 지금 열린 대화에 그 자리가 없다 — 엉뚱한 도막으로 보내면 안 된다 */
+  if (!g.방아이디) return 알림("이 그림은 어느 대화에도 안 붙어 있습니다 — 자리로 갈 수 없습니다");
   const 방 = (D.방 || []).find(x => x.id === g.방아이디);
   if (!방) return 알림("그 대화가 없습니다");
+  if (g.벌){
+    시트닫기();
+    S.플롯 = null; S.방 = 방; S.화면 = "대화"; 그리기();
+    setTimeout(() => { try { 이어하기열기(); } catch(_){} }, 320);
+    return 알림("저장해 둔 지난 대화의 그림입니다 — 「이어하기」에서 그 대화를 여십시오");
+  }
   시트닫기();
   S.플롯 = null; S.방 = 방; S.화면 = "대화"; 그리기();
   /* 그린 뒤에 찾아야 한다 — 한 박자 뒤로 미룬다 */
@@ -6224,39 +6956,154 @@ function 플롯찾기(방){
 }
 
 /* ── 인물 정보 ── */
+/* ★★★ 260914 — **제타가 인물 글을 어디 담는지.**  (회원님 : 「연동해서 출력하는 건데」)
+   제타는 `characters[].description` 을 **비워 두고** `about.characters[].description` 에 담는다.
+   실측 — 인기 「야 나 들어가도돼?」 박아영 : characters 0자 · about.characters **359자**.
+   그래서 about 을 먼저 본다. 없으면 characters 것을 쓴다 */
+/* ★★★ 260914 — **제타 인물 글을 제타처럼 그린다.** (회원님 : 「기능 카피」)
+   제타가 주는 글에는 마크다운이 들어 있다 — 가로줄 · 굵게 · 목록 · 제목.
+   날글로 두면 `---` 과 `**` 가 글자로 보인다. 실제로 그렇게 나왔다.
+   ★ `안전()` 으로 HTML 을 **먼저** 막고, 그 위에 우리 태그만 넣는다 */
+function 글결그리기(글){
+  const 줄들 = String(글 == null ? "" : 글).split(String.fromCharCode(10));
+  const 낸것 = [];
+  let 목록중 = false;
+  const 목록닫기 = () => { if (목록중){ 낸것.push("</ul>"); 목록중 = false; } };
+  const 속그리기 = t => {
+    let x = 안전(t);
+    /* 굵게 — 별표 둘. 먼저 처리해야 별표 하나와 안 부딪힌다 */
+    x = x.split("**");
+    let 나온 = "";
+    for (let i = 0; i < x.length; i++) 나온 += (i % 2 ? "<b>" + x[i] + "</b>" : x[i]);
+    /* 기울임 — 별표 하나 */
+    const y = 나온.split("*");
+    if (y.length > 2){
+      나온 = "";
+      for (let i = 0; i < y.length; i++) 나온 += (i % 2 ? "<i>" + y[i] + "</i>" : y[i]);
+    }
+    return 나온;
+  };
+  for (const 줄 of 줄들){
+    const t = 줄.trim();
+    if (!t){ 목록닫기(); 낸것.push('<div class="빈줄"></div>'); continue; }
+    /* 가로줄 — --- · *** · ___ */
+    if (/^([-*_])\1{2,}$/.test(t.split(" ").join(""))){ 목록닫기(); 낸것.push('<hr class="결줄">'); continue; }
+    /* 제목 — # 부터 ###### 까지 */
+    const 샾 = t.match(/^(#{1,6})\s+(.*)$/);
+    if (샾){ 목록닫기(); 낸것.push('<div class="결제목">' + 속그리기(샾[2]) + "</div>"); continue; }
+    /* 목록 — * 나 - 로 시작하고 뒤에 공백 */
+    const 점 = t.match(/^[*\-]\s+(.*)$/);
+    if (점){
+      if (!목록중){ 낸것.push('<ul class="결목록">'); 목록중 = true; }
+      낸것.push("<li>" + 속그리기(점[1]) + "</li>");
+      continue;
+    }
+    목록닫기();
+    낸것.push("<div>" + 속그리기(t) + "</div>");
+  }
+  목록닫기();
+  return 낸것.join("");
+}
+
+function 인물글꺼내기(플롯, 인물){
+  const ac = ((플롯 && 플롯.about && 플롯.about.characters) || []);
+  const 짝 = ac.find(x => String(x.name || "") === String((인물 || {}).name || ""));
+  const 제타 = 짝 ? String(짝.description || "").trim() : "";
+  if (제타) return 제타;
+  return String((인물 || {}).description || "").trim();
+}
+
 function 인물열기(이름){
   const p = 지금플롯();
   if (!p) return 알림("인물을 못 찾았습니다");
   const c = (p.characters || []).find(x => x.name === 이름) || (p.characters || [])[0];
   if (!c) return 알림("인물 정보가 없습니다");
   const 그림 = 그림풀기(c.imageUrl || p.imageUrl);
-  /* ★★★★★ 260914 — #7 **큰 그림 + 접히는 글 + 화살표.** (회원님 지시)
-     전에는 56px 동그라미 하나에 글이 통째로 쏟아졌다 — 진다희는 1,000자가 넘어
-     시트가 705px 로 화면을 꽉 채웠다. 실제로 눌러 보고 고쳤다 */
+  /* ★★★★★ 260914 — **제타 꼴 그대로.** (받아 둔 제타 화면 그림 「상호_프사」 를 보고 짰다)
+       ✕ + 이름(헤더)  →  글 + 「더보기」  →  **큰 이미지**
+     접혀 있을 때도 그림이 아래다. 앞서 내가 만든 것은 그림이 위였다 — 제타를 안 보고 만들어서다 */
+  const 글 = 인물글꺼내기(p, c) || "(설명 없음)";
   시트열기(null,
     '<div class="인물카드">' +
-    '<div class="인물그림' + (그림 ? '' : ' 빔') + '">' +
-      (그림 ? '<img src="' + 안전(그림) + '" loading=lazy>' : '') +
-      '<div class="덮">' +
-        '<div class="이름">' + 안전(c.name) + '</div>' +
-        '<div class="밑">' + 안전(p.name) + '</div>' +
-      '</div>' +
+    '<div class="인물머리줄">' +
+      '<div class="이름">' + 안전(c.name) + '</div>' +
+      '<div class="밑">' + 안전(p.name) + '</div>' +
     '</div>' +
-    /* ★★★★★ 260914 — **인물 설명에도 이름을 채운다.** 회원님 : 「진다희 … 프사 누르니까
-       {{user}} 라고 표기되기도 준 이라고 표기되어있기오 함. **얘뿐만이 아닐 것 같음**」
-       실측 — 31개 플롯을 훑으니 **48명**이 그랬다. 회원님 짐작이 맞았다 */
     '<div class="인물속 접힘">' +
-      '<div class="인물글">' +
-        안전(이름채우기(c.description || "(설명 없음)", p, S.방)) + '</div>' +
-      /* ★ 260912 — **방 안에서는 그 방 캐릭터 이름으로** (회원님 지시) */
-      (p.longDescription ? '<div class="시트머리">상황</div><div class="인물글">' +
-        안전(이름채우기(p.longDescription, p, S.방)) + '</div>' : "") +
+      '<div class="인물글 결">' + 글결그리기(이름채우기(글, p, S.방)) + '</div>' +
+      /* 제타의 about.contents — 플롯 소개다. 있으면 함께 보인다 */
+      (() => {
+        const 소 = ((p.about || {}).contents || [])
+          .map(x => String((x || {}).content || "").trim()).filter(Boolean).join("\n\n");
+        const 본 = 소 || String(p.longDescription || "");
+        return 본 ? '<div class="시트머리">상황</div><div class="인물글 결">' +
+          글결그리기(이름채우기(본, p, S.방)) + '</div>' : "";
+      })() +
     '</div>' +
-    /* ★ 화살표. 누르면 글이 다 펼쳐지고 그림이 아래로 내려간다 */
-    '<div class="인물펼침" data-시트="인물펼치기">' +
-      '<span class="말">더 보기</span><span class="살">▾</span>' +
+    '<div class="인물펼침" data-시트="인물펼치기" hidden>' +
+      '<span class="말">더보기</span><span class="살">▾</span>' +
     '</div>' +
+    (그림 ? '<div class="인물그림"><img src="' + 안전(그림) + '" loading=lazy></div>'
+          : '<div class="인물그림 빔"></div>') +
     '</div>');
+  /* ★ 260914 — **넘칠 때만** 「더보기」를 보인다. 짧은 글에서는 눌러도 늘어날 것이 없다.
+     그린 뒤에 재야 실제 높이가 나온다 */
+  /* ★ 260914 — **시트가 자리 잡은 뒤에 잰다.** 시트는 .22s 동안 올라오는데
+     그 사이에 재면 clientHeight 가 작게 잡혀 **짧은 글에도 「더보기」가 떴다.**
+     갈무리에서 한 줄짜리 내 프로필에 더보기가 붙어 있었다 */
+  const 넘침재기 = () => {
+    const 속 = document.querySelector("#시트 .인물속");
+    const 펼 = document.querySelector("#시트 .인물펼침");
+    if (!속 || !펼) return;
+    if (속.scrollHeight > 속.clientHeight + 4){ 펼.hidden = false; }
+    else { 펼.hidden = true; 속.classList.remove("접힘"); }
+  };
+  requestAnimationFrame(넘침재기);
+  setTimeout(넘침재기, 300);
+}
+
+/* ★★★★★ 260914 — **유저 프사를 누르면 내 카드가 뜬다.**
+   회원님 #26 : 「유저의 대화에도 프사를 붙일 것. **캐릭터와 좌우대칭 구조를 이루게 할 것.**」
+   `data-가=내프사` 로 그려만 놓고 **받는 데가 없었다.** 전수조사로 찾았다.
+   ★ 인물카드와 **같은 뼈대**로 짠다 — 이름 → 글 → 더보기 → 큰 그림. 그래야 좌우대칭이다 */
+function 내프로필열기(){
+  const p = 지금플롯();
+  const 나 = (S.방 ? 방프로필(S.방, p) : 기본프로필()) || {};
+  const 이름 = String(나.이름 || "").trim() || "(이름 없음)";
+  const 글 = String(나.설명 || "").trim() || "(설명 없음)";
+  let 그림 = "";
+  try { 그림 = 그림풀기(나.그림 || ""); } catch(_){ 그림 = String(나.그림 || ""); }
+  시트열기(null,
+    '<div class="인물카드">' +
+    '<div class="인물머리줄">' +
+      '<div class="이름">' + 안전(이름) + '</div>' +
+      '<div class="밑">' + 안전(p ? p.name : "내 프로필") + '</div>' +
+    '</div>' +
+    '<div class="인물속 접힘">' +
+      '<div class="인물글 결">' + 글결그리기(이름채우기(글, p, S.방)) + '</div>' +
+    '</div>' +
+    '<div class="인물펼침" data-시트="인물펼치기" hidden>' +
+      '<span class="말">더보기</span><span class="살">▾</span>' +
+    '</div>' +
+    (그림 ? '<div class="인물그림"><img src="' + 안전(그림) + '" loading=lazy></div>'
+          : '<div class="인물그림 빔"></div>') +
+    '</div>' +
+    /* ★ 인물 카드에는 없는 두 줄 — 내 것이니 고칠 수 있어야 한다 */
+    시트줄("✏", "이 프로필 고치기", "프로필고치기", {값: 나.id || ""}) +
+    시트줄("👤", "다른 프로필로 바꾸기", "대화프로필"));
+  /* 넘칠 때만 「더보기」 — 인물카드와 같다 */
+  /* ★ 260914 — **시트가 자리 잡은 뒤에 잰다.** 시트는 .22s 동안 올라오는데
+     그 사이에 재면 clientHeight 가 작게 잡혀 **짧은 글에도 「더보기」가 떴다.**
+     갈무리에서 한 줄짜리 내 프로필에 더보기가 붙어 있었다 */
+  const 넘침재기 = () => {
+    const 속 = document.querySelector("#시트 .인물속");
+    const 펼 = document.querySelector("#시트 .인물펼침");
+    if (!속 || !펼) return;
+    if (속.scrollHeight > 속.clientHeight + 4){ 펼.hidden = false; }
+    else { 펼.hidden = true; 속.classList.remove("접힘"); }
+  };
+  requestAnimationFrame(넘침재기);
+  setTimeout(넘침재기, 300);
 }
 
 /* ── 말풍선 메뉴 ── */
@@ -6335,12 +7182,36 @@ function 편집저장(몇){
 }
 
 /* ── 다시 쓰게 하기 ── */
+/* ★★★ 260914 — #16 **인트로 도막은 「다시 쓸 것」이 아니다.**
+   그 방의 첫 장면이라 지우면 되살릴 길이 화면에 없다.
+   몇 도막이 인트로인지는 플롯에서 다시 깔아 보면 안다 */
+function 인트로도막수(방){
+  try {
+    const 것 = 인트로도막(플롯찾기(방), 방);
+    return (것 && 것.length) ? 것.length : 1;
+  } catch(_){ return 1; }
+}
 async function 재실행(몇, 주문){
   const 도막 = D.도막[S.방.id] || [];
   /* 마지막 봇 도막을 걷어내고, 그 앞의 내 말로 다시 친다 */
+  const 첫장면 = 인트로도막수(S.방);
   let i = 몇 === undefined ? 도막.length - 1 : 몇;
-  while (i >= 0 && ((도막[i].sender && 도막[i].sender.type) !== "BOT")) i--;
-  if (i < 0) return 알림("다시 쓸 것이 없습니다");
+  while (i >= 첫장면 && ((도막[i].sender && 도막[i].sender.type) !== "BOT")) i--;
+  /* ★★★ 260914 — #16 봇 답이 **아직 없는** 자리다 (보내다 탈이 났다).
+     그럴 때는 지울 것이 아니라 **마지막으로 친 말을 다시 보내는 것**이 맞다.
+     여태는 여기서 인트로를 지우고, 그다음부터 「다시 쓸 것이 없습니다」만 떴다 */
+  if (i < 첫장면){
+    let k = 도막.length - 1;
+    while (k >= 첫장면 && ((도막[k].sender && 도막[k].sender.type) === "BOT")) k--;
+    if (k < 첫장면) return 알림("다시 쓸 것이 없습니다 — 먼저 한 마디 쳐 보십시오");
+    const 다시칠말 = (도막[k].contents || []).filter(c => c.type === "TEXT")
+      .map(c => c.text).join(NL);
+    도막.splice(k);
+    D.도막[S.방.id] = 도막;
+    보내기탈 = null;
+    방그리기();
+    return 말보내기(다시칠말 || "…", 주문);
+  }
   const 지운것 = 도막.splice(i);
   /* 그 앞의 내 말을 찾는다 */
   let j = i - 1;
@@ -6373,13 +7244,16 @@ function 여기부터지우기(몇){
 }
 
 /* ── 방 메뉴 ── */
-function 방메뉴열기(){
+/* ★ 260914 — #4 **속을 따로 내는 함수로 가른다.**
+   모델을 고르고 뒤로 오면 이것이 다시 돌아 **바뀐 값**이 찍힌다 */
+function 방메뉴속(){
   const 방 = S.방;
   const 이어 = (방.이어하기 || []).length;
-  시트열기(null,
+  return (
     시트줄("＋", "새로하기", "새로하기", {밑: "지금 것을 저장하고 처음부터"}) +
     시트줄("↻", "이어하기", "이어하기", {밑: 이어 ? 이어 + "벌 저장돼 있습니다" : "저장된 것이 없습니다"}) +
-    시트줄("👤", "대화 프로필", "대화프로필", {밑: "내 이름과 설명 — 대화에 계속 씁니다"}) +
+    시트줄("👤", "대화 프로필", "대화프로필",
+      {우: (방프로필(방, 지금플롯()) || {}).이름 || "", 밑: "내 이름과 설명 — 대화에 계속 씁니다"}) +
     시트줄("📄", "플롯 정보", "플롯보기") +
     /* ★ 260913 — 이 방에 실리는 설정집. 방마다 따로 켜고 끈다 */
     (() => { const 셈 = 방설정집셈(방, 지금플롯() || {});
@@ -6391,7 +7265,13 @@ function 방메뉴열기(){
     /* ★ 260911 회원님 — 「그대로 두어라. 그 방이 무슨 모델을 썼나를 보여주는 자리다.
        하지만 zeta가 나올 것 같다면 그 문구만 deta로 변경하라.」
        그래서 **값은 그대로 보여 주되** `zeta` 일 때만 `deta` 로 적는다 */
-    시트줄("🤖", "AI 모델", "모델", {밑: 딱지이름(방.모델 || 설정("모델설정"))}) +
+    /* ★★★ 260914 — #4 회원님 : 「'AI 모델 / deta' 에서는 텍스트 deta 대신
+       **현재 선택되어있는 모델 종류**를 해당 위치에 표시하고 **동기화**할 것」
+       ★ 왜 「deta」 가 남았나 — 여기는 `방.모델` 을 그대로 찍었는데,
+         제타에서 받아 온 방은 그 값이 「zeta」 다. 정작 말을 보낼 때 쓰는 것은
+         `고른모델()` 이고, 그것은 부를 수 없는 「zeta」 를 버리고 전역을 따른다.
+         **찍는 곳과 쓰는 곳이 달랐다.** 이제 둘 다 `고른모델()` 을 본다 */
+    시트줄("🤖", "AI 모델", "모델", {우: 고른모델().이름}) +
     /* ★★★ 260914 회원님 : 「지출액 조회는 방 우상단 내부 설정에서 방별로
        텍스트,이미지 각각 조회.」 */
     (() => { const c = 값세기(방.id);
@@ -6400,12 +7280,17 @@ function 방메뉴열기(){
               " (" + c.그림장 + "장) · 합 " + 돈글(c.다)}); })() +
     시트줄("🧠", "기억", "기억", {밑: "제타에 없는 것"}) +
     시트줄("📝", "메모장", "메모", {밑: 메모읽기(방.id) ? "적어 둔 것이 있습니다" : "비어 있습니다"}) +
-    시트줄("⧉", "대화 통째로 복사", "다복사") +
+    /* ★★★ 260914 — #7 회원님 : 「채팅방설정(우상단)에서 '대화 통째로 복사'는
+       **필요 없으니 메뉴를 없앨 것**.」 — 줄만 뺀다.
+       받는 데(`다복사`)는 남겨 둔다. 「내보내기」가 같은 일을 더 잘 한다 */
     시트줄("⤓", "내보내기", "방내보내기",
            {밑: "채팅 · 플롯 · 내 프로필 · 기억 · 메모"}) +
-    시트줄("🗑", "대화 내용만 지우기", "방지우기", {빛: "빨강", 밑: "방은 남습니다"}) +
+    /* ★★★ 260914 — #3 회원님 : 「채팅창 내부메뉴(우상단)에서
+       '대화 내용만 지우기' 항목 **없애기**」 — 줄만 뺀다.
+       받는 데(`방지우기`)는 남겨 둔다. 딴 데서 부를 수 있고, 지우면 그쪽이 죽는다 */
     시트줄("✕", "이 대화 나가기", "방나가기", {빛: "빨강", 밑: "방째로 지웁니다"}));
 }
+function 방메뉴열기(){ 시트열기(null, 방메뉴속(), 방메뉴속); }
 
 /* **방을 통째로 지운다.**
    자료.json 에서 온 방은 파일을 못 고치므로 「지운방」에 이름을 적어 두고
@@ -6440,7 +7325,7 @@ function 방지우기속(id){
 function 목록방메뉴(방){
   시트열기(방.제목,
     시트줄("💬", "이어서 하기", "목록방열기", {값: 방.id}) +
-    시트줄("⧉", "대화 통째로 복사", "목록방복사", {값: 방.id}) +
+    /* ★ #7 — 같은 갈래 자리라 여기서도 뺀다 (규칙 23) */
     시트줄("🗑", "이 대화 지우기", "목록방지우기",
            {값: 방.id, 빛: "빨강", 밑: "되돌릴 수 없습니다"}));
 }
@@ -6486,13 +7371,20 @@ function 이어하기열기(){
   /* ★ 260912 회원님 : 「메모/기억 뿐만아니라 **수정 버튼도 추가**해서,
      그거 누르면 **제목을 편집**할 수 있게 해.」
      ★ 수정은 늘 보인다 — 메모·기억이 없어도 제목은 붙일 수 있어야 한다 */
-  const 곁줄 = (대화, 있나) =>
-    '<div class="곁줄">' +
-      '<button class="곁단추" data-시트=제목고치기 data-값="' + 안전(대화) + '">✏ 수정</button>' +
-      (있나.메모 ? '<button class="곁단추" data-시트=메모 data-값="@' + 안전(대화) +
-                    '">📝 메모</button>' : "") +
-      (있나.기억 ? '<button class="곁단추" data-시트=기억 data-값="@' + 안전(대화) +
-                    '">🧠 기억</button>' : "") +
+  /* ★★★ 260914 — #15 **오른쪽에 한 줄로.** 꼭지만 남겨 넷이 들어간다.
+     ★ 메모·기억은 **비어 있어도 보인다** — 회원님이 넷을 다 원하셨다.
+       빈 것은 흐리게 두어 있는 것과 갈린다 */
+  const 곁줄 = (대화, 있나, 지울수있나) =>
+    '<div class="이어곁">' +
+      '<button class="곁꼭" title="제목 고치기" data-시트=제목고치기 data-값="' + 안전(대화) + '">✏</button>' +
+      '<button class="곁꼭' + (있나.메모 ? "" : " 빔") + '" title="메모" data-시트=메모 data-값="@' +
+        안전(대화) + '">📝</button>' +
+      '<button class="곁꼭' + (있나.기억 ? "" : " 빔") + '" title="기억" data-시트=기억 data-값="@' +
+        안전(대화) + '">🧠</button>' +
+      /* ★ 260914 — R7 **지금 보고 있는 대화에는 지우기를 안 붙인다** — 돌아갈 데가 없어진다 */
+      (지울수있나
+        ? '<button class="곁꼭 빨" title="지우기" data-시트=이어지우기 data-값="' + 안전(대화) + '">🗑</button>'
+        : '<span class="곁꼭 빔" style="visibility:hidden"></span>') +
     '</div>';
   const 한벌 = (e) => {
     const 도막 = D.도막[e.id] || [];
@@ -6502,23 +7394,23 @@ function 이어하기열기(){
        붙인 제목이 있으면 그것이 앞에 서고, 날짜는 뒤로 물러나 밑줄로 간다 */
     const 때글 = 짧은때(연때(e, 도막)) + "  →  " +
                  짧은때((끝 && 끝.messageTime) || e.savedAt);
-    return 이줄("💾", (e.제목 ? e.제목 : 때글), "이어열기",
+    return '<div class="이어벌">' +
+           이줄("💾", (e.제목 ? e.제목 : 때글), "이어열기",
                 {값: e.id,
                  밑: (e.제목 ? 때글 + " · " : "") +
-                     턴수(도막) + "턴 · " + 도막.length + "도막 · " + 값글(방값(e.id)) +
-                     (있나.메모 ? " · 📝" : "") + (있나.기억 ? " · 🧠" : "")}) +
-           곁줄(e.id, 있나);
+                     턴수(도막) + "턴 · " + 도막.length + "도막 · " + 값글(방값(e.id))}) +
+           곁줄(e.id, 있나, true) + '</div>';
   };
   const 지금끝 = 지금도막[지금도막.length - 1];
   const 지금있나 = 적은것있나(방.id);
   시트열기("대화 " + (목.length + 1) + "개",
+    '<div class="이어벌">' +
     시트줄("▶", (방.벌제목 || "지금 보고 있는 대화"), "닫기",
            {빛: "켬",
             밑: 짧은때(연때(방, 지금도막)) + "  →  " +
                 짧은때(지금끝 && 지금끝.messageTime) + "   " +
-                턴수(지금도막) + "턴 · " + 값글(방값(방.id)) +
-                (지금있나.메모 ? " · 📝" : "") + (지금있나.기억 ? " · 🧠" : "")}) +
-    곁줄(방.id, 지금있나) +
+                턴수(지금도막) + "턴 · " + 값글(방값(방.id))}) +
+    곁줄(방.id, 지금있나) + '</div>' +
     (목.length ? 목.map(한벌).join("")
       : '<div class="인물글">저장된 것이 없습니다. 방메뉴의 「새로하기」로 만듭니다.</div>'));
 }
@@ -6658,10 +7550,16 @@ async function 들이기(){
       /* 화면 배율만큼 커진 것이다 — 그 비로 줄이면 딱 맞는다 */
       const 새h = Math.max(180, Math.round(h * (보임h / 아래)));
       document.documentElement.style.setProperty("--보임", 새h + "px");
-    } else if (넘침 < -1 && h < window.innerHeight){
-      /* 거꾸로 너무 줄어 아래가 비었으면 되돌린다 (확대를 풀었을 때) */
-      document.documentElement.style.setProperty("--보임", window.innerHeight + "px");
     }
+    /* ★★★★★ 260914 — **되돌리는 가지를 걷어냈다.**
+       전에는 「넘침 < -1 && h < innerHeight 면 --보임 을 innerHeight 로 되돌린다」였다.
+       **자판이 올라오면 딱 그 조건이 된다** — visualViewport 가 자판만큼 작아지니까.
+       그래서 앱이 자판 뒤로 도로 늘어나 입력칸이 가려지고 인트로가 밀렸다.
+       회원님 R15 : 「입력창 누르면 인트로가 위로 올라가서 안보이게 되든,
+                     입력창이 아래에 숨어서 안보이게 되든 하는 문제」
+
+       ★ 발이 **화면 안에 있으면 건드리지 않는다.** 확대를 푼 뒤에는 다음 `맞추기()` 가
+         `--보임` 을 새로 세우므로 따로 되돌릴 일이 없다 */
   }
   function 맞추기(){
     const h = Math.round((vv && vv.height) || window.innerHeight);
