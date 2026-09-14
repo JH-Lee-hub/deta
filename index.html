@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#151516">
+<!-- ★★★ 260914 회원님 : 「사용되는 모든 이미지는 img 소스 url을 사용하면
+     **트래픽을 추적당할 염려는 없을까?**」
+     실측 — 앱을 한 번 열고 홈을 내렸을 뿐인데 image.zeta-ai.io 로 **60번** 나갔고,
+     그 요청에 Referer(우리 주소)와 User-Agent 가 함께 갔다.
+     올라간 곳에서는 jh-lee-hub.github.io 가 그대로 제타 로그에 남는다.
+     회원님 260910 지시 — 「제타에 **api 호출 기록을 남기고싶지 않아**」 와 어긋난다.
+     ★ 이 한 줄이 **Referer 를 아예 안 보내게** 한다. 우리 주소가 안 드러난다.
+       (IP 는 여전히 간다 — 그것은 그림을 받아 담아야 끊긴다. 그 일은 따로 한다) -->
+<meta name="referrer" content="no-referrer">
 <title>데타</title>
 <!--
   데타 — 제타와 같은 화면 · 같은 결 · 거기에 **장기기억**
@@ -937,7 +946,7 @@ function 대화그리기(){
     '<div class="칸제목">최신순 ˅</div>' +
     (방.length ? 방.map(r =>
       '<div class="방줄" data-방="' + 안전(r.id) + '">' +
-        (r.그림 ? '<img src="' + 안전(r.그림) + '" loading=lazy>' : '<div style="width:46px;height:46px;border-radius:8px;background:var(--바탕3);flex:0 0 auto"></div>') +
+        (그림풀기(r.그림) ? '<img src="' + 안전(그림풀기(r.그림)) + '" loading=lazy>' : '<div style="width:46px;height:46px;border-radius:8px;background:var(--바탕3);flex:0 0 auto"></div>') +
         '<div class="속">' +
           '<div class="이름">' + 안전(r.제목) + '</div>' +
           '<div class="끝말">' + 안전(r.끝말 || '') + '</div>' +
@@ -1222,7 +1231,7 @@ function 도막그리기(m, 몇){
     if (!주소)
       return '<div class="그림도막"><div class="없음">그림은 자리가 모자라 지웠습니다</div>' + 밑 + '</div>';
     return '<div class="그림도막">' +
-      '<img src="' + 안전(주소) + '" loading=lazy data-그림="' + 몇 + '">' + 밑 + '</div>';
+      '<img src="' + 안전(그림풀기(주소)) + '" loading=lazy data-그림="' + 몇 + '">' + 밑 + '</div>';
   }
   const 조각 = (m.contents || []).filter(c => c.type === "TEXT" && c.text);
   if (!조각.length) return "";
@@ -1233,7 +1242,7 @@ function 도막그리기(m, 몇){
     const 얼굴 = 얼굴찾기(묶음.이름);
     낸것.push(
       '<div class="남말">' +
-        (얼굴 ? '<img class="얼굴" src="' + 안전(얼굴) + '" loading=lazy data-인물="' + 안전(묶음.이름) + '">'
+        (얼굴 ? '<img class="얼굴" src="' + 안전(그림풀기(얼굴)) + '" loading=lazy data-인물="' + 안전(묶음.이름) + '">'
             : '<div class="얼굴" data-인물="' + 안전(묶음.이름) + '"></div>') +
         '<div class="묶음">' +
           '<div class="이름">' + 안전(묶음.이름) + '</div>' +
@@ -1271,7 +1280,7 @@ function 도막그리기(m, 몇){
             조각그리기(c.text) + '</div>' +
         '</div>' +
         (나.그림
-          ? '<img class="얼굴" src="' + 안전(나.그림) + '" loading=lazy data-가=내프사>'
+          ? '<img class="얼굴" src="' + 안전(그림풀기(나.그림)) + '" loading=lazy data-가=내프사>'
           : '<div class="얼굴" data-가=내프사>' +
             안전((나.이름 || " ").slice(0, 1)) + '</div>') +
       '</div>');
@@ -1305,7 +1314,7 @@ function 대기점html(){
   const 이름 = 기다림이름();
   const 얼굴 = 얼굴찾기(이름);
   return '<div class="남말">' +
-    (얼굴 ? '<img class="얼굴" src="' + 안전(얼굴) + '">' : '<div class="얼굴"></div>') +
+    (얼굴 ? '<img class="얼굴" src="' + 안전(그림풀기(얼굴)) + '">' : '<div class="얼굴"></div>') +
     '<div class="묶음">' +
       '<div class="이름">' + 안전(이름) + '</div>' +
       '<div class="방울" aria-live="polite" aria-label="답을 쓰는 중입니다">' +
@@ -1491,8 +1500,23 @@ function 내얼굴(){
 /* ★★★★★ 260914 — #25 **`그림:키` 를 실물 주소로 푼다.**
    그림을 값에 통째로 넣으면 localStorage 가 터진다 — 260914 에 특징이 그렇게 사라졌다.
    그래서 실물은 IndexedDB 에 두고 값에는 키만 적는다. 여기서 푼다 */
+/* ★★★ 260914 회원님 : 「사용되는 모든 이미지는 img 소스 url을 사용하면
+     **트래픽을 추적당할 염려는 없을까?** 만약 염려가 있다면
+     **다운받아서 해당 리소스를 사용**하는게 좋을 것 같다.」
+
+   염려가 있었습니다. 앱을 한 번 열고 홈을 내렸을 뿐인데 image.zeta-ai.io 로
+   **예순 번** 나갔고, 그 요청에 우리 주소(Referer)와 브라우저 꼬리표가 함께 갔습니다.
+   깃허브에 올린 판에서는 jh-lee-hub.github.io 가 그대로 제타 기록에 남습니다.
+
+   그래서 **179장을 한 번만 받아 우리 것으로 담았습니다** — 원본 405MB 를
+   400px webp 로 줄여 4.2MB. 자료의 주소 자리에는 「담김:키」 만 적혀 있고
+   실물은 그림.json 에 있습니다. 이제 제타로 나가는 요청이 없습니다.
+
+   ★ 아직 안 왔으면 빈 것을 돌려줍니다. 자리는 남으므로 화면이 안 무너집니다 */
+let 담긴그림 = {};
 function 그림풀기(v){
   const t = String(v == null ? "" : v);
+  if (t.indexOf("담김:") === 0) return 담긴그림[t.slice(3)] || "";
   if (t.indexOf("그림:") === 0) return 그림꺼내기(t.slice(3)) || "";
   return t;
 }
@@ -3691,7 +3715,12 @@ async function 자동생성(){
       method: "POST",
       headers: {"Content-Type": "application/json",
                 ...(초대 ? {"X-Code": encodeURIComponent(초대)} : {})},
-      body: JSON.stringify({모델: 고른모델().모델 || undefined, 향: 향읽기()})
+      /* ★★★ 260914 회원님 : 「**부름말에 '강현'이라고만 들어가있는데 이게 너무 쌩뚱맞다.**」
+         자동생성이 유저 이름을 제멋대로 지어 인트로 대사에까지 박고 있었다.
+         **회원님이 정해 두신 기본 프로필 이름을 보낸다** — 그러면 지어낼 까닭이 없다.
+         기본 프로필을 안 정해 두셨으면 빈 값이 가고, 중계가 예전처럼 짓게 둔다 */
+      body: JSON.stringify({모델: 고른모델().모델 || undefined, 향: 향읽기(),
+                            내이름: ((기본프로필() || {}).이름 || "").trim()})
     });
     const j = await r.json();
     if (j.error){ 알림((j.error && j.error.message) || "탈"); S.보낸중 = false; return; }
@@ -3779,7 +3808,17 @@ function 플롯가르기(글, 자리){
     characters: [{name: 인물이름, description: (칸["캐릭터"] || "").trim(), imageUrl: null}],
     /* ★★★ 260913 — **유저 이름과 설명을 담는다.** 여태 `[]` 로 버리고 있었다.
        이름이 없으면 앱이 유저를 「나」로 부르고 모델이 지문을 1인칭으로 쓴다 (실측) */
-    chatProfiles: [{name: (칸["유저이름"] || "").trim().split(NL)[0].slice(0, 12),
+    /* ★★★ 260914 회원님 : 「부름말에 '강현'이라고만 들어가있는데 이게 너무 쌩뚱맞다.」
+       이제 중계는 모델에게 **이름을 안 알려 준다** — 인트로에 박히는 것을 막으려고.
+       그러니 이 칸에는 「{{user}}」 나 빈 것이 온다. **여기서 회원님 이름을 채운다.**
+       기본 프로필을 안 정해 두셨으면 빈 채로 둔다 — 그때는 `방프로필()` 이
+       플롯에 박힌 이름을 찾아 쓴다 */
+    chatProfiles: [{name: (() => {
+                      const 온것 = (칸["유저이름"] || "").trim().split(NL)[0].slice(0, 12);
+                      const 자리표 = !온것 || 온것.indexOf("{{") >= 0 || 온것 === "user";
+                      if (!자리표) return 온것;
+                      return ((기본프로필() || {}).이름 || "").trim();
+                    })(),
                     summary: "",
                     description: (칸["유저설명"] || "").trim()}],
     intros: [{conversation: {messages: [{contents: [{type: "TEXT", position: "LEFT",
@@ -5055,7 +5094,7 @@ function 입력붙이기(){
 /* ★ 260910 회원님 : 「완성되어 빌드를 내보내게 된다면
    마이페이지에 빌드넘버와 일자와 시간을 적어서 내보낸다.」
    ★ 아래 한 줄은 **빌드 도구가 갈아 끼운다.** 손으로 고치지 않는다 */
-const 빌드 = {번호: "v1.1.22", 때: "2026-09-14 21:18"};
+const 빌드 = {번호: "v1.1.26", 때: "2026-09-14 22:43"};
 
 const 기본중계 = "https://deta-relay.amuselk.workers.dev";
 
@@ -6615,7 +6654,7 @@ function 그림짓기열기(자리, 받을칸, 힌트){
     const 주 = x.키 ? 그림꺼내기(x.키) : "";
     return '<div class="이력쪽" data-시트="그림말불러" data-값="' + k + '" ' +
       'data-자리="' + 안전(자리) + '" title="' + 안전(x.말.slice(0, 80)) + '">' +
-      (주 ? '<img src="' + 안전(주) + '">' : '<div class="빈">말만</div>') + '</div>';
+      (주 ? '<img src="' + 안전(그림풀기(주)) + '">' : '<div class="빈">말만</div>') + '</div>';
   }).join("");
   시트열기("그림 만들기",
     '<div class="글" style="padding:0 14px;color:var(--흐림2);line-height:1.8">' +
@@ -6720,7 +6759,7 @@ async function 짓기보내기(){
     if (칸) 칸.value = "그림:" + 키;
     else 시트값고치기(받을칸, "그림:" + 키);
     const 미 = $("#짓기미리");
-    if (미) 미.innerHTML = '<img src="' + 안전(j.그림) + '" ' +
+    if (미) 미.innerHTML = '<img src="' + 안전(그림풀기(j.그림)) + '" ' +
       'style="width:100%;border-radius:12px;margin-top:4px">';
     if (판) 판.textContent = "그렸습니다 — 칸에 넣었습니다. 시트를 닫고 담기를 누르십시오";
   } catch(e){
@@ -6879,7 +6918,7 @@ function 그림목록열기(){
       ' 대화방에서 🖼 을 누르면 그 자리를 그림으로 냅니다.</div>');
   const 줄 = 것들.map((g, k) =>
     '<div class="그림줄">' +
-      (g.주소 ? '<img src="' + 안전(g.주소) + '" loading=lazy data-시트="그림가기" data-값="' + k + '">'
+      (g.주소 ? '<img src="' + 안전(그림풀기(g.주소)) + '" loading=lazy data-시트="그림가기" data-값="' + k + '">'
               : '<div class="빈그림" data-시트="그림가기" data-값="' + k + '">실물 없음</div>') +
       '<div class="속">' +
         '<div class="방">' + 안전(g.방제목) + '</div>' +
@@ -6952,7 +6991,7 @@ function 그림열기(몇){
   const 주소 = m.그림 || 그림꺼내기(m.그림키);
   시트열기(null,
     /* ★ 260914 — #30 두 손가락 확대. 붙이는 일은 `확대붙이기()` 가 시트가 뜬 뒤에 한다 */
-    (주소 ? '<div class="확대칸" id="확대칸"><img src="' + 안전(주소) + '">' +
+    (주소 ? '<div class="확대칸" id="확대칸"><img src="' + 안전(그림풀기(주소)) + '">' +
             '<span class="배">1.0배 — 두 번 톡 치면 제자리</span></div>'
           : '<div class="글" style="padding:0 14px;color:var(--흐림)">그림 실물이 지워졌습니다</div>') +
     (m.그림말 ? '<div class="글" style="padding:10px 14px;color:var(--흐림2);font-size:11px;' +
@@ -7200,7 +7239,7 @@ function 인물열기(이름){
     '<div class="인물펼침" data-시트="인물펼치기" hidden>' +
       '<span class="말">더보기</span><span class="살">▾</span>' +
     '</div>' +
-    (그림 ? '<div class="인물그림"><img src="' + 안전(그림) + '" loading=lazy></div>'
+    (그림 ? '<div class="인물그림"><img src="' + 안전(그림풀기(그림)) + '" loading=lazy></div>'
           : '<div class="인물그림 빔"></div>') +
     '</div>');
   /* ★ 260914 — **넘칠 때만** 「더보기」를 보인다. 짧은 글에서는 눌러도 늘어날 것이 없다.
@@ -7242,7 +7281,7 @@ function 내프로필열기(){
     '<div class="인물펼침" data-시트="인물펼치기" hidden>' +
       '<span class="말">더보기</span><span class="살">▾</span>' +
     '</div>' +
-    (그림 ? '<div class="인물그림"><img src="' + 안전(그림) + '" loading=lazy></div>'
+    (그림 ? '<div class="인물그림"><img src="' + 안전(그림풀기(그림)) + '" loading=lazy></div>'
           : '<div class="인물그림 빔"></div>') +
     '</div>' +
     /* ★ 인물 카드에는 없는 두 줄 — 내 것이니 고칠 수 있어야 한다 */
@@ -7616,8 +7655,14 @@ function 기억열기(어느){
    제타에서 받은 것을 그대로 쓴다. 꼴을 안 고친다 */
 async function 들이기(){
   try {
-    const r = await fetch('./자료.json', {cache: 'no-store'});
+    /* ★ 260914 — 그림도 우리 것을 읽는다. 자료와 **나란히** 부른다.
+       차례로 부르면 5.6MB 가 통째로 뒤에 붙어 첫 화면이 그만큼 늦는다 */
+    const [r, 그림받은것] = await Promise.all([
+      fetch('./자료.json', {cache: 'no-store'}),
+      fetch('./그림.json').catch(() => null)
+    ]);
     if (!r.ok) throw new Error(r.status);
+    try { if (그림받은것 && 그림받은것.ok) 담긴그림 = await 그림받은것.json(); } catch(_){}
     const j = await r.json();
     D.플롯 = j.플롯 || []; D.방 = j.방 || []; D.도막 = j.도막 || {}; D.인기 = j.인기 || [];
     /* 받아 온 방의 도막 수를 적어 둔다 — 이어 친 것만 담으려고 */
